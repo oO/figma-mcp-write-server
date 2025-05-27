@@ -1,4 +1,4 @@
-import WebSocket from 'ws';
+import WebSocket, { WebSocketServer } from 'ws';
 import { EventEmitter } from 'events';
 import { v4 as uuidv4 } from 'uuid';
 import { 
@@ -11,7 +11,7 @@ import {
 } from './types.js';
 
 export class PluginBridge extends EventEmitter {
-  private wss: WebSocket.Server;
+  private wss: WebSocketServer;
   private pluginSocket: WebSocket | null = null;
   private pendingRequests = new Map<string, {
     resolve: (value: PluginResponse) => void;
@@ -28,7 +28,7 @@ export class PluginBridge extends EventEmitter {
   constructor(config: ServerConfig) {
     super();
     this.config = config;
-    this.wss = new WebSocket.Server({ 
+    this.wss = new WebSocketServer({ 
       port: config.port + 1, // Use a different port for WebSocket
       verifyClient: this.verifyClient.bind(this)
     });
@@ -45,7 +45,9 @@ export class PluginBridge extends EventEmitter {
 
   private setupWebSocketServer(): void {
     this.wss.on('connection', (ws: WebSocket, request) => {
-      console.log('New WebSocket connection established');
+      console.log('🔌 New WebSocket connection established');
+      console.log('📡 Connection from:', request.socket.remoteAddress);
+      console.log('🔗 User-Agent:', request.headers['user-agent']);
       this.status.activeClients++;
       
       // Check if this is a plugin connection

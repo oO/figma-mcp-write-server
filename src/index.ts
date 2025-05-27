@@ -13,19 +13,19 @@ for (let i = 0; i < args.length; i += 2) {
   
   switch (key) {
     case '--port':
-      config.port = parseInt(value, 10);
+      if (value) config.port = parseInt(value, 10);
       break;
     case '--cors-origin':
-      config.corsOrigin = value;
+      if (value) config.corsOrigin = value;
       break;
     case '--plugin-id':
-      config.pluginId = value;
+      if (value) config.pluginId = value;
       break;
     case '--max-message-size':
-      config.maxMessageSize = parseInt(value, 10);
+      if (value) config.maxMessageSize = parseInt(value, 10);
       break;
     case '--heartbeat-interval':
-      config.heartbeatInterval = parseInt(value, 10);
+      if (value) config.heartbeatInterval = parseInt(value, 10);
       break;
     case '--help':
     case '-h':
@@ -44,15 +44,14 @@ Options:
 
 Description:
   This MCP server provides write access to Figma through a companion plugin.
-  Unlike REST API-based MCP servers which are read-only, this server uses
-  Figma's Plugin API to perform write operations like creating, updating,
-  and deleting design elements.
+  It connects to a WebSocket bridge server that handles plugin communication.
 
 Setup:
-  1. Start this MCP server
-  2. Open Figma and install the companion Figma plugin
-  3. Run the plugin to establish connection
-  4. Use MCP tools to interact with your Figma design
+  1. Start the WebSocket bridge: npx tsx src/index-websocket.ts
+  2. Start this MCP server: node dist/index.js
+  3. Open Figma and install the companion Figma plugin
+  4. Run the plugin to establish connection
+  5. Use MCP tools to interact with your Figma design
 
 Available MCP Tools:
   - create_rectangle    Create rectangle shapes
