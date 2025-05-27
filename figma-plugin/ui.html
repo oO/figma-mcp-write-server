@@ -87,6 +87,7 @@
     .buttons {
       display: flex;
       gap: 8px;
+      margin-bottom: 16px;
     }
     
     .button {
@@ -122,7 +123,6 @@
     }
     
     .logs {
-      margin-top: 16px;
       padding: 8px;
       background: #f8fafc;
       border: 1px solid #e2e8f0;
@@ -130,7 +130,7 @@
       font-family: 'SF Mono', Monaco, monospace;
       font-size: 10px;
       color: #475569;
-      max-height: 80px;
+      max-height: 120px;
       overflow-y: auto;
     }
     
@@ -142,18 +142,18 @@
 <body>
   <div class="header">
     <h1 class="title">🎨 MCP Write Bridge</h1>
-    <p class="subtitle">Connects Figma to MCP Server</p>
+    <p class="subtitle">WebSocket Connection to MCP Server</p>
   </div>
   
   <div id="status" class="status disconnected">
     <div class="status-icon"></div>
-    <span id="status-text">Connecting to MCP Server...</span>
+    <span id="status-text">Connecting to WebSocket...</span>
   </div>
   
   <div class="info">
     <p class="info-text">
-      This plugin bridges Figma with the MCP server to enable write operations.
-      Keep this plugin running while using MCP tools.
+      This plugin connects to the MCP WebSocket bridge to enable write operations.
+      Keep this running while using MCP tools.
     </p>
   </div>
   
@@ -162,13 +162,22 @@
     <button id="close" class="button">Close</button>
   </div>
   
-  <div id="logs" class="logs" style="display: none;">
+  <div id="logs" class="logs">
     <div class="log-entry">🔄 Starting connection...</div>
   </div>
 
   <script>
+    // WebSocket connection
+    let ws = null;
     let isConnected = false;
+    let reconnectTimer = null;
     const logs = [];
+    
+    // Configuration
+    const SERVER_URL = 'ws://localhost:3002';
+    const RECONNECT_INTERVAL = 5000;
+    const HEARTBEAT_INTERVAL = 15000;
+    let heartbeatTimer = null;
     
     // DOM elements
     const statusEl = document.getElementById('status');
@@ -179,36 +188,168 @@
     
     // Event listeners
     reconnectBtn.addEventListener('click', () => {
-      parent.postMessage({ pluginMessage: { type: 'RECONNECT' } }, '*');
-      addLog('🔄 Reconnecting...');
+      addLog('🔄 Manual reconnect requested');
+      connectToServer();
     });
     
     closeBtn.addEventListener('click', () => {
       parent.postMessage({ pluginMessage: { type: 'CLOSE' } }, '*');
     });
     
-    // Handle messages from plugin
-    window.onmessage = (event) => {
-      const { type, connected } = event.data.pluginMessage || {};
-      
-      if (type === 'CONNECTION_STATUS') {
-        updateConnectionStatus(connected);
+    // WebSocket connection
+    function connectToServer() {
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
       }
-    };
+      
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        addLog('📡 Already connected');
+        return;
+      }
+      
+      try {
+        addLog(`🔌 Connecting to ${SERVER_URL}...`);
+        ws = new WebSocket(SERVER_URL);
+        
+        ws.onopen = () => {
+          addLog('✅ WebSocket connected!');
+          isConnected = true;
+          updateConnectionStatus(true);
+          
+          // Send plugin ready message
+          sendToServer({
+            id: generateUUID(),
+            type: 'PLUGIN_READY',
+            payload: {
+              pluginId: 'figma-mcp-write-plugin',
+              version: '1.0.0',
+              capabilities: [
+                'CREATE_RECTANGLE', 'CREATE_ELLIPSE', 'CREATE_TEXT', 'CREATE_FRAME',
+                'UPDATE_NODE', 'MOVE_NODE', 'DELETE_NODE', 'DUPLICATE_NODE',
+                'GET_SELECTION', 'SET_SELECTION', 'GET_PAGE_NODES', 'EXPORT_NODE'
+              ]
+            }
+          });
+          
+          // Start heartbeat
+          startHeartbeat();
+          
+          // Notify main thread
+          parent.postMessage({ 
+            pluginMessage: { type: 'CONNECTION_STATUS', connected: true } 
+          }, '*');
+        };
+        
+        ws.onmessage = (event) => {
+          try {
+            const message = JSON.parse(event.data);
+            addLog(`📨 Received: ${message.type || 'message'}`);
+            handleServerMessage(message);
+          } catch (error) {
+            addLog(`❌ Parse error: ${error.message}`);
+          }
+        };
+        
+        ws.onclose = () => {
+          addLog('❌ WebSocket disconnected');
+          isConnected = false;
+          updateConnectionStatus(false);
+          stopHeartbeat();
+          scheduleReconnect();
+          
+          // Notify main thread
+          parent.postMessage({ 
+            pluginMessage: { type: 'CONNECTION_STATUS', connected: false } 
+          }, '*');
+        };
+        
+        ws.onerror = (error) => {
+          addLog(`💥 WebSocket error: ${error.type}`);
+          isConnected = false;
+          updateConnectionStatus(false);
+        };
+        
+      } catch (error) {
+        addLog(`❌ Connection failed: ${error.message}`);
+        scheduleReconnect();
+      }
+    }
+    
+    function sendToServer(message) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify(message));
+          addLog(`📤 Sent: ${message.type}`);
+        } catch (error) {
+          addLog(`❌ Send error: ${error.message}`);
+        }
+      } else {
+        addLog('⚠️ Cannot send - not connected');
+      }
+    }
+    
+    function handleServerMessage(message) {
+      // Handle different message types
+      switch (message.type) {
+        case 'WELCOME':
+          addLog('👋 Received welcome from bridge');
+          break;
+          
+        case 'HEARTBEAT':
+          // Heartbeat response - just log quietly
+          console.log('💓 Heartbeat received');
+          break;
+          
+        default:
+          // Forward tool requests to main thread
+          parent.postMessage({ 
+            pluginMessage: { 
+              type: message.type,
+              payload: message.payload,
+              id: message.id
+            } 
+          }, '*');
+          break;
+      }
+    }
+    
+    function scheduleReconnect() {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      reconnectTimer = setTimeout(() => {
+        addLog('🔄 Attempting reconnect...');
+        connectToServer();
+      }, RECONNECT_INTERVAL);
+    }
+    
+    function startHeartbeat() {
+      heartbeatTimer = setInterval(() => {
+        if (isConnected) {
+          sendToServer({
+            id: generateUUID(),
+            type: 'HEARTBEAT',
+            payload: { timestamp: Date.now() }
+          });
+        }
+      }, HEARTBEAT_INTERVAL);
+    }
+    
+    function stopHeartbeat() {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+    }
     
     function updateConnectionStatus(connected) {
-      isConnected = connected;
-      
       if (connected) {
         statusEl.className = 'status connected';
-        statusTextEl.textContent = 'Connected to MCP Server';
+        statusTextEl.textContent = 'Connected to WebSocket Bridge';
         reconnectBtn.disabled = false;
-        addLog('✅ Connected to MCP Server');
       } else {
         statusEl.className = 'status disconnected';
-        statusTextEl.textContent = 'Disconnected from MCP Server';
+        statusTextEl.textContent = 'Disconnected from Bridge';
         reconnectBtn.disabled = false;
-        addLog('❌ Disconnected from MCP Server');
       }
     }
     
@@ -216,22 +357,38 @@
       const timestamp = new Date().toLocaleTimeString();
       logs.push(`[${timestamp}] ${message}`);
       
-      // Keep only last 20 logs
-      if (logs.length > 20) {
+      // Keep only last 30 logs
+      if (logs.length > 30) {
         logs.shift();
       }
       
       // Update logs display
-      if (logs.length > 0) {
-        logsEl.style.display = 'block';
-        logsEl.innerHTML = logs.map(log => `<div class="log-entry">${log}</div>`).join('');
-        logsEl.scrollTop = logsEl.scrollHeight;
-      }
+      logsEl.innerHTML = logs.map(log => `<div class="log-entry">${log}</div>`).join('');
+      logsEl.scrollTop = logsEl.scrollHeight;
     }
     
-    // Initial state
-    addLog('🚀 Plugin started');
-    addLog('🔌 Attempting to connect to MCP Server...');
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+    
+    // Handle messages from main thread
+    window.onmessage = (event) => {
+      const { type, payload } = event.data.pluginMessage || {};
+      
+      if (type === 'SEND_TO_SERVER') {
+        // Forward response back to server
+        sendToServer(payload);
+      } else if (type === 'RECONNECT_REQUEST') {
+        connectToServer();
+      }
+    };
+    
+    // Auto-connect on load
+    addLog('🚀 UI started, connecting...');
+    connectToServer();
   </script>
 </body>
 </html>

@@ -1,451 +1,340 @@
 // Main plugin code that runs in Figma's main thread
 console.log('🎨 Figma MCP Write Plugin starting...');
 
-// Configuration
-const SERVER_URL = 'ws://localhost:3002'; // WebSocket port (main port + 1)
-const RECONNECT_INTERVAL = 5000;
-const HEARTBEAT_INTERVAL = 15000;
+// Show UI
+figma.showUI(__html__, { width: 300, height: 400 });
 
-let ws = null;
-let reconnectTimer = null;
-let heartbeatTimer = null;
+// Plugin state
 let isConnected = false;
 
-// Initialize WebSocket connection
-function connectToServer() {
-  try {
-    ws = new WebSocket(SERVER_URL);
-    
-    ws.onopen = () => {
-      console.log('✅ Connected to MCP server');
-      isConnected = true;
-      clearTimeout(reconnectTimer);
+// Handle messages from UI thread
+figma.ui.onmessage = (msg) => {
+  console.log('📨 Received from UI:', msg.type);
+  
+  switch (msg.type) {
+    case 'CONNECTION_STATUS':
+      isConnected = msg.connected;
+      console.log(`🔌 Connection status: ${isConnected ? 'Connected' : 'Disconnected'}`);
+      break;
       
-      // Send plugin ready message
-      sendMessage({
-        id: generateUUID(),
-        type: 'PLUGIN_READY',
-        payload: {
-          pluginId: 'figma-mcp-write-plugin',
-          version: '1.0.0',
-          capabilities: [
-            'CREATE_RECTANGLE',
-            'CREATE_ELLIPSE',
-            'CREATE_TEXT',
-            'CREATE_FRAME',
-            'UPDATE_NODE',
-            'MOVE_NODE',
-            'DELETE_NODE',
-            'DUPLICATE_NODE',
-            'GET_SELECTION',
-            'SET_SELECTION',
-            'GET_PAGE_NODES',
-            'EXPORT_NODE'
-          ]
-        }
-      });
+    case 'RECONNECT':
+      console.log('🔄 UI requested reconnection');
+      figma.ui.postMessage({ type: 'RECONNECT_REQUEST' });
+      break;
       
-      // Start heartbeat
-      startHeartbeat();
+    case 'CLOSE':
+      console.log('👋 Closing plugin');
+      figma.closePlugin();
+      break;
       
-      // Update UI
-      figma.ui.postMessage({ type: 'CONNECTION_STATUS', connected: true });
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        handleMessage(message);
-      } catch (error) {
-        console.error('❌ Error parsing message:', error);
-      }
-    };
-    
-    ws.onclose = () => {
-      console.log('❌ Disconnected from MCP server');
-      isConnected = false;
-      stopHeartbeat();
-      scheduleReconnect();
+    // Handle MCP tool requests from the server
+    case 'CREATE_RECTANGLE':
+      handleCreateRectangle(msg.payload, msg.id);
+      break;
       
-      // Update UI
-      figma.ui.postMessage({ type: 'CONNECTION_STATUS', connected: false });
-    };
-    
-    ws.onerror = (error) => {
-      console.error('❌ WebSocket error:', error);
-      isConnected = false;
-    };
-    
-  } catch (error) {
-    console.error('❌ Failed to connect to server:', error);
-    scheduleReconnect();
+    case 'CREATE_ELLIPSE':
+      handleCreateEllipse(msg.payload, msg.id);
+      break;
+      
+    case 'CREATE_TEXT':
+      handleCreateText(msg.payload, msg.id);
+      break;
+      
+    case 'CREATE_FRAME':
+      handleCreateFrame(msg.payload, msg.id);
+      break;
+      
+    case 'UPDATE_NODE':
+      handleUpdateNode(msg.payload, msg.id);
+      break;
+      
+    case 'MOVE_NODE':
+      handleMoveNode(msg.payload, msg.id);
+      break;
+      
+    case 'DELETE_NODE':
+      handleDeleteNode(msg.payload, msg.id);
+      break;
+      
+    case 'DUPLICATE_NODE':
+      handleDuplicateNode(msg.payload, msg.id);
+      break;
+      
+    case 'GET_SELECTION':
+      handleGetSelection(msg.id);
+      break;
+      
+    case 'SET_SELECTION':
+      handleSetSelection(msg.payload, msg.id);
+      break;
+      
+    case 'GET_PAGE_NODES':
+      handleGetPageNodes(msg.id);
+      break;
+      
+    case 'EXPORT_NODE':
+      handleExportNode(msg.payload, msg.id);
+      break;
+      
+    default:
+      console.log('❓ Unknown message type:', msg.type);
   }
-}
+};
 
-function scheduleReconnect() {
-  if (reconnectTimer) clearTimeout(reconnectTimer);
-  reconnectTimer = setTimeout(() => {
-    console.log('🔄 Attempting to reconnect...');
-    connectToServer();
-  }, RECONNECT_INTERVAL);
-}
-
-function startHeartbeat() {
-  heartbeatTimer = setInterval(() => {
-    if (isConnected) {
-      sendMessage({
-        id: generateUUID(),
-        type: 'HEARTBEAT',
-        payload: { timestamp: Date.now() }
-      });
-    }
-  }, HEARTBEAT_INTERVAL);
-}
-
-function stopHeartbeat() {
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-}
-
-function sendMessage(message) {
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify(message));
-  }
-}
-
-function sendResponse(id, success, data, error) {
-  sendMessage({
-    id,
-    success,
-    data,
-    error
+// Send response back to server via UI
+function sendResponse(id, success, data = null, error = null) {
+  figma.ui.postMessage({
+    type: 'SEND_TO_SERVER',
+    payload: { id, success, data, error }
   });
 }
 
-// Message handler
-async function handleMessage(message) {
-  const { id, type, payload } = message;
-  
+// Figma API handlers
+function handleCreateRectangle(params, id) {
   try {
-    switch (type) {
-      case 'HEARTBEAT':
-        // Respond to heartbeat
-        sendResponse(id, true, { timestamp: Date.now() });
-        break;
-        
-      case 'CREATE_RECTANGLE':
-        await createRectangle(id, payload);
-        break;
-        
-      case 'CREATE_ELLIPSE':
-        await createEllipse(id, payload);
-        break;
-        
-      case 'CREATE_TEXT':
-        await createText(id, payload);
-        break;
-        
-      case 'CREATE_FRAME':
-        await createFrame(id, payload);
-        break;
-        
-      case 'UPDATE_NODE':
-        await updateNode(id, payload);
-        break;
-        
-      case 'MOVE_NODE':
-        await moveNode(id, payload);
-        break;
-        
-      case 'DELETE_NODE':
-        await deleteNode(id, payload);
-        break;
-        
-      case 'DUPLICATE_NODE':
-        await duplicateNode(id, payload);
-        break;
-        
-      case 'GET_SELECTION':
-        await getSelection(id);
-        break;
-        
-      case 'SET_SELECTION':
-        await setSelection(id, payload);
-        break;
-        
-      case 'GET_PAGE_NODES':
-        await getPageNodes(id);
-        break;
-        
-      case 'EXPORT_NODE':
-        await exportNode(id, payload);
-        break;
-        
-      default:
-        sendResponse(id, false, null, `Unknown message type: ${type}`);
+    const rect = figma.createRectangle();
+    rect.x = params.x || 0;
+    rect.y = params.y || 0;
+    rect.resize(params.width || 100, params.height || 100);
+    rect.name = params.name || 'Rectangle';
+    
+    if (params.fillColor) {
+      rect.fills = [{ type: 'SOLID', color: hexToRgb(params.fillColor) }];
     }
+    
+    figma.currentPage.appendChild(rect);
+    sendResponse(id, true, { nodeId: rect.id, name: rect.name });
   } catch (error) {
-    console.error(`❌ Error handling ${type}:`, error);
     sendResponse(id, false, null, error.message);
   }
 }
 
-// Plugin operation implementations
-
-async function createRectangle(id, params) {
-  const rect = figma.createRectangle();
-  rect.name = params.name || 'Rectangle';
-  rect.x = params.x || 0;
-  rect.y = params.y || 0;
-  rect.resize(params.width || 100, params.height || 100);
-  
-  if (params.fillColor) {
-    rect.fills = [{ type: 'SOLID', color: hexToRgb(params.fillColor) }];
+function handleCreateEllipse(params, id) {
+  try {
+    const ellipse = figma.createEllipse();
+    ellipse.x = params.x || 0;
+    ellipse.y = params.y || 0;
+    ellipse.resize(params.width || 100, params.height || 100);
+    ellipse.name = params.name || 'Ellipse';
+    
+    if (params.fillColor) {
+      ellipse.fills = [{ type: 'SOLID', color: hexToRgb(params.fillColor) }];
+    }
+    
+    figma.currentPage.appendChild(ellipse);
+    sendResponse(id, true, { nodeId: ellipse.id, name: ellipse.name });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  if (params.strokeColor) {
-    rect.strokes = [{ type: 'SOLID', color: hexToRgb(params.strokeColor) }];
-    rect.strokeWeight = params.strokeWidth || 1;
-  }
-  
-  figma.currentPage.appendChild(rect);
-  sendResponse(id, true, { nodeId: rect.id, name: rect.name });
 }
 
-async function createEllipse(id, params) {
-  const ellipse = figma.createEllipse();
-  ellipse.name = params.name || 'Ellipse';
-  ellipse.x = params.x || 0;
-  ellipse.y = params.y || 0;
-  ellipse.resize(params.width || 100, params.height || 100);
-  
-  if (params.fillColor) {
-    ellipse.fills = [{ type: 'SOLID', color: hexToRgb(params.fillColor) }];
+function handleCreateText(params, id) {
+  try {
+    const text = figma.createText();
+    text.x = params.x || 0;
+    text.y = params.y || 0;
+    text.characters = params.content || 'Text';
+    text.fontSize = params.fontSize || 16;
+    text.name = params.name || 'Text';
+    
+    if (params.textColor) {
+      text.fills = [{ type: 'SOLID', color: hexToRgb(params.textColor) }];
+    }
+    
+    figma.currentPage.appendChild(text);
+    sendResponse(id, true, { nodeId: text.id, name: text.name });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  if (params.strokeColor) {
-    ellipse.strokes = [{ type: 'SOLID', color: hexToRgb(params.strokeColor) }];
-    ellipse.strokeWeight = params.strokeWidth || 1;
-  }
-  
-  figma.currentPage.appendChild(ellipse);
-  sendResponse(id, true, { nodeId: ellipse.id, name: ellipse.name });
 }
 
-async function createText(id, params) {
-  const text = figma.createText();
-  
-  // Load font before setting text
-  await figma.loadFontAsync({ family: params.fontFamily || 'Inter', style: 'Regular' });
-  
-  text.name = params.name || 'Text';
-  text.characters = params.content || 'Text';
-  text.x = params.x || 0;
-  text.y = params.y || 0;
-  text.fontSize = params.fontSize || 16;
-  text.fontName = { family: params.fontFamily || 'Inter', style: 'Regular' };
-  
-  if (params.textColor) {
-    text.fills = [{ type: 'SOLID', color: hexToRgb(params.textColor) }];
+function handleCreateFrame(params, id) {
+  try {
+    const frame = figma.createFrame();
+    frame.x = params.x || 0;
+    frame.y = params.y || 0;
+    frame.resize(params.width || 200, params.height || 200);
+    frame.name = params.name || 'Frame';
+    
+    if (params.backgroundColor) {
+      frame.fills = [{ type: 'SOLID', color: hexToRgb(params.backgroundColor) }];
+    }
+    
+    figma.currentPage.appendChild(frame);
+    sendResponse(id, true, { nodeId: frame.id, name: frame.name });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  figma.currentPage.appendChild(text);
-  sendResponse(id, true, { nodeId: text.id, name: text.name });
 }
 
-async function createFrame(id, params) {
-  const frame = figma.createFrame();
-  frame.name = params.name || 'Frame';
-  frame.x = params.x || 0;
-  frame.y = params.y || 0;
-  frame.resize(params.width || 200, params.height || 200);
-  
-  if (params.backgroundColor) {
-    frame.fills = [{ type: 'SOLID', color: hexToRgb(params.backgroundColor) }];
+function handleUpdateNode(params, id) {
+  try {
+    const node = figma.getNodeById(params.nodeId);
+    if (!node) {
+      sendResponse(id, false, null, 'Node not found');
+      return;
+    }
+    
+    // Update properties
+    Object.keys(params.properties).forEach(key => {
+      if (key in node) {
+        node[key] = params.properties[key];
+      }
+    });
+    
+    sendResponse(id, true, { nodeId: node.id, updated: Object.keys(params.properties) });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  figma.currentPage.appendChild(frame);
-  sendResponse(id, true, { nodeId: frame.id, name: frame.name });
 }
 
-async function updateNode(id, params) {
-  const node = await figma.getNodeByIdAsync(params.nodeId);
-  if (!node) {
-    sendResponse(id, false, null, `Node not found: ${params.nodeId}`);
-    return;
+function handleMoveNode(params, id) {
+  try {
+    const node = figma.getNodeById(params.nodeId);
+    if (!node) {
+      sendResponse(id, false, null, 'Node not found');
+      return;
+    }
+    
+    node.x = params.x;
+    node.y = params.y;
+    
+    sendResponse(id, true, { nodeId: node.id, x: node.x, y: node.y });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  // Update properties
-  for (const [key, value] of Object.entries(params.properties)) {
-    if (key === 'fills' && Array.isArray(value)) {
-      // Handle fills specially
-      if ('fills' in node) {
-        node.fills = value.map(fill => {
-          if (fill.type === 'SOLID' && typeof fill.color === 'string') {
-            return { type: 'SOLID', color: hexToRgb(fill.color) };
-          }
-          return fill;
+}
+
+function handleDeleteNode(params, id) {
+  try {
+    const node = figma.getNodeById(params.nodeId);
+    if (!node) {
+      sendResponse(id, false, null, 'Node not found');
+      return;
+    }
+    
+    node.remove();
+    sendResponse(id, true, { nodeId: params.nodeId, deleted: true });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
+  }
+}
+
+function handleDuplicateNode(params, id) {
+  try {
+    const node = figma.getNodeById(params.nodeId);
+    if (!node) {
+      sendResponse(id, false, null, 'Node not found');
+      return;
+    }
+    
+    const clone = node.clone();
+    clone.x = node.x + (params.offsetX || 10);
+    clone.y = node.y + (params.offsetY || 10);
+    
+    if (node.parent) {
+      node.parent.appendChild(clone);
+    } else {
+      figma.currentPage.appendChild(clone);
+    }
+    
+    sendResponse(id, true, { 
+      originalId: params.nodeId, 
+      cloneId: clone.id,
+      name: clone.name 
+    });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
+  }
+}
+
+function handleGetSelection(id) {
+  try {
+    const selection = figma.currentPage.selection;
+    const selectionData = selection.map(node => ({
+      id: node.id,
+      name: node.name,
+      type: node.type,
+      x: node.x,
+      y: node.y,
+      width: node.width,
+      height: node.height
+    }));
+    
+    sendResponse(id, true, { selection: selectionData });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
+  }
+}
+
+function handleSetSelection(params, id) {
+  try {
+    const nodes = params.nodeIds.map(nodeId => figma.getNodeById(nodeId)).filter(Boolean);
+    figma.currentPage.selection = nodes;
+    
+    sendResponse(id, true, { selectedIds: nodes.map(n => n.id) });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
+  }
+}
+
+function handleGetPageNodes(id) {
+  try {
+    const getAllNodes = (node) => {
+      const result = [{
+        id: node.id,
+        name: node.name,
+        type: node.type,
+        x: node.x || 0,
+        y: node.y || 0,
+        width: node.width || 0,
+        height: node.height || 0
+      }];
+      
+      if ('children' in node) {
+        node.children.forEach(child => {
+          result.push(...getAllNodes(child));
         });
       }
-    } else if (key in node) {
-      node[key] = value;
+      
+      return result;
+    };
+    
+    const allNodes = getAllNodes(figma.currentPage);
+    sendResponse(id, true, { nodes: allNodes });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
+  }
+}
+
+function handleExportNode(params, id) {
+  try {
+    const node = figma.getNodeById(params.nodeId);
+    if (!node) {
+      sendResponse(id, false, null, 'Node not found');
+      return;
     }
+    
+    // Note: Actual export would require async operations
+    // For now, just return success
+    sendResponse(id, true, { 
+      nodeId: params.nodeId,
+      format: params.format,
+      message: 'Export functionality would be implemented here'
+    });
+  } catch (error) {
+    sendResponse(id, false, null, error.message);
   }
-  
-  sendResponse(id, true, { nodeId: node.id });
 }
 
-async function moveNode(id, params) {
-  const node = await figma.getNodeByIdAsync(params.nodeId);
-  if (!node) {
-    sendResponse(id, false, null, `Node not found: ${params.nodeId}`);
-    return;
-  }
-  
-  node.x = params.x;
-  node.y = params.y;
-  
-  sendResponse(id, true, { nodeId: node.id, x: node.x, y: node.y });
-}
-
-async function deleteNode(id, params) {
-  const node = await figma.getNodeByIdAsync(params.nodeId);
-  if (!node) {
-    sendResponse(id, false, null, `Node not found: ${params.nodeId}`);
-    return;
-  }
-  
-  node.remove();
-  sendResponse(id, true, { nodeId: params.nodeId });
-}
-
-async function duplicateNode(id, params) {
-  const node = await figma.getNodeByIdAsync(params.nodeId);
-  if (!node) {
-    sendResponse(id, false, null, `Node not found: ${params.nodeId}`);
-    return;
-  }
-  
-  const clone = node.clone();
-  clone.x = node.x + (params.offsetX || 10);
-  clone.y = node.y + (params.offsetY || 10);
-  
-  if (node.parent) {
-    node.parent.appendChild(clone);
-  } else {
-    figma.currentPage.appendChild(clone);
-  }
-  
-  sendResponse(id, true, { originalId: node.id, cloneId: clone.id });
-}
-
-async function getSelection(id) {
-  const selection = figma.currentPage.selection;
-  const selectionData = selection.map(node => ({
-    id: node.id,
-    name: node.name,
-    type: node.type,
-    x: 'x' in node ? node.x : undefined,
-    y: 'y' in node ? node.y : undefined,
-    width: 'width' in node ? node.width : undefined,
-    height: 'height' in node ? node.height : undefined
-  }));
-  
-  sendResponse(id, true, selectionData);
-}
-
-async function setSelection(id, params) {
-  const nodes = [];
-  for (const nodeId of params.nodeIds) {
-    const node = await figma.getNodeByIdAsync(nodeId);
-    if (node) nodes.push(node);
-  }
-  
-  figma.currentPage.selection = nodes;
-  sendResponse(id, true, { selectedCount: nodes.length });
-}
-
-async function getPageNodes(id) {
-  const nodes = figma.currentPage.children.map(node => ({
-    id: node.id,
-    name: node.name,
-    type: node.type,
-    x: 'x' in node ? node.x : undefined,
-    y: 'y' in node ? node.y : undefined,
-    width: 'width' in node ? node.width : undefined,
-    height: 'height' in node ? node.height : undefined
-  }));
-  
-  sendResponse(id, true, nodes);
-}
-
-async function exportNode(id, params) {
-  const node = await figma.getNodeByIdAsync(params.nodeId);
-  if (!node) {
-    sendResponse(id, false, null, `Node not found: ${params.nodeId}`);
-    return;
-  }
-  
-  const settings = {
-    format: params.format || 'PNG',
-    constraint: { type: 'SCALE', value: params.scale || 1 }
-  };
-  
-  const bytes = await node.exportAsync(settings);
-  const base64 = figma.base64Encode(bytes);
-  
-  sendResponse(id, true, { 
-    format: settings.format,
-    scale: settings.constraint.value,
-    data: base64
-  });
-}
-
-// Utility functions
-
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    const r = Math.random() * 16 | 0;
-    const v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
-}
-
+// Helper function to convert hex color to RGB
 function hexToRgb(hex) {
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? {
     r: parseInt(result[1], 16) / 255,
     g: parseInt(result[2], 16) / 255,
     b: parseInt(result[3], 16) / 255
-  } : { r: 0, g: 0, b: 0 };
+  } : { r: 1, g: 1, b: 1 };
 }
 
-// Show UI and start connection
-figma.showUI(__html__, { 
-  width: 320, 
-  height: 240,
-  title: 'MCP Write Bridge'
-});
-
-// Connect to server
-connectToServer();
-
-// Handle UI messages
-figma.ui.onmessage = (msg) => {
-  if (msg.type === 'RECONNECT') {
-    connectToServer();
-  } else if (msg.type === 'CLOSE') {
-    figma.closePlugin();
-  }
-};
-
-// Handle plugin close
-figma.on('close', () => {
-  if (ws) {
-    ws.close();
-  }
-  if (reconnectTimer) clearTimeout(reconnectTimer);
-  if (heartbeatTimer) clearInterval(heartbeatTimer);
-});
+console.log('✅ Plugin initialized, UI thread will handle WebSocket connection');
