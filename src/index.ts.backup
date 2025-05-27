@@ -29,7 +29,7 @@ for (let i = 0; i < args.length; i += 2) {
       break;
     case '--help':
     case '-h':
-      console.error(`
+      console.log(`
 Figma MCP Write Server - Model Context Protocol server with Figma write access
 
 Usage: figma-mcp-write-server [options]
@@ -83,14 +83,14 @@ Examples:
 }
 
 async function main() {
-  console.error('🎨 Figma MCP Write Server');
-  console.error('==========================');
+  console.log('🎨 Figma MCP Write Server');
+  console.log('==========================');
   
   const server = new FigmaMCPServer(config);
   
   // Handle graceful shutdown
   const shutdown = async (signal: string) => {
-    console.error(`\n📡 Received ${signal}, shutting down gracefully...`);
+    console.log(`\n📡 Received ${signal}, shutting down gracefully...`);
     try {
       await server.stop();
       process.exit(0);

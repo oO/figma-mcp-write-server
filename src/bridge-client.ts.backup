@@ -25,7 +25,7 @@ export class BridgeClient extends EventEmitter {
         this.ws = new WebSocket(this.url);
 
         this.ws.on('open', () => {
-          console.error('🔗 Connected to WebSocket bridge');
+          console.log('🔗 Connected to WebSocket bridge');
           this.isConnected = true;
           if (this.reconnectTimer) {
             clearTimeout(this.reconnectTimer);
@@ -45,7 +45,7 @@ export class BridgeClient extends EventEmitter {
         });
 
         this.ws.on('close', () => {
-          console.error('❌ Disconnected from WebSocket bridge');
+          console.log('❌ Disconnected from WebSocket bridge');
           this.isConnected = false;
           this.emit('disconnected');
           this.scheduleReconnect();
@@ -79,7 +79,7 @@ export class BridgeClient extends EventEmitter {
     }
 
     // Handle other message types
-    console.error('📨 Received from bridge:', message.type || 'unknown');
+    console.log('📨 Received from bridge:', message.type || 'unknown');
   }
 
   public async sendToPlugin(message: any): Promise<any> {
@@ -103,7 +103,7 @@ export class BridgeClient extends EventEmitter {
       // Send message
       try {
         this.ws!.send(JSON.stringify(messageWithId));
-        console.error('📤 Sent to plugin via bridge:', message.type);
+        console.log('📤 Sent to plugin via bridge:', message.type);
       } catch (error) {
         this.pendingRequests.delete(messageId);
         clearTimeout(timeout);
@@ -116,7 +116,7 @@ export class BridgeClient extends EventEmitter {
     if (this.reconnectTimer) return;
     
     this.reconnectTimer = setTimeout(async () => {
-      console.error('🔄 Attempting to reconnect to bridge...');
+      console.log('🔄 Attempting to reconnect to bridge...');
       try {
         await this.connect();
       } catch (error) {

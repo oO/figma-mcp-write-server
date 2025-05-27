@@ -1,6 +1,6 @@
 {
   "name": "figma-mcp-write-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP server for Figma with write access via Plugin API bridge",
   "main": "dist/index.js",
   "type": "module",

@@ -48,11 +48,11 @@ export class FigmaMCPServer {
 
   private setupBridgeClient(): void {
     this.bridgeClient.on('connected', () => {
-      console.error('✅ Connected to Figma bridge - write operations now available');
+      console.log('✅ Connected to Figma bridge - write operations now available');
     });
 
     this.bridgeClient.on('disconnected', () => {
-      console.error('❌ Disconnected from Figma bridge - write operations unavailable');
+      console.log('❌ Disconnected from Figma bridge - write operations unavailable');
     });
   }
 
@@ -508,28 +508,28 @@ ${!status.pluginConnected ? '\n⚠️  To enable write operations, please open F
   }
 
   public async start(): Promise<void> {
-    console.error('🚀 Starting Figma MCP Write Server...');
-    console.error('🔗 Connecting to WebSocket bridge...');
+    console.log('🚀 Starting Figma MCP Write Server...');
+    console.log('🔗 Connecting to WebSocket bridge...');
     
     // Connect to bridge
     try {
       await this.bridgeClient.connect();
     } catch (error) {
-      console.error('⚠️ Bridge not available yet - will retry when needed');
+      console.log('⚠️ Bridge not available yet - will retry when needed');
     }
     
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     
-    console.error('✅ MCP Server started successfully');
-    console.error('💡 Available tools: create_rectangle, create_ellipse, create_text, create_frame, update_node, move_node, delete_node, duplicate_node, get_selection, set_selection, get_page_nodes, export_node, get_plugin_status');
+    console.log('✅ MCP Server started successfully');
+    console.log('💡 Available tools: create_rectangle, create_ellipse, create_text, create_frame, update_node, move_node, delete_node, duplicate_node, get_selection, set_selection, get_page_nodes, export_node, get_plugin_status');
   }
 
   public async stop(): Promise<void> {
-    console.error('🛑 Stopping Figma MCP Write Server...');
+    console.log('🛑 Stopping Figma MCP Write Server...');
     this.bridgeClient.close();
     await this.server.close();
-    console.error('✅ Server stopped');
+    console.log('✅ Server stopped');
   }
 
   public getServer(): Server {

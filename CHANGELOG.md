@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2025-05-28
+
+### Fixed
+- **Critical**: Fixed JSON parsing errors in MCP protocol communication
+  - Redirected decorative console output from stdout to stderr
+  - Prevented emoji-decorated log messages from interfering with JSON-RPC protocol
+  - Resolved parsing errors: "Unexpected token '🎨'", "🚀 Startin", "🔗 Connect", etc.
+  - Maintained all debug logging functionality while ensuring MCP compliance
+- Updated files: `src/index.ts`, `src/mcp-server.ts`, `src/bridge-client.ts`
+
+### Technical Details
+- Root cause: Console messages with emojis/decorations were being sent to stdout
+- Solution: Changed `console.log()` to `console.error()` for non-JSON output
+- Impact: Eliminates connection issues between Claude Desktop and MCP server
+- MCP protocol requires stdout to contain only valid JSON-RPC messages
+
 ## [1.0.0] - 2025-01-28
 
 ### Added
