@@ -4,7 +4,7 @@ import { z } from 'zod';
 // Figma Node Types (simplified for write operations)
 // =====================
 
-export const FigmaNodeSchema = z.object({
+export const FigmaNodeSchema: z.ZodType<any> = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
@@ -20,7 +20,7 @@ export const FigmaNodeSchema = z.object({
   fills: z.array(z.any()).optional(),
   strokes: z.array(z.any()).optional(),
   effects: z.array(z.any()).optional(),
-  children: z.array(z.lazy(() => FigmaNodeSchema)).optional(),
+  children: z.array(z.lazy((): z.ZodType<any> => FigmaNodeSchema)).optional(),
 });
 
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
@@ -47,7 +47,8 @@ export const PluginMessageSchema = z.object({
     'CREATE_STYLE',
     'APPLY_STYLE',
     'EXPORT_NODE',
-    'PLUGIN_READY'
+    'PLUGIN_READY',
+    'HEARTBEAT'
   ]),
   payload: z.any().optional(),
 });
