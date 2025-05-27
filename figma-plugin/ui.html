@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Figma MCP Write Bridge</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #fff;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    
+    .title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #000;
+      margin: 0 0 4px 0;
+    }
+    
+    .subtitle {
+      font-size: 11px;
+      color: #666;
+      margin: 0;
+    }
+    
+    .status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    
+    .status.connected {
+      background: #e8f5e8;
+      color: #2d7d2d;
+      border: 1px solid #b8e6b8;
+    }
+    
+    .status.disconnected {
+      background: #fef2f2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+    
+    .status-icon {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status.connected .status-icon {
+      background: #22c55e;
+    }
+    
+    .status.disconnected .status-icon {
+      background: #ef4444;
+    }
+    
+    .info {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .info-text {
+      font-size: 11px;
+      color: #475569;
+      line-height: 1.5;
+      margin: 0;
+    }
+    
+    .buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .button {
+      flex: 1;
+      padding: 8px 12px;
+      background: #0066ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .button:hover {
+      background: #0052cc;
+    }
+    
+    .button.secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .button.secondary:hover {
+      background: #e2e8f0;
+    }
+    
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .logs {
+      margin-top: 16px;
+      padding: 8px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 10px;
+      color: #475569;
+      max-height: 80px;
+      overflow-y: auto;
+    }
+    
+    .log-entry {
+      margin: 2px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">🎨 MCP Write Bridge</h1>
+    <p class="subtitle">Connects Figma to MCP Server</p>
+  </div>
+  
+  <div id="status" class="status disconnected">
+    <div class="status-icon"></div>
+    <span id="status-text">Connecting to MCP Server...</span>
+  </div>
+  
+  <div class="info">
+    <p class="info-text">
+      This plugin bridges Figma with the MCP server to enable write operations.
+      Keep this plugin running while using MCP tools.
+    </p>
+  </div>
+  
+  <div class="buttons">
+    <button id="reconnect" class="button secondary">Reconnect</button>
+    <button id="close" class="button">Close</button>
+  </div>
+  
+  <div id="logs" class="logs" style="display: none;">
+    <div class="log-entry">🔄 Starting connection...</div>
+  </div>
+
+  <script>
+    let isConnected = false;
+    const logs = [];
+    
+    // DOM elements
+    const statusEl = document.getElementById('status');
+    const statusTextEl = document.getElementById('status-text');
+    const reconnectBtn = document.getElementById('reconnect');
+    const closeBtn = document.getElementById('close');
+    const logsEl = document.getElementById('logs');
+    
+    // Event listeners
+    reconnectBtn.addEventListener('click', () => {
+      parent.postMessage({ pluginMessage: { type: 'RECONNECT' } }, '*');
+      addLog('🔄 Reconnecting...');
+    });
+    
+    closeBtn.addEventListener('click', () => {
+      parent.postMessage({ pluginMessage: { type: 'CLOSE' } }, '*');
+    });
+    
+    // Handle messages from plugin
+    window.onmessage = (event) => {
+      const { type, connected } = event.data.pluginMessage || {};
+      
+      if (type === 'CONNECTION_STATUS') {
+        updateConnectionStatus(connected);
+      }
+    };
+    
+    function updateConnectionStatus(connected) {
+      isConnected = connected;
+      
+      if (connected) {
+        statusEl.className = 'status connected';
+        statusTextEl.textContent = 'Connected to MCP Server';
+        reconnectBtn.disabled = false;
+        addLog('✅ Connected to MCP Server');
+      } else {
+        statusEl.className = 'status disconnected';
+        statusTextEl.textContent = 'Disconnected from MCP Server';
+        reconnectBtn.disabled = false;
+        addLog('❌ Disconnected from MCP Server');
+      }
+    }
+    
+    function addLog(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      logs.push(`[${timestamp}] ${message}`);
+      
+      // Keep only last 20 logs
+      if (logs.length > 20) {
+        logs.shift();
+      }
+      
+      // Update logs display
+      if (logs.length > 0) {
+        logsEl.style.display = 'block';
+        logsEl.innerHTML = logs.map(log => `<div class="log-entry">${log}</div>`).join('');
+        logsEl.scrollTop = logsEl.scrollHeight;
+      }
+    }
+    
+    // Initial state
+    addLog('🚀 Plugin started');
+    addLog('🔌 Attempting to connect to MCP Server...');
+  </script>
+</body>
+</html>

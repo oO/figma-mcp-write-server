@@ -1,0 +1,14 @@
+{
+  "name": "Figma MCP Write Bridge",
+  "id": "figma-mcp-write-plugin",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "This plugin needs to connect to the local MCP server via WebSocket for write operations."
+  }
+}
