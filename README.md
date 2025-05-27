@@ -80,11 +80,21 @@ npm install
 npm run build
 ```
 
-### 3. Start the MCP Server
+### 3. Start the Complete System
+
+**Option A: Manual Start (Recommended for Development)**
 ```bash
-npm start
-# or with custom port
-npm start -- --port 3002
+# Terminal 1: Start WebSocket Bridge
+npx tsx src/index-websocket.ts
+
+# Terminal 2: Start MCP Server v2
+node dist/index-v2.js
+```
+
+**Option B: Automated Start**
+```bash
+# This starts both bridge and MCP server
+./start-complete-server.sh
 ```
 
 ### 4. Install Figma Plugin
