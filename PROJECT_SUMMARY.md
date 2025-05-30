@@ -1,244 +1,178 @@
 # Figma MCP Write Server - Project Summary
 
-## 🎯 Project Overview
+## Overview
 
-I've successfully created a **breakthrough MCP server** that provides **write access to Figma** through the Plugin API - something that existing Figma MCP servers cannot do since they rely on the read-only REST API.
+This MCP server provides write access to Figma through the Plugin API. Unlike existing Figma MCP servers that use the read-only REST API, this implementation uses Figma's Plugin API to enable creation and modification of design elements.
 
-## 🏗️ Architecture Innovation
+## Architecture
 
-### The Problem with Current Figma MCP Servers
-- **All existing Figma MCP servers use the REST API**
-- **REST API is fundamentally read-only** - no write operations possible
-- Limited to fetching design data, cannot create or modify designs
+### Problem with Existing Solutions
+- Current Figma MCP servers use the REST API
+- REST API only supports read operations
+- Cannot create or modify design elements
 
-### Our Solution: Plugin API Bridge
-- **Figma Plugin API has full write access** to design files
-- **WebSocket bridge** connects MCP server to Figma plugin
-- **Real-time bidirectional communication** for instant operations
-- **First MCP server** to enable AI agents to create and modify Figma designs
+### This Solution
+- Uses Figma's Plugin API which has full read/write access
+- **NEW: Simplified architecture** with direct MCP server to plugin communication
+- **Legacy: WebSocket bridge** connects MCP server to Figma plugin (more complex)
+- Enables AI agents to create and modify Figma designs
 
-## 📁 Project Structure
+## Project Structure
 
+### Simplified Architecture (Recommended)
 ```
 figma-mcp-write-server/
-├── src/                          # MCP Server (Node.js/TypeScript)
-│   ├── types.ts                 # Shared types and Zod schemas
-│   ├── plugin-bridge.ts         # WebSocket bridge to Figma
-│   ├── mcp-server.ts           # Main MCP server implementation
-│   └── index.ts                # CLI entry point
-├── figma-plugin/               # Figma Plugin (JavaScript)
-│   ├── manifest.json           # Plugin configuration
-│   ├── code.js                 # Plugin main thread (Figma API calls)
-│   └── ui.html                 # Plugin UI (connection status)
-├── examples/                   # Usage examples and configs
-│   ├── claude-desktop-config.json
-│   ├── design-system-example.md
-│   └── README.md
-├── README.md                   # Complete documentation
-├── DEVELOPMENT.md              # Development guide
+├── src/                        # MCP Server (Node.js/TypeScript)
+│   ├── simple-mcp-server.ts   # Direct MCP server with plugin communication
+│   ├── simple-plugin-client.ts # WebSocket client with exponential backoff
+│   ├── index-simple.ts        # Entry point for simplified architecture
+│   └── types.ts               # Shared types and schemas
+├── figma-plugin/              # Figma Plugin (JavaScript)
+│   ├── code-simple.js         # Self-contained plugin with built-in server
+│   ├── ui-simple.html         # Enhanced plugin UI
+│   └── manifest.json          # Plugin configuration
 └── package.json               # Dependencies and scripts
 ```
 
-## 🔧 How It Works
-
-### Communication Flow
-```mermaid
-sequenceDiagram
-    participant AI as AI Agent/Claude
-    participant MCP as MCP Server
-    participant WS as WebSocket Bridge
-    participant Plugin as Figma Plugin
-    participant Figma as Figma API
-
-    AI->>MCP: create_rectangle({x: 0, y: 0, width: 100, height: 100})
-    MCP->>MCP: Validate parameters with Zod
-    MCP->>WS: Send to plugin bridge
-    WS->>Plugin: WebSocket message
-    Plugin->>Figma: figma.createRectangle()
-    Figma-->>Plugin: Rectangle node created
-    Plugin-->>WS: Success response
-    WS-->>MCP: Operation result
-    MCP-->>AI: "✅ Created rectangle at (0, 0) with size 100x100"
+### Legacy Architecture
+```
+figma-mcp-write-server/
+├── src/                     # MCP Server (Node.js/TypeScript)
+│   ├── types.ts            # Shared types and schemas
+│   ├── bridge-client.ts    # WebSocket bridge client
+│   ├── mcp-server.ts       # MCP server implementation
+│   ├── index-websocket.ts  # WebSocket bridge server
+│   └── index.ts            # CLI entry point
+├── figma-plugin/           # Figma Plugin (JavaScript)
+│   ├── manifest.json       # Plugin configuration
+│   ├── code.js             # Plugin main thread
+│   └── ui.html             # Plugin UI
+└── package.json            # Dependencies and scripts
 ```
 
-### Key Components
+## How It Works
 
-1. **MCP Server** (TypeScript/Node.js)
-   - Implements Model Context Protocol
-   - Provides 13 write-capable tools
-   - WebSocket server for plugin communication
-   - Robust error handling and validation
+### Simplified Architecture (Recommended)
+The system has two components:
 
-2. **Figma Plugin** (JavaScript)  
-   - Runs inside Figma (main thread + UI)
-   - WebSocket client connecting to MCP server
-   - Executes all write operations via Plugin API
-   - Real-time connection monitoring
+1. **Simple MCP Server** - Direct communication with plugin, better error handling
+2. **Self-Contained Figma Plugin** - Runs own WebSocket server, handles all operations
 
-3. **WebSocket Bridge**
-   - Async request/response handling
-   - Connection health monitoring
-   - Message queuing and error recovery
-   - Heartbeat system for reliability
-
-## 🛠️ Available MCP Tools
-
-| Tool | Description | Write Capability |
-|------|-------------|------------------|
-| `create_rectangle` | Create rectangle shapes | ✅ Full write access |
-| `create_ellipse` | Create ellipse/circle shapes | ✅ Full write access |  
-| `create_text` | Create text elements | ✅ Full write access |
-| `create_frame` | Create frame containers | ✅ Full write access |
-| `update_node` | Update node properties | ✅ Full write access |
-| `move_node` | Move nodes to new positions | ✅ Full write access |
-| `delete_node` | Delete nodes | ✅ Full write access |
-| `duplicate_node` | Duplicate nodes | ✅ Full write access |
-| `get_selection` | Get currently selected nodes | 📖 Read access |
-| `set_selection` | Set node selection | ✅ Limited write access |
-| `get_page_nodes` | List all nodes on current page | 📖 Read access |
-| `export_node` | Export nodes as images | 📖 Read access |
-| `get_plugin_status` | Check plugin connection | 📖 Status check |
-
-## 🔬 Technical Innovations
-
-### 1. Plugin API Integration
-- **First MCP server** to use Figma's Plugin API instead of REST API
-- **Direct access** to Figma's scene graph and creation methods
-- **No rate limits** - Plugin API has no request limitations
-- **Real-time operations** - Instant feedback on design changes
-
-### 2. WebSocket Communication
-- **Persistent connection** between MCP server and Figma plugin
-- **Async request/response** handling with UUID correlation
-- **Heartbeat monitoring** to detect connection issues
-- **Automatic reconnection** logic for reliability
-
-### 3. Type Safety & Validation
-- **Zod schemas** for runtime parameter validation
-- **TypeScript** throughout for compile-time safety
-- **Structured error handling** with meaningful messages
-- **Comprehensive logging** for debugging
-
-### 4. Production-Ready Features
-- **Graceful shutdown** handling
-- **Connection pooling** for multiple clients
-- **Error recovery** mechanisms
-- **Configurable settings** via CLI or environment variables
-
-## 🎯 Use Cases Enabled
-
-### 1. AI-Driven Design Creation
+Communication flow:
 ```
-"Create a modern landing page with header, hero section, and call-to-action button"
-```
-- AI can now actually **create** the design, not just read existing ones
-- **Iterate on designs** based on feedback
-- **Generate multiple variations** automatically
-
-### 2. Design System Automation
-```
-"Create 5 button variants with our brand colors and consistent styling"
-```
-- **Programmatically generate** design system components
-- **Apply consistent styling** across multiple elements
-- **Batch create** components with variations
-
-### 3. Content Generation
-```
-"Create a dashboard layout with 6 metric cards showing different data points"
-```
-- **Generate layouts** based on data requirements
-- **Create multiple instances** of components
-- **Populate with content** programmatically
-
-### 4. Design Maintenance
-```
-"Update all buttons to use the new border radius of 8px"
-```
-- **Bulk update** existing design elements
-- **Apply style changes** across entire designs
-- **Maintain consistency** automatically
-
-## 🆚 Comparison with Existing Solutions
-
-| Feature | REST API MCP Servers | Plugin API MCP (This Project) |
-|---------|---------------------|-------------------------------|
-| **Read Operations** | ✅ Full support | ✅ Full support |
-| **Write Operations** | ❌ **Not possible** | ✅ **Full support** |
-| **Create Elements** | ❌ No | ✅ **Yes** |
-| **Modify Elements** | ❌ No | ✅ **Yes** |
-| **Delete Elements** | ❌ No | ✅ **Yes** |
-| **Real-time Updates** | ❌ Polling only | ✅ **Live connection** |
-| **Rate Limits** | ✅ Yes (15,000/hour) | ✅ **No limits** |
-| **Setup Complexity** | 🟢 Simple (API token) | 🟡 Moderate (plugin required) |
-| **Capabilities** | 📖 **Read-only** | ✏️ **Full read/write** |
-
-## 🚀 Getting Started
-
-### Quick Setup
-1. **Clone the project**
-2. **Install dependencies**: `npm install`
-3. **Start MCP server**: `npm start`
-4. **Install Figma plugin** from `figma-plugin/` directory
-5. **Configure MCP client** (Claude Desktop, Cursor, etc.)
-6. **Start creating designs with AI!**
-
-### Example Usage
-```
-# In Claude Desktop or Cursor:
-"Create a card component with a title, description, and action button"
-
-# The AI will now:
-1. Create a frame for the card container
-2. Add text elements for title and description  
-3. Create a styled button element
-4. Position everything appropriately
+AI Agent → Simple MCP Server → Figma Plugin (Built-in Server) → Figma API
 ```
 
-## 🔮 Future Possibilities
+**Benefits:**
+- Single process instead of multiple processes
+- Direct WebSocket connection with exponential backoff reconnection
+- Better error handling and status reporting
+- Eliminates bridge complexity and potential failure points
 
-This project opens up entirely new categories of AI-design workflows:
+### Legacy Architecture
+The system has three components:
 
-1. **Generative Design Systems** - AI creates entire design systems from scratch
-2. **Responsive Layout Generation** - AI adapts designs for different screen sizes
-3. **Content-Aware Design** - AI generates layouts based on actual content
-4. **Design Maintenance Automation** - AI keeps designs consistent and up-to-date
-5. **Collaborative AI Design** - Multiple AI agents working on the same design
-6. **Design Testing & Validation** - AI creates variations for A/B testing
+1. **MCP Server** - Implements the Model Context Protocol and provides tools
+2. **WebSocket Bridge** - Handles communication between server and plugin
+3. **Figma Plugin** - Executes operations using Figma's Plugin API
 
-## 📊 Impact & Significance
+Communication flow:
+```
+AI Agent → MCP Server → WebSocket Bridge → Figma Plugin → Figma API
+```
 
-### For Designers
-- **AI becomes a true design partner**, not just a reader
-- **Rapid prototyping** with AI assistance
-- **Automated design tasks** free up time for creative work
-- **Consistent design systems** maintained automatically
+## Available Tools
 
-### For Developers  
-- **Bridge between design and code** - AI can create designs that match implementation
-- **Automated UI generation** from requirements
-- **Design-code consistency** maintained programmatically
+| Tool | Description | Access |
+|------|-------------|--------|
+| `create_rectangle` | Create rectangle shapes | Write |
+| `create_ellipse` | Create ellipse/circle shapes | Write |
+| `create_text` | Create text elements | Write |
+| `create_frame` | Create frame containers | Write |
+| `update_node` | Update node properties | Write |
+| `move_node` | Move nodes | Write |
+| `delete_node` | Delete nodes | Write |
+| `duplicate_node` | Duplicate nodes | Write |
+| `get_selection` | Get selected nodes | Read |
+| `set_selection` | Set node selection | Write |
+| `get_page_nodes` | List page nodes | Read |
+| `export_node` | Export nodes as images | Read |
+| `get_plugin_status` | Check plugin connection | Status |
 
-### For the MCP Ecosystem
-- **First write-capable Figma integration** sets new standard
-- **Demonstrates Plugin API potential** for other design tools
-- **Opens new categories** of MCP server capabilities
+## Use Cases
 
-## 🎉 Achievement Summary
+- Create design elements programmatically
+- Generate design system components
+- Batch update existing designs
+- Automate repetitive design tasks
 
-This project represents a **significant breakthrough** in AI-design tool integration:
+## Setup
 
-✅ **First MCP server with Figma write access**
-✅ **Novel architecture** using Plugin API + WebSocket bridge  
-✅ **Production-ready implementation** with error handling & monitoring
-✅ **Comprehensive documentation** and examples
-✅ **13 write-capable MCP tools** for complete design control
-✅ **Type-safe** implementation with runtime validation
-✅ **Real-time communication** with Figma
-✅ **No rate limits** unlike REST API approaches
+### Simplified Architecture (Recommended)
+1. Install dependencies: `npm install`
+2. Build the server: `npm run build`
+3. Start the simplified server: `npm run start-simple`
+4. Install the Figma plugin from the `figma-plugin/` directory
+5. Load `ui-simple.html` in the plugin in Figma
+6. Configure your MCP client to use `dist/index-simple.js`
 
-**This fundamentally changes what's possible with AI-assisted design workflows.**
+### Legacy Architecture
+1. Install dependencies: `npm install`
+2. Build the server: `npm run build`
+3. Start WebSocket bridge: `npx tsx src/index-websocket.ts`
+4. Start MCP server: `npm start`
+5. Install the Figma plugin from the `figma-plugin/` directory
+6. Run the plugin in Figma
+7. Configure your MCP client to use `dist/index.js`
 
----
+## Comparison with REST API Approach
 
-*The future of design is collaborative intelligence between humans and AI - and now AI can actually create, not just consume design content.*
+| Feature | REST API | Plugin API (Legacy) | Plugin API (Simplified) |
+|---------|----------|---------------------|-------------------------|
+| Read operations | ✅ | ✅ | ✅ |
+| Write operations | ❌ | ✅ | ✅ |
+| Rate limits | Yes (15k/hour) | No | No |
+| Setup complexity | Low | High | Medium |
+| Process count | 1 | 3 | 1 |
+| Reliability | Medium | Low | High |
+| Auto-reconnection | N/A | Manual | Automatic |
+
+## Technical Details
+
+- Built with TypeScript and Node.js
+- Uses Zod for parameter validation
+- WebSocket communication for real-time operations
+- Plugin runs in Figma's sandboxed environment
+- Handles connection management and error recovery
+
+## Limitations
+
+### Simplified Architecture
+- Requires Figma Desktop (plugin needed)
+- Plugin must be manually installed and run
+- Limited to operations available in Plugin API
+
+### Legacy Architecture
+- Requires Figma Desktop (plugin needed)
+- Plugin must be manually installed and run
+- WebSocket bridge adds complexity and potential failure points
+- Multiple processes must be managed
+- Limited to operations available in Plugin API
+
+## Recent Improvements
+
+### v1.1 - Simplified Architecture
+- **Single Process**: Eliminated complex multi-process setup
+- **Direct Communication**: MCP server connects directly to plugin (port 8765)
+- **Auto-Reconnection**: Exponential backoff reconnection logic
+- **Better Error Handling**: Improved status reporting and error recovery
+- **Self-Contained Plugin**: Plugin runs own server, eliminating bridge dependency
+
+### Backwards Compatibility
+- Legacy architecture still available for existing setups
+- Use `npm run start-simple` for new simplified architecture
+- Use `npm start` for legacy multi-process architecture
+
+## Contributing
+
+This is a working implementation that demonstrates write access to Figma via MCP. The simplified architecture makes the system much more reliable and easier to maintain. See the code for implementation details.

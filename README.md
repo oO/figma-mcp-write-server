@@ -14,18 +14,20 @@ Unlike existing Figma MCP servers that use the REST API (which is read-only), th
 
 ## 🏗️ Architecture
 
-The system consists of two main components:
+Direct communication design eliminates complexity and improves reliability.
 
-### 1. MCP Server (`src/`)
-- **WebSocket Bridge** (`plugin-bridge.ts`) - Manages communication with Figma plugin
-- **MCP Server** (`mcp-server.ts`) - Implements Model Context Protocol interface
+### Components
+
+#### 1. MCP Server (`src/`)
+- **MCP Server** (`mcp-server.ts`) - Direct plugin communication with robust error handling
+- **Plugin Client** (`plugin-client.ts`) - WebSocket client with exponential backoff reconnection
+- **Entry Point** (`index.ts`) - Streamlined startup with comprehensive documentation
 - **Type Definitions** (`types.ts`) - Shared types and schemas
-- **Main Entry** (`index.ts`) - CLI interface and server startup
 
-### 2. Figma Plugin (`figma-plugin/`)
-- **Plugin Code** (`code.js`) - Runs inside Figma, executes write operations
-- **User Interface** (`ui.html`) - Shows connection status and controls
-- **Manifest** (`manifest.json`) - Plugin configuration
+#### 2. Figma Plugin (`figma-plugin/`)
+- **Self-Contained Plugin** (`code.js`) - Runs own WebSocket server, handles all operations
+- **Enhanced UI** (`ui.html`) - Real-time status monitoring and connection feedback
+- **Plugin Manifest** (`manifest.json`) - Standard Figma plugin configuration
 
 ## 🔄 How It Works
 
@@ -33,16 +35,21 @@ The system consists of two main components:
 graph LR
     A[AI Agent/Claude] --> B[MCP Client]
     B --> C[MCP Server]
-    C --> D[WebSocket Bridge]
-    D --> E[Figma Plugin]
-    E --> F[Figma Design]
+    C --> D[Figma Plugin with Built-in Server]
+    D --> E[Figma Design]
 ```
 
+**Architecture Benefits:**
+- Single process design
+- Direct WebSocket connection with exponential backoff reconnection
+- Robust error handling and status reporting
+- Self-contained plugin runs its own server
+- No complex bridges or multiple processes
+
 1. **AI Agent** calls MCP tools (e.g., `create_rectangle`)
-2. **MCP Server** receives the request and validates parameters
-3. **WebSocket Bridge** sends message to Figma plugin
-4. **Figma Plugin** executes the operation using Plugin API
-5. **Results** are sent back through the chain to the AI agent
+2. **MCP Server** validates parameters and connects directly to plugin
+3. **Figma Plugin** receives message and executes operation using Plugin API
+4. **Results** are sent back directly to the MCP server and then to the AI agent
 
 ## 📋 Available MCP Tools
 
@@ -80,21 +87,18 @@ npm install
 npm run build
 ```
 
-### 3. Start the Complete System
+### 3. Start the Server
 
-**Option A: Manual Start (Recommended for Development)**
+**Production:**
 ```bash
-# Terminal 1: Start WebSocket Bridge
-npx tsx src/index-websocket.ts
-
-# Terminal 2: Start MCP Server v2
-node dist/index-v2.js
+# Single command starts everything
+npm start
 ```
 
-**Option B: Automated Start**
+**Development with Watch Mode:**
 ```bash
-# This starts both bridge and MCP server
-./start-complete-server.sh
+# Auto-restart on code changes
+npm run dev
 ```
 
 ### 4. Install Figma Plugin
@@ -112,7 +116,9 @@ For **Claude Desktop**, add to `~/.claude/claude_desktop_config.json`:
     "figma-write": {
       "command": "node",
       "args": ["/path/to/figma-mcp-write-server/dist/index.js"],
-      "env": {}
+      "env": {
+        "FIGMA_MCP_PORT": "8765"
+      }
     }
   }
 }
@@ -186,10 +192,10 @@ The system provides real-time connection monitoring:
 ## 🔍 Troubleshooting
 
 ### Plugin Won't Connect
-1. Check WebSocket port (default: 3002)
+1. Check WebSocket port (default: 8765)
 2. Verify Figma plugin is running
-3. Check browser console for errors
-4. Try reconnecting via plugin UI
+3. Check plugin console for connection logs
+4. Plugin automatically reconnects with exponential backoff
 
 ### Write Operations Fail
 1. Ensure plugin is connected (`get_plugin_status`)

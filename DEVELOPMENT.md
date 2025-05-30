@@ -20,31 +20,58 @@ npm install
 # Build TypeScript
 npm run build
 
-# Start development server with watch mode
+# Start simplified development server with watch mode (recommended)
+npm run dev-simple
+
+# Or start legacy development server
 npm run dev
 ```
 
 ### Project Structure
 ```
 figma-mcp-write-server/
-├── src/                     # MCP Server source code
-│   ├── types.ts            # Type definitions and schemas
-│   ├── plugin-bridge.ts    # WebSocket bridge to Figma plugin
-│   ├── mcp-server.ts       # Main MCP server implementation
-│   └── index.ts            # CLI entry point
-├── figma-plugin/           # Figma plugin source code
-│   ├── manifest.json       # Plugin configuration
-│   ├── code.js             # Plugin main thread code
-│   └── ui.html             # Plugin user interface
-├── dist/                   # Compiled JavaScript output
-├── package.json            # Node.js dependencies and scripts
-├── tsconfig.json           # TypeScript configuration
-└── README.md               # Project documentation
+├── src/                        # MCP Server source code
+│   ├── types.ts               # Type definitions and schemas
+│   ├── simple-mcp-server.ts   # Simplified MCP server (recommended)
+│   ├── simple-plugin-client.ts # Direct WebSocket client with reconnection
+│   ├── index-simple.ts        # Simplified entry point
+│   ├── mcp-server.ts          # Legacy MCP server implementation
+│   ├── bridge-client.ts       # Legacy WebSocket bridge client
+│   ├── index-websocket.ts     # Legacy WebSocket bridge server
+│   └── index.ts               # Legacy CLI entry point
+├── figma-plugin/              # Figma plugin source code
+│   ├── manifest.json          # Plugin configuration
+│   ├── code-simple.js         # Simplified plugin with built-in server
+│   ├── ui-simple.html         # Simplified plugin UI
+│   ├── code.js                # Legacy plugin main thread code
+│   └── ui.html                # Legacy plugin user interface
+├── dist/                      # Compiled JavaScript output
+├── package.json               # Node.js dependencies and scripts
+├── tsconfig.json              # TypeScript configuration
+└── README.md                  # Project documentation
 ```
 
 ## 🏗️ Architecture Deep Dive
 
-### MCP Server Components
+### Simplified Architecture (Recommended)
+
+The new simplified architecture eliminates the complexity of multiple processes and bridges:
+
+#### Components
+1. **Simple MCP Server** (`simple-mcp-server.ts`) - Direct plugin communication
+2. **Simple Plugin Client** (`simple-plugin-client.ts`) - WebSocket client with exponential backoff
+3. **Self-Contained Plugin** (`code-simple.js`) - Runs own server, handles all operations
+
+#### Benefits
+- Single process instead of multiple processes
+- Direct WebSocket connection (port 8765)
+- Automatic reconnection with exponential backoff
+- Better error handling and status reporting
+- Eliminates bridge complexity and failure points
+
+### Legacy Architecture Components
+
+#### MCP Server Components
 
 #### 1. Type System (`types.ts`)
 - **Zod Schemas**: Runtime type validation for all operations
@@ -52,22 +79,42 @@ figma-mcp-write-server/
 - **MCP Tool Schemas**: Input validation for each tool
 - **Configuration Types**: Server and plugin settings
 
-#### 2. Plugin Bridge (`plugin-bridge.ts`)
-- **WebSocket Server**: Manages connections from Figma plugin
+#### 2. Bridge Client (`bridge-client.ts`)
+- **WebSocket Client**: Connects MCP server to bridge
 - **Message Queue**: Handles async request/response patterns
 - **Heartbeat System**: Monitors connection health
 - **Error Handling**: Robust failure recovery
 
-#### 3. MCP Server (`mcp-server.ts`)
+#### 3. WebSocket Bridge (`index-websocket.ts`)
+- **WebSocket Server**: Manages connections from Figma plugin and MCP server
+- **Message Routing**: Routes messages between plugin and MCP server
+- **Connection Management**: Handles multiple connection types
+- **Heartbeat Forwarding**: Maintains connection health
+
+#### 4. MCP Server (`mcp-server.ts`)
 - **Tool Registration**: Defines available MCP tools
 - **Request Handling**: Processes tool calls from MCP clients
 - **Parameter Validation**: Ensures type safety
 - **Response Formatting**: Standardized result format
 
-### Figma Plugin Components
+### Simplified Plugin Components
+
+#### 1. Self-Contained Plugin (`code-simple.js`)
+- **Built-in WebSocket Server**: Runs on port 8765
+- **Message Handlers**: Processes operation requests directly
+- **Figma API Calls**: Executes actual design operations
+- **Connection Management**: Handles MCP server connections
+
+#### 2. Enhanced UI (`ui-simple.html`)
+- **Real-time Status**: Connection and operation monitoring
+- **Server Control**: Start/stop built-in server
+- **Activity Logs**: Detailed operation history
+- **Status Indicators**: Visual connection and health feedback
+
+### Legacy Plugin Components
 
 #### 1. Main Thread (`code.js`)
-- **WebSocket Client**: Connects to MCP server
+- **WebSocket Client**: Connects to WebSocket bridge
 - **Message Handlers**: Processes operation requests
 - **Figma API Calls**: Executes actual design operations
 - **Error Recovery**: Handles network and API failures
