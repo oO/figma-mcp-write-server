@@ -7,6 +7,11 @@ import {
 } from '@modelcontextprotocol/sdk/types.js';
 import WebSocket, { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
+import { createServer } from 'http';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 import { 
   CreateRectangleSchema,
   CreateEllipseSchema,
@@ -48,11 +53,110 @@ export class FigmaMCPServer {
     );
 
     this.setupHandlers();
-    this.setupWebSocketServer();
   }
 
-  private setupWebSocketServer(): void {
-    this.wsServer = new WebSocketServer({ port: this.config.port });
+  private async checkPortAvailable(port: number): Promise<boolean> {
+    return new Promise((resolve) => {
+      const testServer = createServer();
+      
+      testServer.listen(port, () => {
+        testServer.close(() => resolve(true));
+      });
+      
+      testServer.on('error', () => resolve(false));
+    });
+  }
+
+  private async findZombieProcesses(port: number): Promise<string[]> {
+    try {
+      const { stdout } = await execAsync(`lsof -ti :${port}`);
+      return stdout.trim().split('\n').filter(pid => pid);
+    } catch (error) {
+      // No processes found on port (which is good)
+      return [];
+    }
+  }
+
+  private async killZombieProcesses(pids: string[]): Promise<void> {
+    for (const pid of pids) {
+      try {
+        console.error(`🧟 Killing zombie process ${pid} on port ${this.config.port}`);
+        await execAsync(`kill -9 ${pid}`);
+        // Wait a bit for process to actually die
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`⚠️ Could not kill process ${pid}:`, error);
+      }
+    }
+  }
+
+  private async findAvailablePort(startPort: number, maxTries: number = 10): Promise<number> {
+    for (let port = startPort; port < startPort + maxTries; port++) {
+      if (await this.checkPortAvailable(port)) {
+        return port;
+      }
+    }
+    throw new Error(`No available ports found in range ${startPort}-${startPort + maxTries - 1}`);
+  }
+
+  private async setupWebSocketServer(): Promise<void> {
+    let port = this.config.port;
+    let zombieProcesses: string[] = [];
+    
+    // Check if default port is available
+    const isPortAvailable = await this.checkPortAvailable(port);
+    
+    if (!isPortAvailable) {
+      console.error(`⚠️ Port ${port} is in use`);
+      
+      // Look for zombie processes
+      zombieProcesses = await this.findZombieProcesses(port);
+      
+      if (zombieProcesses.length > 0) {
+        console.error(`🧟 Found ${zombieProcesses.length} process(es) using port ${port}: ${zombieProcesses.join(', ')}`);
+        console.error('🔪 Attempting to kill zombie processes...');
+        
+        await this.killZombieProcesses(zombieProcesses);
+        
+        // Check if port is now available
+        if (await this.checkPortAvailable(port)) {
+          console.error(`✅ Successfully freed port ${port}`);
+        } else {
+          console.error(`❌ Port ${port} still in use after cleanup`);
+          
+          // Find alternative port
+          try {
+            port = await this.findAvailablePort(port + 1);
+            console.error(`🔄 Using alternative port ${port}`);
+            this.config.port = port; // Update config
+          } catch (error) {
+            throw new Error(`Cannot start WebSocket server: ${error}`);
+          }
+        }
+      } else {
+        // Port in use but no zombie processes found - find alternative
+        try {
+          port = await this.findAvailablePort(port + 1);
+          console.error(`🔄 Port ${this.config.port} in use, using alternative port ${port}`);
+          this.config.port = port; // Update config
+        } catch (error) {
+          throw new Error(`Cannot start WebSocket server: ${error}`);
+        }
+      }
+    }
+
+    // Create WebSocket server
+    this.wsServer = new WebSocketServer({ port });
+    
+    this.wsServer.on('error', (error: any) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${port} is still in use. Try a different port or kill existing processes.`);
+        throw new Error(`WebSocket server failed to start: Port ${port} is in use`);
+      } else {
+        console.error('💥 WebSocket server error:', error);
+        throw error;
+      }
+    });
     
     this.wsServer.on('connection', (ws) => {
       console.error('🔗 New WebSocket connection');
@@ -575,9 +679,10 @@ export class FigmaMCPServer {
 - Connected: ${this.pluginConnection ? '✅' : '❌'}
 - WebSocket Server: ${this.wsServer ? 'Running' : 'Stopped'} on port ${this.config.port}
 - Pending Requests: ${this.pendingRequests.size}
+- Server Address: ws://localhost:${this.config.port}
 
 ${!this.pluginConnection ? 
-  '⚠️ To enable write operations:\n1. Open Figma Desktop\n2. Go to Plugins → Development → Import plugin from manifest\n3. Select figma-plugin/manifest.json\n4. Run the plugin' : 
+  '⚠️ To enable write operations:\n1. Open Figma Desktop\n2. Go to Plugins → Development → Import plugin from manifest\n3. Select figma-plugin/manifest.json\n4. Run the plugin\n\n💡 If plugin won\'t connect, try: node dist/index.js --check-port ' + this.config.port : 
   '🎉 Ready for Figma operations!'}`
       }]
     };
@@ -588,13 +693,22 @@ ${!this.pluginConnection ?
     console.error('============================');
     console.error('🚀 Starting server...');
     
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    
-    console.error('✅ MCP Server started successfully');
-    console.error(`🔌 WebSocket server running on port ${this.config.port}`);
-    console.error('💡 Available tools: 13 total - create/update/move/delete/duplicate elements, manage selection, export, status');
-    console.error('📱 Run the Figma plugin to enable write operations');
+    try {
+      // Setup WebSocket server with port management
+      await this.setupWebSocketServer();
+      
+      // Connect MCP transport
+      const transport = new StdioServerTransport();
+      await this.server.connect(transport);
+      
+      console.error('✅ MCP Server started successfully');
+      console.error(`🔌 WebSocket server running on port ${this.config.port}`);
+      console.error('💡 Available tools: 13 total - create/update/move/delete/duplicate elements, manage selection, export, status');
+      console.error('📱 Run the Figma plugin to enable write operations');
+    } catch (error) {
+      console.error('❌ Failed to start server:', error);
+      throw error;
+    }
   }
 
   public async stop(): Promise<void> {
