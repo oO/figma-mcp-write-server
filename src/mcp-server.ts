@@ -5,8 +5,8 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from '@modelcontextprotocol/sdk/types.js';
+import WebSocket, { WebSocketServer } from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { BridgeClient } from './bridge-client.js';
 import { 
   CreateRectangleSchema,
   CreateEllipseSchema,
@@ -24,15 +24,21 @@ import {
 
 export class FigmaMCPServer {
   private server: Server;
-  private bridgeClient: BridgeClient;
+  private wsServer: WebSocketServer | null = null;
+  private pluginConnection: WebSocket | null = null;
   private config: ServerConfig;
+  private pendingRequests = new Map<string, {
+    resolve: (value: any) => void;
+    reject: (error: Error) => void;
+    timeout: NodeJS.Timeout;
+  }>();
 
   constructor(config: Partial<ServerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.server = new Server(
       {
         name: 'figma-mcp-write-server',
-        version: '1.0.0',
+        version: '1.0.2',
       },
       {
         capabilities: {
@@ -41,18 +47,84 @@ export class FigmaMCPServer {
       }
     );
 
-    this.bridgeClient = new BridgeClient();
     this.setupHandlers();
-    this.setupBridgeClient();
+    this.setupWebSocketServer();
   }
 
-  private setupBridgeClient(): void {
-    this.bridgeClient.on('connected', () => {
-      console.error('✅ Connected to Figma bridge - write operations now available');
+  private setupWebSocketServer(): void {
+    this.wsServer = new WebSocketServer({ port: this.config.port });
+    
+    this.wsServer.on('connection', (ws) => {
+      console.error('🔗 New WebSocket connection');
+      
+      ws.on('message', (data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          this.handleWebSocketMessage(ws, message);
+        } catch (error) {
+          console.error('❌ Failed to parse WebSocket message:', error);
+        }
+      });
+      
+      ws.on('close', () => {
+        if (ws === this.pluginConnection) {
+          console.error('❌ Figma plugin disconnected');
+          this.pluginConnection = null;
+        }
+      });
+      
+      ws.on('error', (error) => {
+        console.error('💥 WebSocket error:', error);
+      });
     });
+  }
 
-    this.bridgeClient.on('disconnected', () => {
-      console.error('❌ Disconnected from Figma bridge - write operations unavailable');
+  private handleWebSocketMessage(ws: WebSocket, message: any): void {
+    if (message.type === 'PLUGIN_HELLO') {
+      console.error('✅ Figma plugin connected');
+      this.pluginConnection = ws;
+      ws.send(JSON.stringify({ type: 'CONNECTED', role: 'plugin' }));
+      return;
+    }
+    
+    // Handle responses from plugin
+    if (message.id && this.pendingRequests.has(message.id)) {
+      const request = this.pendingRequests.get(message.id)!;
+      clearTimeout(request.timeout);
+      this.pendingRequests.delete(message.id);
+      
+      if (message.success) {
+        request.resolve(message);
+      } else {
+        request.reject(new Error(message.error || 'Plugin operation failed'));
+      }
+    }
+  }
+
+  private async sendToPlugin(request: any): Promise<any> {
+    if (!this.pluginConnection) {
+      throw new Error('Figma plugin not connected. Please run the plugin in Figma.');
+    }
+
+    const id = uuidv4();
+    const fullRequest = { ...request, id };
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.pendingRequests.delete(id);
+        reject(new Error('Plugin request timeout after 30s'));
+      }, 30000);
+
+      this.pendingRequests.set(id, { resolve, reject, timeout });
+
+      try {
+        this.pluginConnection!.send(JSON.stringify(fullRequest));
+        console.error('📤 Sent to plugin:', request.type);
+      } catch (error) {
+        this.pendingRequests.delete(id);
+        clearTimeout(timeout);
+        reject(error);
+      }
     });
   }
 
@@ -66,14 +138,14 @@ export class FigmaMCPServer {
           inputSchema: {
             type: 'object',
             properties: {
-              x: { type: 'number', default: 0 },
-              y: { type: 'number', default: 0 },
-              width: { type: 'number', default: 100 },
-              height: { type: 'number', default: 100 },
-              name: { type: 'string', default: 'Rectangle' },
-              fillColor: { type: 'string' },
-              strokeColor: { type: 'string' },
-              strokeWidth: { type: 'number' }
+              x: { type: 'number', default: 0, description: 'X position' },
+              y: { type: 'number', default: 0, description: 'Y position' },
+              width: { type: 'number', default: 100, description: 'Width' },
+              height: { type: 'number', default: 100, description: 'Height' },
+              name: { type: 'string', default: 'Rectangle', description: 'Shape name' },
+              fillColor: { type: 'string', description: 'Fill color (hex)' },
+              strokeColor: { type: 'string', description: 'Stroke color (hex)' },
+              strokeWidth: { type: 'number', description: 'Stroke width' }
             }
           },
         },
@@ -127,51 +199,69 @@ export class FigmaMCPServer {
         },
         {
           name: 'update_node',
-          description: 'Update properties of an existing Figma node',
+          description: 'Update properties of an existing node in Figma',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeId: { type: 'string' },
-              properties: { type: 'object' }
+              nodeId: { type: 'string', description: 'ID of the node to update' },
+              properties: { 
+                type: 'object', 
+                description: 'Properties to update (e.g., {name: "New Name", x: 100})' 
+              }
             },
             required: ['nodeId', 'properties']
           },
         },
         {
           name: 'move_node',
-          description: 'Move a Figma node to new coordinates',
+          description: 'Move a node to a new position in Figma',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeId: { type: 'string' },
-              x: { type: 'number' },
-              y: { type: 'number' }
+              nodeId: { type: 'string', description: 'ID of the node to move' },
+              x: { type: 'number', description: 'New X position' },
+              y: { type: 'number', description: 'New Y position' }
             },
             required: ['nodeId', 'x', 'y']
           },
         },
         {
           name: 'delete_node',
-          description: 'Delete a Figma node',
+          description: 'Delete a node from Figma',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeId: { type: 'string' }
+              nodeId: { type: 'string', description: 'ID of the node to delete' }
             },
             required: ['nodeId']
           },
         },
         {
           name: 'duplicate_node',
-          description: 'Duplicate a Figma node',
+          description: 'Duplicate a node in Figma',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeId: { type: 'string' },
-              offsetX: { type: 'number', default: 10 },
-              offsetY: { type: 'number', default: 10 }
+              nodeId: { type: 'string', description: 'ID of the node to duplicate' },
+              offsetX: { type: 'number', default: 10, description: 'X offset for duplicate' },
+              offsetY: { type: 'number', default: 10, description: 'Y offset for duplicate' }
             },
             required: ['nodeId']
+          },
+        },
+        {
+          name: 'set_selection',
+          description: 'Set the selection to specific nodes in Figma',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              nodeIds: { 
+                type: 'array', 
+                items: { type: 'string' },
+                description: 'Array of node IDs to select' 
+              }
+            },
+            required: ['nodeIds']
           },
         },
         {
@@ -179,44 +269,31 @@ export class FigmaMCPServer {
           description: 'Get currently selected nodes in Figma',
           inputSchema: {
             type: 'object',
-            properties: {},
-          },
-        },
-        {
-          name: 'set_selection',
-          description: 'Set the selection in Figma',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              nodeIds: {
-                type: 'array',
-                items: { type: 'string' }
-              }
-            },
-            required: ['nodeIds']
+            properties: {}
           },
         },
         {
           name: 'get_page_nodes',
-          description: 'Get all nodes from the current page',
+          description: 'Get all nodes on the current page in Figma',
           inputSchema: {
             type: 'object',
-            properties: {},
+            properties: {}
           },
         },
         {
           name: 'export_node',
-          description: 'Export a Figma node as an image',
+          description: 'Export a node as an image from Figma',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeId: { type: 'string' },
-              format: {
-                type: 'string',
+              nodeId: { type: 'string', description: 'ID of the node to export' },
+              format: { 
+                type: 'string', 
                 enum: ['PNG', 'JPG', 'SVG', 'PDF'],
-                default: 'PNG'
+                default: 'PNG',
+                description: 'Export format' 
               },
-              scale: { type: 'number', default: 1 }
+              scale: { type: 'number', default: 1, description: 'Export scale factor' }
             },
             required: ['nodeId']
           },
@@ -226,9 +303,9 @@ export class FigmaMCPServer {
           description: 'Check if the Figma plugin is connected and ready',
           inputSchema: {
             type: 'object',
-            properties: {},
+            properties: {}
           },
-        },
+        }
       ];
 
       return { tools };
@@ -241,22 +318,15 @@ export class FigmaMCPServer {
       try {
         // Check plugin connection for write operations
         const writeOperations = [
-          'create_rectangle',
-          'create_ellipse', 
-          'create_text',
-          'create_frame',
-          'update_node',
-          'move_node',
-          'delete_node',
-          'duplicate_node',
-          'set_selection'
+          'create_rectangle', 'create_ellipse', 'create_text', 'create_frame',
+          'update_node', 'move_node', 'delete_node', 'duplicate_node', 'set_selection'
         ];
 
-        if (writeOperations.includes(name) && !this.bridgeClient.isPluginConnected()) {
+        if (writeOperations.includes(name) && !this.pluginConnection) {
           return {
             content: [{
               type: 'text',
-              text: `❌ Cannot perform write operation: Figma plugin not connected. Please open Figma and run the companion plugin.`
+              text: `❌ Error executing ${name}: Figma plugin not connected. Please run the plugin in Figma.`
             }]
           };
         }
@@ -264,51 +334,41 @@ export class FigmaMCPServer {
         switch (name) {
           case 'create_rectangle':
             return await this.createRectangle(args);
-          
           case 'create_ellipse':
             return await this.createEllipse(args);
-          
           case 'create_text':
             return await this.createText(args);
-          
           case 'create_frame':
             return await this.createFrame(args);
-          
           case 'update_node':
             return await this.updateNode(args);
-          
           case 'move_node':
             return await this.moveNode(args);
-          
           case 'delete_node':
             return await this.deleteNode(args);
-          
           case 'duplicate_node':
             return await this.duplicateNode(args);
-          
-          case 'get_selection':
-            return await this.getSelection();
-          
           case 'set_selection':
             return await this.setSelection(args);
-          
+          case 'get_selection':
+            return await this.getSelection();
           case 'get_page_nodes':
             return await this.getPageNodes();
-          
           case 'export_node':
             return await this.exportNode(args);
-          
           case 'get_plugin_status':
             return await this.getPluginStatus();
-          
           default:
             throw new Error(`Unknown tool: ${name}`);
         }
       } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        console.error(`❌ Tool execution error [${name}]:`, errorMessage);
+        
         return {
           content: [{
             type: 'text',
-            text: `❌ Error executing ${name}: ${error instanceof Error ? error.message : String(error)}`
+            text: `❌ Error executing ${name}: ${errorMessage}`
           }]
         };
       }
@@ -319,22 +379,28 @@ export class FigmaMCPServer {
 
   private async createRectangle(args: any) {
     const params = CreateRectangleSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
-      type: 'CREATE_RECTANGLE',
-      payload: params
-    });
+    
+    try {
+      const response = await this.sendToPlugin({
+        type: 'CREATE_RECTANGLE',
+        payload: params
+      });
 
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Created rectangle "${params.name}" at (${params.x}, ${params.y}) with size ${params.width}x${params.height}`
-      }]
-    };
+      return {
+        content: [{
+          type: 'text',
+          text: `✅ Created rectangle "${params.name}" at (${params.x}, ${params.y}) with size ${params.width}x${params.height}${params.fillColor ? ` with color ${params.fillColor}` : ''}`
+        }]
+      };
+    } catch (error) {
+      throw new Error(`Failed to create rectangle: ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 
   private async createEllipse(args: any) {
     const params = CreateEllipseSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'CREATE_ELLIPSE',
       payload: params
     });
@@ -349,7 +415,8 @@ export class FigmaMCPServer {
 
   private async createText(args: any) {
     const params = CreateTextSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'CREATE_TEXT',
       payload: params
     });
@@ -364,7 +431,8 @@ export class FigmaMCPServer {
 
   private async createFrame(args: any) {
     const params = CreateFrameSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'CREATE_FRAME',
       payload: params
     });
@@ -379,7 +447,8 @@ export class FigmaMCPServer {
 
   private async updateNode(args: any) {
     const params = UpdateNodeSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'UPDATE_NODE',
       payload: params
     });
@@ -387,14 +456,15 @@ export class FigmaMCPServer {
     return {
       content: [{
         type: 'text',
-        text: `✅ Updated node ${params.nodeId} with properties: ${JSON.stringify(params.properties, null, 2)}`
+        text: `✅ Updated node ${params.nodeId} with properties: ${JSON.stringify(params.properties)}`
       }]
     };
   }
 
   private async moveNode(args: any) {
     const params = MoveNodeSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'MOVE_NODE',
       payload: params
     });
@@ -402,14 +472,15 @@ export class FigmaMCPServer {
     return {
       content: [{
         type: 'text',
-        text: `✅ Moved node ${params.nodeId} to (${params.x}, ${params.y})`
+        text: `✅ Moved node ${params.nodeId} to position (${params.x}, ${params.y})`
       }]
     };
   }
 
   private async deleteNode(args: any) {
     const params = DeleteNodeSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'DELETE_NODE',
       payload: params
     });
@@ -424,7 +495,8 @@ export class FigmaMCPServer {
 
   private async duplicateNode(args: any) {
     const params = DuplicateNodeSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'DUPLICATE_NODE',
       payload: params
     });
@@ -437,8 +509,24 @@ export class FigmaMCPServer {
     };
   }
 
+  private async setSelection(args: any) {
+    const params = SetSelectionSchema.parse(args);
+    
+    const response = await this.sendToPlugin({
+      type: 'SET_SELECTION',
+      payload: params
+    });
+
+    return {
+      content: [{
+        type: 'text',
+        text: `✅ Set selection to ${params.nodeIds.length} node(s): ${params.nodeIds.join(', ')}`
+      }]
+    };
+  }
+
   private async getSelection() {
-    const response = await this.bridgeClient.sendToPlugin({
+    const response = await this.sendToPlugin({
       type: 'GET_SELECTION'
     });
 
@@ -450,23 +538,8 @@ export class FigmaMCPServer {
     };
   }
 
-  private async setSelection(args: any) {
-    const params = SetSelectionSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
-      type: 'SET_SELECTION',
-      payload: params
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Set selection to nodes: ${params.nodeIds.join(', ')}`
-      }]
-    };
-  }
-
   private async getPageNodes() {
-    const response = await this.bridgeClient.sendToPlugin({
+    const response = await this.sendToPlugin({
       type: 'GET_PAGE_NODES'
     });
 
@@ -480,7 +553,8 @@ export class FigmaMCPServer {
 
   private async exportNode(args: any) {
     const params = ExportNodeSchema.parse(args);
-    const response = await this.bridgeClient.sendToPlugin({
+    
+    const response = await this.sendToPlugin({
       type: 'EXPORT_NODE',
       payload: params
     });
@@ -488,55 +562,62 @@ export class FigmaMCPServer {
     return {
       content: [{
         type: 'text',
-        text: `📸 Exported node ${params.nodeId} as ${params.format} at ${params.scale}x scale`
+        text: `✅ Exported node ${params.nodeId} as ${params.format} with scale ${params.scale}`
       }]
     };
   }
 
   private async getPluginStatus() {
-    const status = this.bridgeClient.getStatus();
     return {
       content: [{
         type: 'text',
         text: `🔌 Plugin Status:
-- Connected: ${status.pluginConnected ? '✅' : '❌'}
-- Last Heartbeat: ${status.lastHeartbeat?.toISOString() || 'Never'}
-- Active Clients: ${status.activeClients}
-${!status.pluginConnected ? '\n⚠️  To enable write operations, please open Figma and run the companion plugin.' : ''}`
+- Connected: ${this.pluginConnection ? '✅' : '❌'}
+- WebSocket Server: ${this.wsServer ? 'Running' : 'Stopped'} on port ${this.config.port}
+- Pending Requests: ${this.pendingRequests.size}
+
+${!this.pluginConnection ? 
+  '⚠️ To enable write operations:\n1. Open Figma Desktop\n2. Go to Plugins → Development → Import plugin from manifest\n3. Select figma-plugin/manifest.json\n4. Run the plugin' : 
+  '🎉 Ready for Figma operations!'}`
       }]
     };
   }
 
   public async start(): Promise<void> {
-    console.error('🚀 Starting Figma MCP Write Server...');
-    console.error('🔗 Connecting to WebSocket bridge...');
-    
-    // Connect to bridge
-    try {
-      await this.bridgeClient.connect();
-    } catch (error) {
-      console.error('⚠️ Bridge not available yet - will retry when needed');
-    }
+    console.error('🎨 Figma MCP Write Server');
+    console.error('============================');
+    console.error('🚀 Starting server...');
     
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     
     console.error('✅ MCP Server started successfully');
-    console.error('💡 Available tools: create_rectangle, create_ellipse, create_text, create_frame, update_node, move_node, delete_node, duplicate_node, get_selection, set_selection, get_page_nodes, export_node, get_plugin_status');
+    console.error(`🔌 WebSocket server running on port ${this.config.port}`);
+    console.error('💡 Available tools: 13 total - create/update/move/delete/duplicate elements, manage selection, export, status');
+    console.error('📱 Run the Figma plugin to enable write operations');
   }
 
   public async stop(): Promise<void> {
-    console.error('🛑 Stopping Figma MCP Write Server...');
-    this.bridgeClient.close();
+    console.error('🛑 Stopping server...');
+    
+    // Clear pending requests
+    for (const [id, request] of this.pendingRequests) {
+      clearTimeout(request.timeout);
+      request.reject(new Error('Server shutting down'));
+    }
+    this.pendingRequests.clear();
+    
+    // Close WebSocket server
+    if (this.wsServer) {
+      this.wsServer.close();
+    }
+    
+    // Close MCP server
     await this.server.close();
     console.error('✅ Server stopped');
   }
 
-  public getServer(): Server {
-    return this.server;
-  }
-
-  public getBridgeClient(): BridgeClient {
-    return this.bridgeClient;
+  public isPluginConnected(): boolean {
+    return this.pluginConnection !== null;
   }
 }

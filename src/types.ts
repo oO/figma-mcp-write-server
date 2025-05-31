@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
 // =====================
-// Figma Node Types (simplified for write operations)
+// Simple Figma Node Types (without recursive children to avoid TS infinite loop)
 // =====================
 
-export const FigmaNodeSchema: z.ZodType<any> = z.object({
+export const FigmaNodeSchema = z.object({
   id: z.string(),
   name: z.string(),
   type: z.string(),
@@ -20,17 +20,17 @@ export const FigmaNodeSchema: z.ZodType<any> = z.object({
   fills: z.array(z.any()).optional(),
   strokes: z.array(z.any()).optional(),
   effects: z.array(z.any()).optional(),
-  children: z.array(z.lazy((): z.ZodType<any> => FigmaNodeSchema)).optional(),
+  // Removed recursive children to fix TypeScript compilation
 });
 
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
 
 // =====================
-// Plugin Bridge Communication Types
+// Plugin Communication Types
 // =====================
 
 export const PluginMessageSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   type: z.enum([
     'GET_SELECTION',
     'CREATE_RECTANGLE',
@@ -56,7 +56,7 @@ export const PluginMessageSchema = z.object({
 export type PluginMessage = z.infer<typeof PluginMessageSchema>;
 
 export const PluginResponseSchema = z.object({
-  id: z.string().uuid(),
+  id: z.string(),
   success: z.boolean(),
   data: z.any().optional(),
   error: z.string().optional(),
@@ -153,7 +153,7 @@ export interface ServerConfig {
 }
 
 export const DEFAULT_CONFIG: ServerConfig = {
-  port: 3001,
+  port: 8765,
   corsOrigin: '*',
   pluginId: 'figma-mcp-write-plugin',
   maxMessageSize: 1024 * 1024, // 1MB

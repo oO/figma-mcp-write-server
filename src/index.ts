@@ -15,18 +15,6 @@ for (let i = 0; i < args.length; i += 2) {
     case '--port':
       if (value) config.port = parseInt(value, 10);
       break;
-    case '--cors-origin':
-      if (value) config.corsOrigin = value;
-      break;
-    case '--plugin-id':
-      if (value) config.pluginId = value;
-      break;
-    case '--max-message-size':
-      if (value) config.maxMessageSize = parseInt(value, 10);
-      break;
-    case '--heartbeat-interval':
-      if (value) config.heartbeatInterval = parseInt(value, 10);
-      break;
     case '--help':
     case '-h':
       console.error(`
@@ -35,57 +23,41 @@ Figma MCP Write Server - Model Context Protocol server with Figma write access
 Usage: figma-mcp-write-server [options]
 
 Options:
-  --port <number>              Server port (default: 3001)
-  --cors-origin <string>       CORS origin (default: *)
-  --plugin-id <string>         Plugin ID for authentication (default: figma-mcp-write-plugin)
-  --max-message-size <number>  Maximum message size in bytes (default: 1048576)
-  --heartbeat-interval <number> Heartbeat interval in ms (default: 30000)
+  --port <number>              WebSocket server port (default: 8765)
   --help, -h                   Show this help message
 
 Description:
-  This MCP server provides write access to Figma through a companion plugin.
-  It connects to a WebSocket bridge server that handles plugin communication.
+  MCP server with built-in WebSocket server for Figma plugin communication.
+
+Architecture:
+  Claude Desktop ↔ MCP Server (WebSocket Server) ↔ Figma MCP Write Bridge Plugin (WebSocket Client)
 
 Setup:
-  1. Start the WebSocket bridge: npx tsx src/index-websocket.ts
-  2. Start this MCP server: node dist/index.js
-  3. Open Figma and install the companion Figma plugin
-  4. Run the plugin to establish connection
-  5. Use MCP tools to interact with your Figma design
+  1. Start this MCP server: node dist/index.js
+  2. Open Figma Desktop and import the plugin from figma-plugin/manifest.json
+  3. Run the "Figma MCP Write Bridge" plugin - it will auto-connect to the MCP server
+  4. Use MCP tools from Claude Desktop
 
 Available MCP Tools:
   - create_rectangle    Create rectangle shapes
   - create_ellipse      Create ellipse/circle shapes  
   - create_text         Create text elements
   - create_frame        Create frame containers
-  - update_node         Update existing node properties
-  - move_node           Move nodes to new positions
-  - delete_node         Delete nodes
-  - duplicate_node      Duplicate existing nodes
   - get_selection       Get currently selected nodes
-  - set_selection       Set node selection
-  - get_page_nodes      List all nodes on current page
-  - export_node         Export nodes as images
   - get_plugin_status   Check plugin connection status
 
 Examples:
   # Start server with default settings
-  figma-mcp-write-server
+  node dist/index.js
   
-  # Start server on custom port
-  figma-mcp-write-server --port 3002
-  
-  # Start with custom heartbeat interval
-  figma-mcp-write-server --heartbeat-interval 15000
+  # Start server with custom WebSocket port
+  node dist/index.js --port 9000
 `);
       process.exit(0);
   }
 }
 
 async function main() {
-  console.error('🎨 Figma MCP Write Server');
-  console.error('==========================');
-  
   const server = new FigmaMCPServer(config);
   
   // Handle graceful shutdown

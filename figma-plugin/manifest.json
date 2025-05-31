@@ -1,5 +1,5 @@
 {
-  "name": "Figma MCP Write Bridge",
+  "name": "Figma MCP Plugin",
   "id": "figma-mcp-write-plugin",
   "api": "1.0.0",
   "main": "code.js",
