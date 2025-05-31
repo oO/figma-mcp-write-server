@@ -4,7 +4,7 @@ A Model Context Protocol (MCP) server that provides **write access** to Figma th
 
 ## 🚀 Overview
 
-Unlike existing Figma MCP servers that use the REST API (which is read-only), this project uses Figma's Plugin API to enable full write operations. This breakthrough allows AI agents to:
+Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
 
 - ✅ **Create** design elements (rectangles, ellipses, text, frames)
 - ✅ **Modify** existing nodes (properties, position, styling)
@@ -25,8 +25,8 @@ Direct communication design eliminates complexity and improves reliability.
 - **Type Definitions** (`types.ts`) - Shared types and schemas
 
 #### 2. Figma Plugin (`figma-plugin/`)
-- **Self-Contained Plugin** (`code.js`) - Runs own WebSocket server, handles all operations
-- **Enhanced UI** (`ui.html`) - Real-time status monitoring and connection feedback
+- **Plugin** (`code.js`) - Handles WebSocket communication and Figma API operations
+- **UI** (`ui.html`) - Real-time status monitoring and connection feedback
 - **Plugin Manifest** (`manifest.json`) - Standard Figma plugin configuration
 
 ## 🔄 How It Works
@@ -35,7 +35,7 @@ Direct communication design eliminates complexity and improves reliability.
 graph LR
     A[AI Agent/Claude] --> B[MCP Client]
     B --> C[MCP Server]
-    C --> D[Figma Plugin with Built-in Server]
+    C --> D[Figma Plugin]
     D --> E[Figma Design]
 ```
 
@@ -43,13 +43,13 @@ graph LR
 - Single process design
 - Direct WebSocket connection with exponential backoff reconnection
 - Robust error handling and status reporting
-- Self-contained plugin runs its own server
+- Plugin runs its own server
 - No complex bridges or multiple processes
 
 1. **AI Agent** calls MCP tools (e.g., `create_rectangle`)
-2. **MCP Server** validates parameters and connects directly to plugin
+2. **MCP Server** validates parameters and connects to plugin
 3. **Figma Plugin** receives message and executes operation using Plugin API
-4. **Results** are sent back directly to the MCP server and then to the AI agent
+4. **Results** are sent back to the MCP server and then to the AI agent
 
 ## 📋 Available MCP Tools
 
@@ -237,25 +237,19 @@ The system provides real-time connection monitoring:
 - Some advanced Figma features may not be supported
 - Limited to single file operations (current page)
 
-## 🔮 Future Enhancements
+## 📚 Documentation
 
-- [ ] Support for multiple Figma files
-- [ ] Advanced design system operations
-- [ ] Component and variant management
-- [ ] Auto-reconnection improvements
-- [ ] Batch operation optimization
-- [ ] Plugin marketplace publication
-- [ ] Integration with design tokens
-- [ ] Version history operations
+- **[Development Guide](DEVELOPMENT.md)** - Setup, architecture, and contribution guidelines
+- **[Changelog](CHANGELOG.md)** - Version history and updates
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-Contributions welcome! Please see CONTRIBUTING.md for guidelines.
+Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) for guidelines.
 
 ---
 
-**Note**: This project demonstrates a novel approach to Figma automation by bridging MCP with Figma's Plugin API. It's the first MCP server to provide full write access to Figma designs, opening new possibilities for AI-driven design workflows.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API.
