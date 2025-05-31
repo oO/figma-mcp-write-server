@@ -28,13 +28,12 @@ npm run dev
 ```
 figma-mcp-write-server/
 ├── src/                     # MCP Server source code
-│   ├── types.ts            # Type definitions and schemas
-│   ├── mcp-server.ts       # MCP server implementation
-│   ├── plugin-client.ts    # WebSocket client with reconnection
+│   ├── types.ts            # Type definitions and Zod schemas
+│   ├── mcp-server.ts       # MCP server with built-in WebSocket server
 │   └── index.ts            # CLI entry point
 ├── figma-plugin/           # Figma plugin source code
 │   ├── manifest.json       # Plugin configuration
-│   ├── code.js             # Plugin main thread code
+│   ├── code.js             # Plugin WebSocket client code
 │   └── ui.html             # Plugin user interface
 ├── dist/                   # Compiled JavaScript output
 ├── package.json            # Node.js dependencies and scripts
@@ -49,13 +48,12 @@ The system uses a direct communication architecture between the MCP server and F
 ### Components
 
 #### 1. MCP Server (`src/`)
-- **MCP Server** (`mcp-server.ts`) - Implements MCP protocol and tool handlers
-- **Plugin Client** (`plugin-client.ts`) - WebSocket client with reconnection logic
-- **Entry Point** (`index.ts`) - CLI interface and startup logic
+- **MCP Server** (`mcp-server.ts`) - Implements MCP protocol with built-in WebSocket server
+- **Entry Point** (`index.ts`) - CLI interface and startup logic with help text
 - **Type Definitions** (`types.ts`) - Shared types and Zod schemas
 
 #### 2. Figma Plugin (`figma-plugin/`)
-- **Plugin** (`code.js`) - Handles WebSocket communication and Figma API operations
+- **Plugin** (`code.js`) - WebSocket client that connects to MCP server on port 8765
 - **UI** (`ui.html`) - Real-time status monitoring and connection feedback
 - **Manifest** (`manifest.json`) - Plugin configuration and permissions
 
@@ -207,10 +205,10 @@ describe('create_rectangle tool', () => {
 ### MCP Server Debugging
 ```bash
 # Enable debug logging
-DEBUG=figma-mcp:* npm run dev
+npm run dev
 
 # Check WebSocket connections
-netstat -an | grep 3001
+netstat -an | grep 8765
 ```
 
 ### Plugin Debugging
@@ -222,7 +220,8 @@ netstat -an | grep 3001
 ### Common Issues
 
 #### Plugin Won't Connect
-- Check WebSocket port availability (default: 3001)
+- Check WebSocket port availability (default: 8765)
+- Verify MCP server is running
 - Verify plugin is running in Figma
 - Check network connectivity
 - Look for connection errors in plugin console
@@ -306,7 +305,7 @@ catch (error) {
 
 ## 📦 Available MCP Tools
 
-The server provides these tools for Figma operations:
+The server provides 13 MCP tools for Figma operations:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -331,8 +330,7 @@ npm run dev  # Watch mode with auto-restart
 
 ### Configuration
 Set environment variables:
-- `FIGMA_MCP_PORT` - WebSocket port (default: 3001)
-- `FIGMA_MCP_CORS_ORIGIN` - CORS settings
+- `FIGMA_MCP_PORT` - WebSocket port (default: 8765)
 
 ## 📚 Additional Resources
 

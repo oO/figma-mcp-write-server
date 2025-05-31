@@ -19,13 +19,12 @@ Direct communication design eliminates complexity and improves reliability.
 ### Components
 
 #### 1. MCP Server (`src/`)
-- **MCP Server** (`mcp-server.ts`) - Direct plugin communication with robust error handling
-- **Plugin Client** (`plugin-client.ts`) - WebSocket client with exponential backoff reconnection
-- **Entry Point** (`index.ts`) - Streamlined startup with comprehensive documentation
-- **Type Definitions** (`types.ts`) - Shared types and schemas
+- **MCP Server** (`mcp-server.ts`) - Built-in WebSocket server with direct plugin communication
+- **Entry Point** (`index.ts`) - CLI interface with configuration options
+- **Type Definitions** (`types.ts`) - Shared types and Zod schemas
 
 #### 2. Figma Plugin (`figma-plugin/`)
-- **Plugin** (`code.js`) - Handles WebSocket communication and Figma API operations
+- **Plugin** (`code.js`) - WebSocket client that connects to MCP server
 - **UI** (`ui.html`) - Real-time status monitoring and connection feedback
 - **Plugin Manifest** (`manifest.json`) - Standard Figma plugin configuration
 
@@ -40,11 +39,11 @@ graph LR
 ```
 
 **Architecture Benefits:**
-- Single process design
-- Direct WebSocket connection with exponential backoff reconnection
+- Single process design - MCP server includes WebSocket server
+- Direct WebSocket connection with auto-reconnection
 - Robust error handling and status reporting
-- Plugin runs its own server
 - No complex bridges or multiple processes
+- Standardized port 8765 for all communication
 
 1. **AI Agent** calls MCP tools (e.g., `create_rectangle`)
 2. **MCP Server** validates parameters and connects to plugin
@@ -115,10 +114,7 @@ For **Claude Desktop**, add to `~/.claude/claude_desktop_config.json`:
   "mcpServers": {
     "figma-write": {
       "command": "node",
-      "args": ["/path/to/figma-mcp-write-server/dist/index.js"],
-      "env": {
-        "FIGMA_MCP_PORT": "8765"
-      }
+      "args": ["/path/to/figma-mcp-write-server/dist/index.js"]
     }
   }
 }
@@ -171,15 +167,11 @@ The AI agent will:
 ## 🔧 Configuration
 
 ### Command Line Options
-- `--port <number>` - Server port (default: 3001)
-- `--cors-origin <string>` - CORS origin (default: *)
-- `--plugin-id <string>` - Plugin authentication ID
-- `--max-message-size <number>` - Max WebSocket message size
-- `--heartbeat-interval <number>` - Connection heartbeat interval
+- `--port <number>` - WebSocket server port (default: 8765)
+- `--help, -h` - Show help message
 
 ### Environment Variables
-- `FIGMA_MCP_PORT` - Server port
-- `FIGMA_MCP_CORS_ORIGIN` - CORS configuration
+- `FIGMA_MCP_PORT` - WebSocket server port (default: 8765)
 
 ## 🚦 Connection Status
 
@@ -193,9 +185,10 @@ The system provides real-time connection monitoring:
 
 ### Plugin Won't Connect
 1. Check WebSocket port (default: 8765)
-2. Verify Figma plugin is running
-3. Check plugin console for connection logs
-4. Plugin automatically reconnects with exponential backoff
+2. Verify MCP server is running
+3. Verify Figma plugin is running
+4. Check plugin console for connection logs
+5. Plugin automatically reconnects on connection loss
 
 ### Write Operations Fail
 1. Ensure plugin is connected (`get_plugin_status`)
@@ -252,4 +245,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 13 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

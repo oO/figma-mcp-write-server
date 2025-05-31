@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2025-05-31
+
+### Fixed
+- **Architecture**: Fixed broken communication between MCP server and Figma plugin
+  - Implemented WebSocket server directly in MCP server (port 8765)
+  - Updated Figma plugin to be WebSocket client that connects to MCP server
+  - Fixed port configuration inconsistencies (standardized on 8765)
+  - Removed broken plugin-client.ts and bridge architecture
+- **Documentation**: Comprehensive cleanup and accuracy improvements
+  - Removed exaggerated claims ("breakthrough", "first ever", "novel")
+  - Fixed help text references to non-existent files
+  - Updated architecture descriptions to match actual implementation
+  - Removed redundant PROJECT_SUMMARY.md file
+  - Fixed typos and improved navigation between documentation files
+- **Plugin**: Enhanced Figma plugin implementation
+  - Added proper WebSocket client with auto-reconnection
+  - Improved error handling and visual status indicators
+  - Added font loading for text creation operations
+  - Enhanced UI with real-time connection monitoring
+
+### Changed
+- **Architecture**: Simplified to direct MCP server ↔ Plugin communication
+  - MCP server now includes built-in WebSocket server
+  - Plugin connects as WebSocket client (eliminates bridge complexity)
+  - Consistent port configuration (8765) across all components
+- **Code Structure**: Cleaned up unused files and inconsistent references
+  - Removed plugin-client.ts (functionality moved to mcp-server.ts)
+  - Updated help text and documentation to match actual file structure
+  - Fixed TypeScript imports and dependencies
+
+### Technical Details
+- **Port**: Standardized on 8765 for WebSocket communication
+- **Connection**: Plugin auto-connects to MCP server on startup
+- **Error Handling**: Improved timeout and reconnection logic
+- **Logging**: Better status reporting and debugging information
+
 ## [1.0.1] - 2025-05-28
 
 ### Fixed
@@ -68,7 +104,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Compatibility**: Node.js 18+, Figma Desktop, MCP clients (Claude Desktop, etc.)
 
 ### Security
-- Local-only WebSocket connections (localhost:3002)
+- Local-only WebSocket connections (localhost:8765)
 - Plugin runs in Figma's sandboxed environment
 - Message validation using Zod schemas
 - No sensitive data stored in plugin code

@@ -4,11 +4,7 @@
       "command": "node",
       "args": [
         "/path/to/figma-mcp-write-server/dist/index.js"
-      ],
-      "env": {
-        "FIGMA_MCP_PORT": "3001",
-        "FIGMA_MCP_CORS_ORIGIN": "*"
-      }
+      ]
     }
   }
 }
