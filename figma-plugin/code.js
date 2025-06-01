@@ -32,20 +32,8 @@ async function handlePluginOperation(operation, payload, id) {
     let result;
     
     switch (operation) {
-      case 'CREATE_RECTANGLE':
-        result = await createRectangle(payload);
-        break;
-        
-      case 'CREATE_ELLIPSE':
-        result = await createEllipse(payload);
-        break;
-        
-      case 'CREATE_TEXT':
-        result = await createText(payload);
-        break;
-        
-      case 'CREATE_FRAME':
-        result = await createFrame(payload);
+      case 'CREATE_NODE':
+        result = await createNode(payload);
         break;
         
       case 'UPDATE_NODE':
@@ -490,6 +478,24 @@ function hexToRgb(hex) {
     g: parseInt(result[2], 16) / 255,
     b: parseInt(result[3], 16) / 255
   } : { r: 0.5, g: 0.5, b: 0.5 }; // Default gray
+}
+
+// Unified node creation function
+async function createNode(params) {
+  console.log('🔧 Creating node with unified handler:', params);
+  
+  switch (params.nodeType) {
+    case 'rectangle':
+      return await createRectangle(params);
+    case 'ellipse':
+      return await createEllipse(params);
+    case 'text':
+      return await createText(params);
+    case 'frame':
+      return await createFrame(params);
+    default:
+      throw new Error(`Unknown node type: ${params.nodeType}`);
+  }
 }
 
 // Plugin ready

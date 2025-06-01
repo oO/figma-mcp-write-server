@@ -24,6 +24,7 @@ export const FigmaNodeSchema = z.object({
 });
 
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
+export type CreateNodeParams = z.infer<typeof CreateNodeSchema>;
 
 // =====================
 // Plugin Communication Types
@@ -33,10 +34,7 @@ export const PluginMessageSchema = z.object({
   id: z.string(),
   type: z.enum([
     'GET_SELECTION',
-    'CREATE_RECTANGLE',
-    'CREATE_ELLIPSE', 
-    'CREATE_TEXT',
-    'CREATE_FRAME',
+    'CREATE_NODE',
     'UPDATE_NODE',
     'DELETE_NODE',
     'MOVE_NODE',
@@ -68,46 +66,50 @@ export type PluginResponse = z.infer<typeof PluginResponseSchema>;
 // MCP Tool Input Schemas
 // =====================
 
-export const CreateRectangleSchema = z.object({
+export const CreateNodeSchema = z.object({
+  nodeType: z.enum(['rectangle', 'ellipse', 'text', 'frame']),
+  // Common properties
   x: z.number().default(0),
   y: z.number().default(0),
-  width: z.number().default(100),
-  height: z.number().default(100),
-  name: z.string().default('Rectangle'),
+  name: z.string().optional(),
+  
+  // Size properties (for rectangle, ellipse, frame)
+  width: z.number().optional(),
+  height: z.number().optional(),
+  
+  // Visual properties
   fillColor: z.string().optional(),
   strokeColor: z.string().optional(),
   strokeWidth: z.number().optional(),
-});
-
-export const CreateEllipseSchema = z.object({
-  x: z.number().default(0),
-  y: z.number().default(0),
-  width: z.number().default(100),
-  height: z.number().default(100),
-  name: z.string().default('Ellipse'),
-  fillColor: z.string().optional(),
-  strokeColor: z.string().optional(),
-  strokeWidth: z.number().optional(),
-});
-
-export const CreateTextSchema = z.object({
-  x: z.number().default(0),
-  y: z.number().default(0),
-  content: z.string().default('Text'),
-  fontSize: z.number().default(16),
-  fontFamily: z.string().default('Inter'),
+  
+  // Text-specific properties
+  content: z.string().optional(),
+  fontSize: z.number().optional(),
+  fontFamily: z.string().optional(),
   textColor: z.string().optional(),
-  name: z.string().default('Text'),
+  
+  // Frame-specific properties
+  backgroundColor: z.string().optional(),
+}).refine((data) => {
+  // Validate that required properties are present for each node type
+  // Allow defaults to be applied in the createNode method
+  switch (data.nodeType) {
+    case 'rectangle':
+    case 'ellipse':
+    case 'frame':
+      // These node types are valid (defaults will be applied if width/height missing)
+      return true;
+    case 'text':
+      // Text node should have content (no default makes sense for content)
+      return data.content !== undefined && data.content.trim().length > 0;
+    default:
+      return false;
+  }
+}, {
+  message: "Text nodes must have non-empty content"
 });
 
-export const CreateFrameSchema = z.object({
-  x: z.number().default(0),
-  y: z.number().default(0),
-  width: z.number().default(200),
-  height: z.number().default(200),
-  name: z.string().default('Frame'),
-  backgroundColor: z.string().optional(),
-});
+
 
 export const UpdateNodeSchema = z.object({
   nodeId: z.string(),

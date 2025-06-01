@@ -13,10 +13,7 @@ import { promisify } from 'util';
 
 const execAsync = promisify(exec);
 import { 
-  CreateRectangleSchema,
-  CreateEllipseSchema,
-  CreateTextSchema,
-  CreateFrameSchema,
+  CreateNodeSchema,
   UpdateNodeSchema,
   MoveNodeSchema,
   DeleteNodeSchema,
@@ -43,7 +40,7 @@ export class FigmaMCPServer {
     this.server = new Server(
       {
         name: 'figma-mcp-write-server',
-        version: '1.0.2',
+        version: '0.9.3',
       },
       {
         capabilities: {
@@ -237,68 +234,31 @@ export class FigmaMCPServer {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: Tool[] = [
         {
-          name: 'create_rectangle',
-          description: 'Create a rectangle shape in Figma',
+          name: 'create_node',
+          description: 'Create a node in Figma (rectangle, ellipse, text, or frame)',
           inputSchema: {
             type: 'object',
             properties: {
+              nodeType: { 
+                type: 'string', 
+                enum: ['rectangle', 'ellipse', 'text', 'frame'],
+                description: 'Type of node to create' 
+              },
               x: { type: 'number', default: 0, description: 'X position' },
               y: { type: 'number', default: 0, description: 'Y position' },
-              width: { type: 'number', default: 100, description: 'Width' },
-              height: { type: 'number', default: 100, description: 'Height' },
-              name: { type: 'string', default: 'Rectangle', description: 'Shape name' },
+              name: { type: 'string', description: 'Node name' },
+              width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
+              height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
               fillColor: { type: 'string', description: 'Fill color (hex)' },
               strokeColor: { type: 'string', description: 'Stroke color (hex)' },
-              strokeWidth: { type: 'number', description: 'Stroke width' }
-            }
-          },
-        },
-        {
-          name: 'create_ellipse',
-          description: 'Create an ellipse/circle shape in Figma',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              x: { type: 'number', default: 0 },
-              y: { type: 'number', default: 0 },
-              width: { type: 'number', default: 100 },
-              height: { type: 'number', default: 100 },
-              name: { type: 'string', default: 'Ellipse' },
-              fillColor: { type: 'string' },
-              strokeColor: { type: 'string' },
-              strokeWidth: { type: 'number' }
-            }
-          },
-        },
-        {
-          name: 'create_text',
-          description: 'Create text in Figma',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              x: { type: 'number', default: 0 },
-              y: { type: 'number', default: 0 },
-              content: { type: 'string', default: 'Text' },
-              fontSize: { type: 'number', default: 16 },
-              fontFamily: { type: 'string', default: 'Inter' },
-              textColor: { type: 'string' },
-              name: { type: 'string', default: 'Text' }
-            }
-          },
-        },
-        {
-          name: 'create_frame',
-          description: 'Create a frame container in Figma',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              x: { type: 'number', default: 0 },
-              y: { type: 'number', default: 0 },
-              width: { type: 'number', default: 200 },
-              height: { type: 'number', default: 200 },
-              name: { type: 'string', default: 'Frame' },
-              backgroundColor: { type: 'string' }
-            }
+              strokeWidth: { type: 'number', description: 'Stroke width' },
+              content: { type: 'string', description: 'Text content (required for text nodes)' },
+              fontSize: { type: 'number', default: 16, description: 'Font size (for text nodes)' },
+              fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' },
+              textColor: { type: 'string', description: 'Text color (hex, for text nodes)' },
+              backgroundColor: { type: 'string', description: 'Background color (hex, for frame nodes)' }
+            },
+            required: ['nodeType']
           },
         },
         {
@@ -422,8 +382,7 @@ export class FigmaMCPServer {
       try {
         // Check plugin connection for write operations
         const writeOperations = [
-          'create_rectangle', 'create_ellipse', 'create_text', 'create_frame',
-          'update_node', 'move_node', 'delete_node', 'duplicate_node', 'set_selection'
+          'create_node', 'update_node', 'move_node', 'delete_node', 'duplicate_node', 'set_selection'
         ];
 
         if (writeOperations.includes(name) && !this.pluginConnection) {
@@ -436,14 +395,8 @@ export class FigmaMCPServer {
         }
 
         switch (name) {
-          case 'create_rectangle':
-            return await this.createRectangle(args);
-          case 'create_ellipse':
-            return await this.createEllipse(args);
-          case 'create_text':
-            return await this.createText(args);
-          case 'create_frame':
-            return await this.createFrame(args);
+          case 'create_node':
+            return await this.createNode(args);
           case 'update_node':
             return await this.updateNode(args);
           case 'move_node':
@@ -481,73 +434,79 @@ export class FigmaMCPServer {
 
   // Tool implementations
 
-  private async createRectangle(args: any) {
-    const params = CreateRectangleSchema.parse(args);
-    
+  private async createNode(args: any) {
     try {
+      const params = CreateNodeSchema.parse(args);
+      
+      // Create a mutable copy for applying defaults
+      const nodeParams = { ...params };
+
+      // Set default names based on node type if not provided
+      if (!nodeParams.name) {
+        switch (nodeParams.nodeType) {
+          case 'rectangle':
+            nodeParams.name = 'Rectangle';
+            break;
+          case 'ellipse':
+            nodeParams.name = 'Ellipse';
+            break;
+          case 'text':
+            nodeParams.name = 'Text';
+            break;
+          case 'frame':
+            nodeParams.name = 'Frame';
+            break;
+        }
+      }
+
+      // Set default dimensions for shape nodes if not provided
+      if (nodeParams.nodeType === 'rectangle' || nodeParams.nodeType === 'ellipse') {
+        if (nodeParams.width === undefined) nodeParams.width = 100;
+        if (nodeParams.height === undefined) nodeParams.height = 100;
+      } else if (nodeParams.nodeType === 'frame') {
+        if (nodeParams.width === undefined) nodeParams.width = 200;
+        if (nodeParams.height === undefined) nodeParams.height = 200;
+      }
+
+      // Set default text properties if not provided
+      if (nodeParams.nodeType === 'text') {
+        if (nodeParams.fontSize === undefined) nodeParams.fontSize = 16;
+        if (nodeParams.fontFamily === undefined) nodeParams.fontFamily = 'Inter';
+      }
+
       const response = await this.sendToPlugin({
-        type: 'CREATE_RECTANGLE',
-        payload: params
+        type: 'CREATE_NODE',
+        payload: nodeParams
       });
+
+      // Generate appropriate success message based on node type
+      let message = `✅ Created ${nodeParams.nodeType} "${nodeParams.name}" at (${nodeParams.x}, ${nodeParams.y})`;
+      
+      if (nodeParams.nodeType === 'text') {
+        message += ` with content "${nodeParams.content}"`;
+        if (nodeParams.fontSize) message += ` and font size ${nodeParams.fontSize}px`;
+      } else if (nodeParams.width && nodeParams.height) {
+        message += ` with size ${nodeParams.width}x${nodeParams.height}`;
+      }
+      
+      if (nodeParams.fillColor || nodeParams.backgroundColor) {
+        message += ` with color ${nodeParams.fillColor || nodeParams.backgroundColor}`;
+      }
 
       return {
         content: [{
           type: 'text',
-          text: `✅ Created rectangle "${params.name}" at (${params.x}, ${params.y}) with size ${params.width}x${params.height}${params.fillColor ? ` with color ${params.fillColor}` : ''}`
+          text: message
         }]
       };
     } catch (error) {
-      throw new Error(`Failed to create rectangle: ${error instanceof Error ? error.message : String(error)}`);
+      if (error instanceof Error && error.message.includes('Text nodes must have non-empty content')) {
+        throw new Error(`Text nodes require non-empty content. Please provide a 'content' property.`);
+      }
+      throw new Error(`Failed to create node: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
-  private async createEllipse(args: any) {
-    const params = CreateEllipseSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'CREATE_ELLIPSE',
-      payload: params
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Created ellipse "${params.name}" at (${params.x}, ${params.y}) with size ${params.width}x${params.height}`
-      }]
-    };
-  }
-
-  private async createText(args: any) {
-    const params = CreateTextSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'CREATE_TEXT',
-      payload: params
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Created text "${params.content}" at (${params.x}, ${params.y}) with font size ${params.fontSize}px`
-      }]
-    };
-  }
-
-  private async createFrame(args: any) {
-    const params = CreateFrameSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'CREATE_FRAME',
-      payload: params
-    });
-
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Created frame "${params.name}" at (${params.x}, ${params.y}) with size ${params.width}x${params.height}`
-      }]
-    };
-  }
 
   private async updateNode(args: any) {
     const params = UpdateNodeSchema.parse(args);

@@ -8,9 +8,9 @@ Create a color palette with primary, secondary, and neutral colors as rectangles
 ```
 
 **AI Agent Commands:**
-- `create_rectangle` with different fill colors for each color swatch
-- `create_text` to label each color with hex values
-- `create_frame` to group related colors together
+- `create_node` with `nodeType: "rectangle"` and different fill colors for each color swatch
+- `create_node` with `nodeType: "text"` to label each color with hex values
+- `create_node` with `nodeType: "frame"` to group related colors together
 
 ### Step 2: Typography Scale
 ```

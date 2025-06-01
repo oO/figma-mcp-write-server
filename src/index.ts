@@ -104,11 +104,15 @@ Port Management:
   - Provides clear error messages for port conflicts
 
 Available MCP Tools:
-  - create_rectangle    Create rectangle shapes
-  - create_ellipse      Create ellipse/circle shapes  
-  - create_text         Create text elements
-  - create_frame        Create frame containers
+  - create_node         Create nodes (rectangle, ellipse, text, frame)
+  - update_node         Update node properties
+  - move_node           Move nodes to new positions
+  - delete_node         Delete nodes
+  - duplicate_node      Duplicate nodes
+  - set_selection       Set node selection
   - get_selection       Get currently selected nodes
+  - get_page_nodes      Get all nodes on current page
+  - export_node         Export nodes as images
   - get_plugin_status   Check plugin connection status
 
 Examples:

@@ -5,7 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.2] - 2025-05-31
+## [0.9.3] - 2025-01-25
+
+### Added
+- **Unified Node Creation**: New `create_node` tool that consolidates all node creation functionality
+  - Single tool for creating rectangles, ellipses, text, and frames
+  - Uses `nodeType` parameter to specify what type of node to create
+  - Built-in validation ensures required properties are provided for each node type
+  - Automatic default value assignment (dimensions, names, font properties)
+- **Enhanced Documentation**: Added comprehensive examples and usage guide
+  - New `unified-create-node-example.md` with detailed usage examples
+  - Updated README with unified tool documentation
+  - Complete property reference guide
+
+### Removed
+- **Legacy Tools**: Removed individual node creation tools to simplify API
+  - Removed `create_rectangle`, `create_ellipse`, `create_text`, and `create_frame`
+  - Removed corresponding schemas and plugin handlers
+  - Streamlined codebase with single creation interface
+
+### Changed
+- **Version Scheme**: Reset to 0.9.x to reflect pre-release development status
+- **Plugin Communication**: Updated to use single `CREATE_NODE` message type
+- **Tool Count**: Reduced from 14 to 10 tools with cleaner, unified interface
+
+## [0.9.2] - 2025-05-31
 
 ### Fixed
 - **Architecture**: Fixed broken communication between MCP server and Figma plugin
