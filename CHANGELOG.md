@@ -28,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated examples README to reflect actual content
   - Removed references to non-existent example files
 
-## [0.9.3] - 2025-01-25
+## [0.9.3] - 2024-01-03
 
 ### Added
 - **Unified Node Creation**: New `create_node` tool that consolidates all node creation functionality
@@ -51,7 +51,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin Communication**: Updated to use single `CREATE_NODE` message type
 - **Tool Count**: Reduced from 14 to 10 tools with cleaner, unified interface
 
-## [0.9.2] - 2025-05-31
+## [0.9.2] - 2023-12-15
 
 ### Fixed
 - **Architecture**: Fixed broken communication between MCP server and Figma plugin
@@ -87,7 +87,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling**: Improved timeout and reconnection logic
 - **Logging**: Better status reporting and debugging information
 
-## [1.0.1] - 2025-05-28
+## [1.0.1] - 2023-12-10
 
 ### Fixed
 - **Critical**: Fixed JSON parsing errors in MCP protocol communication
@@ -103,7 +103,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Impact: Eliminates connection issues between Claude Desktop and MCP server
 - MCP protocol requires stdout to contain only valid JSON-RPC messages
 
-## [1.0.0] - 2025-01-28
+## [1.0.0] - 2023-12-01
 
 ### Added
 - Initial release of Figma MCP Write Server
