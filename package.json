@@ -5,7 +5,9 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "npm run build:ts && npm run build:plugin-ui",
+    "build:ts": "tsc",
+    "build:plugin-ui": "node tools/build-plugin-ui.js",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "type-check": "tsc --noEmit"
