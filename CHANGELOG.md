@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added build:plugin-ui npm script
 
 ### Changed
+- **UI Improvements**: Enhanced plugin interface
+  - Simplified version display to single line "MCP WebSocket Client v0.9.4"
+  - Improved UI layout and readability
+
+### Changed
 - **Property Handling**: Standardized color property handling across node types
   - Unified fillColor property for all node types (text, shapes, frames)
   - Removed redundant textColor and backgroundColor properties
