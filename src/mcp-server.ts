@@ -249,14 +249,12 @@ export class FigmaMCPServer {
               name: { type: 'string', description: 'Node name' },
               width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
               height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
-              fillColor: { type: 'string', description: 'Fill color (hex)' },
+              fillColor: { type: 'string', description: 'Fill color (hex) - Use for all node types including text and frame fills' },
               strokeColor: { type: 'string', description: 'Stroke color (hex)' },
               strokeWidth: { type: 'number', description: 'Stroke width' },
               content: { type: 'string', description: 'Text content (required for text nodes)' },
               fontSize: { type: 'number', default: 16, description: 'Font size (for text nodes)' },
-              fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' },
-              textColor: { type: 'string', description: 'Text color (hex, for text nodes)' },
-              backgroundColor: { type: 'string', description: 'Background color (hex, for frame nodes)' }
+              fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' }
             },
             required: ['nodeType']
           },
@@ -489,8 +487,8 @@ export class FigmaMCPServer {
         message += ` with size ${nodeParams.width}x${nodeParams.height}`;
       }
       
-      if (nodeParams.fillColor || nodeParams.backgroundColor) {
-        message += ` with color ${nodeParams.fillColor || nodeParams.backgroundColor}`;
+      if (params.fillColor) {
+        message += ` with color ${params.fillColor}`;
       }
 
       return {
