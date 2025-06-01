@@ -2,43 +2,18 @@
 
 This directory contains example usage patterns and configurations for the Figma MCP Write Server.
 
-## 🎯 Use Case Examples
+## 🎯 Examples
 
 ### 1. Claude Desktop Configuration
 File: `claude-desktop-config.json`
-- Complete Claude Desktop MCP configuration
-- Environment variable setup
-- Troubleshooting common issues
+- Example configuration for Claude Desktop MCP integration
+- Shows basic server setup parameters
 
 ### 2. Design System Creation
 File: `design-system-example.md`
 - Create consistent design components
 - Set up color palettes and typography
 - Build reusable component libraries
-
-### 3. Layout Generation
-File: `layout-examples.md`
-- Generate common layout patterns
-- Create responsive grid systems
-- Build navigation structures
-
-### 4. Batch Operations
-File: `batch-operations.md`
-- Process multiple elements efficiently
-- Bulk styling updates
-- Mass content generation
-
-## 🔧 Configuration Examples
-
-### MCP Client Configurations
-- **Claude Desktop**: JSON configuration for macOS/Windows
-- **Cursor IDE**: MCP server setup for development workflows
-- **Custom Clients**: Generic MCP client integration
-
-### Plugin Configurations
-- **Development Setup**: Local development configuration
-- **Production Deployment**: Optimized settings for production use
-- **Team Collaboration**: Multi-user setup guidelines
 
 ## 📝 Code Examples
 
