@@ -1,4 +1,4 @@
-# Development Guide
+# Development Guide - v0.10.0 with Advanced Typography
 
 ## 🔧 Setting Up Development Environment
 
@@ -29,12 +29,15 @@ npm run dev
 figma-mcp-write-server/
 ├── src/                     # MCP Server source code
 │   ├── types.ts            # Type definitions and Zod schemas
-│   ├── mcp-server.ts       # MCP server with built-in WebSocket server
+│   ├── mcp-server.ts       # MCP server with built-in WebSocket server and typography features
 │   └── index.ts            # CLI entry point
 ├── figma-plugin/           # Figma plugin source code
 │   ├── manifest.json       # Plugin configuration
-│   ├── code.js             # Plugin WebSocket client code
+│   ├── code.js             # Plugin WebSocket client with advanced text creation
 │   └── ui.html             # Plugin user interface
+├── examples/               # Usage examples and documentation
+│   ├── README.md           # Advanced typography examples
+│   └── design-system-example.md  # Design system with typography
 ├── dist/                   # Compiled JavaScript output
 ├── package.json            # Node.js dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
@@ -309,11 +312,19 @@ The server provides 13 MCP tools for Figma operations:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Create** | `create_rectangle`, `create_ellipse`, `create_text`, `create_frame` | Create new design elements |
+| **Create** | `create_node`, `create_text` | Create design elements with unified and advanced typography |
 | **Modify** | `update_node`, `move_node`, `delete_node`, `duplicate_node` | Modify existing elements |
 | **Selection** | `get_selection`, `set_selection` | Manage element selection |
 | **Data** | `get_page_nodes`, `export_node` | Read design data |
 | **Status** | `get_plugin_status` | Monitor connection health |
+
+### Typography Features (New in v0.10.0)
+The `create_text` tool provides advanced typography capabilities:
+- **Mixed Styling**: Apply different fonts, sizes, and colors to text segments with `styleRanges`
+- **Text Styles**: Create reusable text styles with `createStyle` and `styleName`
+- **Advanced Properties**: Font families, weights, alignment, spacing, case, and decoration
+- **Layout Control**: Fixed-width text with automatic height adjustment
+- **Professional Typography**: Line height units, letter spacing, paragraph formatting
 
 ## 🚀 Deployment
 

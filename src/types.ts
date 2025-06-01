@@ -1,6 +1,68 @@
 import { z } from 'zod';
 
 // ================================================================================
+// Typography Types
+// ================================================================================
+
+export const TextStyleRangeSchema = z.object({
+  start: z.number(),
+  end: z.number(),
+  fontFamily: z.string().optional(),
+  fontStyle: z.string().optional(),
+  fontSize: z.number().optional(),
+  fillColor: z.string().optional(),
+  textDecoration: z.enum(["none", "underline", "strikethrough"]).optional(),
+  textCase: z.enum(["original", "upper", "lower", "title"]).optional(),
+  letterSpacing: z.number().optional(),
+  lineHeight: z.number().optional(),
+});
+
+export type TextStyleRange = z.infer<typeof TextStyleRangeSchema>;
+
+export const CreateTextSchema = z.object({
+  // Core content
+  characters: z.string(),
+  
+  // Positioning
+  x: z.number().default(0),
+  y: z.number().default(0),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  
+  // Basic styling
+  fontFamily: z.string().default("Inter"),
+  fontStyle: z.string().optional().default("Regular"),
+  fontSize: z.number().default(16),
+  
+  // Text alignment
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
+  textAlignVertical: z.enum(["top", "center", "bottom"]).optional(),
+  
+  // Text styling
+  textCase: z.enum(["original", "upper", "lower", "title"]).optional(),
+  textDecoration: z.enum(["none", "underline", "strikethrough"]).optional(),
+  
+  // Spacing
+  letterSpacing: z.number().optional(),
+  lineHeight: z.number().optional(),
+  lineHeightUnit: z.enum(["px", "percent"]).optional().default("percent"),
+  paragraphIndent: z.number().optional(),
+  paragraphSpacing: z.number().optional(),
+  
+  // Visual
+  fillColor: z.string().optional(),
+  
+  // Advanced styling with ranges
+  styleRanges: z.array(TextStyleRangeSchema).optional(),
+  
+  // Style management
+  createStyle: z.boolean().optional(),
+  styleName: z.string().optional(),
+});
+
+export type CreateTextParams = z.infer<typeof CreateTextSchema>;
+
+// ================================================================================
 // Simple Figma Node Types (without recursive children to avoid TS infinite loop)
 // ================================================================================
 
@@ -96,6 +158,9 @@ export const CreateNodeSchema = z.object({
   content: z.string().optional(),
   fontSize: z.number().optional(),
   fontFamily: z.string().optional(),
+  // Basic text style properties (for backward compatibility)
+  fontStyle: z.string().optional(),
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
 }).refine((data) => {
   // Validate that required properties are present for each node type
   // Allow defaults to be applied in the createNode method

@@ -1,12 +1,13 @@
 # Figma MCP Write Server
 
-A Model Context Protocol (MCP) server that provides **write access** to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically.
+A Model Context Protocol (MCP) server that provides **write access** to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically with **advanced typography features**.
 
 ## 🚀 Overview
 
 Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
 
 - ✅ **Create** design elements (rectangles, ellipses, text, frames)
+- ✅ **Advanced Typography** with mixed styling, text styles, and comprehensive formatting
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
@@ -55,6 +56,7 @@ graph LR
 | Tool | Description | Parameters |
 |------|-------------|------------|
 | `create_node` | Create nodes (rectangle, ellipse, text, frame) | nodeType, x, y, width, height, content, fillColor, etc. |
+| `create_text` | **NEW** Create text with advanced typography features | characters, fontFamily, fontSize, styleRanges, textAlign, etc. |
 | `update_node` | Update node properties | nodeId, properties |
 | `move_node` | Move nodes to new positions | nodeId, x, y |
 | `delete_node` | Delete nodes | nodeId |
@@ -131,6 +133,32 @@ For **Cursor**, add to MCP configuration:
 
 ## 🎯 Usage Examples
 
+### Advanced Typography (NEW in v0.10.0)
+```
+Create a styled heading with mixed formatting and create a text style.
+```
+
+The AI agent will:
+1. Use `create_text` with `styleRanges` for mixed bold/colored text
+2. Set advanced typography properties like `letterSpacing` and `lineHeight`
+3. Create reusable text styles with `createStyle` and `styleName`
+
+**Example:**
+```javascript
+// Create text with mixed styling
+await mcpClient.callTool('create_text', {
+  characters: "Advanced Typography Example",
+  fontSize: 24,
+  fontFamily: "Inter",
+  styleRanges: [
+    { start: 0, end: 8, fontStyle: "Bold" },
+    { start: 9, end: 19, fillColor: "#FF0000" }
+  ],
+  createStyle: true,
+  styleName: "Heading/H1"
+});
+```
+
 ### Create a Simple Layout
 ```
 Create a header frame at the top of the page, then add a title and subtitle inside it.
@@ -138,7 +166,7 @@ Create a header frame at the top of the page, then add a title and subtitle insi
 
 The AI agent will:
 1. Use `create_node` with `nodeType: "frame"` to create the header container
-2. Use `create_node` with `nodeType: "text"` twice for title and subtitle
+2. Use `create_text` for advanced title styling or `create_node` with `nodeType: "text"` for simple text
 3. Position elements appropriately
 
 ### Design System Operations
@@ -148,7 +176,7 @@ Create 5 button variants with different colors and update their corner radius to
 
 The AI agent will:
 1. Use `create_node` with `nodeType: "rectangle"` multiple times for button bases
-2. Use `create_node` with `nodeType: "text"` for button labels
+2. Use `create_text` for styled button labels with consistent typography
 3. Use `update_node` to set corner radius and colors
 
 ### Batch Operations
@@ -242,4 +270,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 10 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 11 MCP tools with advanced typography features (v0.10.0) and runs a WebSocket server on port 8765 for plugin communication.

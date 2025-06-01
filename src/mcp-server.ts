@@ -229,23 +229,197 @@ export class FigmaMCPServer {
     });
   }
 
-  private setupHandlers(): void {
+  // Enhanced text node creation with typography features
+  private async createTextNode(params: any): Promise<any> {
+      try {
+          console.error(`🔤 Creating text node with advanced typography`);
+             
+          // Validate required parameters
+          if (!params.characters) {
+              throw new Error('Text nodes must have characters content');
+          }
+
+          // Set name if not provided
+          if (!params.name) {
+              params.name = 'Text';
+          }
+             
+          // Prepare line height in Figma's expected format
+          let lineHeight = undefined;
+          if (params.lineHeight) {
+              lineHeight = {
+                  value: params.lineHeight,
+                  unit: (params.lineHeightUnit === 'px') ? 'PIXELS' : 'PERCENT'
+              };
+          }
+             
+          // Convert styleRanges to Figma's expected format
+          const styleRanges = params.styleRanges?.map((range: any) => {
+              const figmaRange: any = {
+                  start: range.start,
+                  end: range.end,
+              };
+                
+              if (range.fontFamily || range.fontStyle) {
+                  figmaRange.fontName = {
+                      family: range.fontFamily || params.fontFamily || 'Inter',
+                      style: range.fontStyle || 'Regular'
+                  };
+              }
+                
+              if (range.fontSize) figmaRange.fontSize = range.fontSize;
+              if (range.textCase) figmaRange.textCase = range.textCase.toUpperCase();
+              if (range.textDecoration) figmaRange.textDecoration = range.textDecoration.toUpperCase();
+              if (range.letterSpacing) figmaRange.letterSpacing = range.letterSpacing;
+              if (range.lineHeight) {
+                  figmaRange.lineHeight = {
+                      value: range.lineHeight,
+                      unit: 'PERCENT' // Default to percent for ranges
+                  };
+              }
+                
+              if (range.fillColor) {
+                  figmaRange.fills = [{
+                      type: 'SOLID',
+                      color: this.hexToRgb(range.fillColor)
+                  }];
+              }
+                
+              return figmaRange;
+          });
+            
+          // Prepare Figma-compatible parameters
+          const figmaParams: any = {
+              nodeType: 'text',
+              content: params.characters,
+              x: params.x || 0,
+              y: params.y || 0,
+              width: params.width,
+              height: params.height,
+                
+              // Font properties in Figma format
+              fontName: {
+                  family: params.fontFamily || 'Inter',
+                  style: params.fontStyle || 'Regular'
+              },
+              fontSize: params.fontSize || 16,
+                
+              // Alignment (convert to uppercase for Figma)
+              textAlignHorizontal: params.textAlignHorizontal?.toUpperCase(),
+              textAlignVertical: params.textAlignVertical?.toUpperCase(),
+                
+              // Text case and decoration
+              textCase: params.textCase?.toUpperCase(),
+              textDecoration: params.textDecoration?.toUpperCase(),
+                
+              // Spacing
+              letterSpacing: params.letterSpacing,
+              lineHeight: lineHeight,
+              paragraphIndent: params.paragraphIndent,
+              paragraphSpacing: params.paragraphSpacing,
+                
+              // Style ranges
+              styleRanges: styleRanges,
+              
+              // Style management
+              createStyle: params.createStyle,
+              styleName: params.styleName
+          };
+            
+          // Set fill color if provided
+          if (params.fillColor) {
+              figmaParams.fills = [{
+                  type: 'SOLID',
+                  color: this.hexToRgb(params.fillColor)
+              }];
+          }
+            
+          // Send creation request to plugin
+          const result = await this.sendToPlugin({
+            type: 'CREATE_TEXT',
+            payload: figmaParams
+          });
+            
+          if (!result.success) {
+              throw new Error(result.error || 'Failed to create text node');
+          }
+            
+          // Build a user-friendly message
+          let message = `Created text`;
+            
+          if (params.characters) {
+              const previewText = params.characters.substring(0, 20) + 
+                                 (params.characters.length > 20 ? '...' : '');
+              message += ` with content "${previewText}"`;
+          }
+            
+          if (params.fontFamily) {
+              message += ` using ${params.fontFamily}`;
+              if (params.fontSize) {
+                  message += ` at ${params.fontSize}px`;
+              }
+          }
+            
+          if (params.styleRanges && params.styleRanges.length > 0) {
+              message += ` with ${params.styleRanges.length} styled ranges`;
+          }
+            
+          if (params.createStyle && params.styleName) {
+              message += ` and created style "${params.styleName}"`;
+          }
+            
+          return {
+              content: [
+                  {
+                      type: "text",
+                      text: `✅ ${message}`
+                  }
+              ]
+          };
+            
+      } catch (error: any) {
+          console.error('❌ Error creating text node:', error);
+          return {
+              content: [
+                  {
+                      type: "text",
+                      text: `❌ Error: ${error.message || 'Failed to create text node'}`
+                  }
+              ],
+              isError: true
+          };
+      }
+  }
+     
+  // Helper to convert hex color to RGB
+  private hexToRgb(hex: string): {r: number, g: number, b: number} {
+      // Remove # if present
+      hex = hex.replace(/^#/, '');
+        
+      // Parse hex values
+      const bigint = parseInt(hex, 16);
+      const r = ((bigint >> 16) & 255) / 255;
+      const g = ((bigint >> 8) & 255) / 255;
+      const b = (bigint & 255) / 255;
+        
+      return { r, g, b };
+  }
+    
+  private setupHandlers() {
     // List available tools
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
       const tools: Tool[] = [
         {
           name: 'create_node',
-          description: 'Create a node in Figma (rectangle, ellipse, text, or frame)',
+          description: 'Create a new node in Figma (rectangle, ellipse, text, or frame)',
           inputSchema: {
             type: 'object',
             properties: {
-              nodeType: { 
-                type: 'string', 
+              nodeType: {
+                type: 'string',
                 enum: ['rectangle', 'ellipse', 'text', 'frame'],
-                description: 'Type of node to create' 
+                description: 'Type of node to create'
               },
-              x: { type: 'number', default: 0, description: 'X position' },
-              y: { type: 'number', default: 0, description: 'Y position' },
               name: { type: 'string', description: 'Node name' },
               width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
               height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
@@ -254,10 +428,68 @@ export class FigmaMCPServer {
               strokeWidth: { type: 'number', description: 'Stroke width' },
               content: { type: 'string', description: 'Text content (required for text nodes)' },
               fontSize: { type: 'number', default: 16, description: 'Font size (for text nodes)' },
-              fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' }
+              fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' },
+              fontStyle: { type: 'string', description: 'Font style (for text nodes, e.g., Regular, Bold)' },
+              textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Text alignment (for text nodes)' }
             },
             required: ['nodeType']
           },
+          annotations: {
+            description_extra: "For advanced typography features, use the create_text tool instead."
+          },
+          examples: [
+            '{"nodeType": "rectangle", "width": 100, "height": 100, "fillColor": "#FF0000"}',
+            '{"nodeType": "text", "content": "Hello, World!", "fontSize": 24}'
+          ]
+        },
+        {
+          name: 'create_text',
+          description: 'Create a text node with advanced typography features',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              characters: { type: 'string', description: 'Text content' },
+              x: { type: 'number', default: 0, description: 'X position' },
+              y: { type: 'number', default: 0, description: 'Y position' },
+              width: { type: 'number', description: 'Width (optional, for fixed width text)' },
+              height: { type: 'number', description: 'Height (optional)' },
+              fontFamily: { type: 'string', default: 'Inter', description: 'Font family' },
+              fontStyle: { type: 'string', default: 'Regular', description: 'Font style (e.g., Regular, Bold, Medium, Italic)' },
+              fontSize: { type: 'number', default: 16, description: 'Font size in pixels' },
+              textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Horizontal text alignment' },
+              textAlignVertical: { type: 'string', enum: ['top', 'center', 'bottom'], description: 'Vertical text alignment' },
+              textCase: { type: 'string', enum: ['original', 'upper', 'lower', 'title'], description: 'Text case transformation' },
+              textDecoration: { type: 'string', enum: ['none', 'underline', 'strikethrough'], description: 'Text decoration' },
+              letterSpacing: { type: 'number', description: 'Letter spacing in pixels' },
+              lineHeight: { type: 'number', description: 'Line height value' },
+              lineHeightUnit: { type: 'string', enum: ['px', 'percent'], default: 'percent', description: 'Line height unit' },
+              fillColor: { type: 'string', description: 'Text color (hex)' },
+              styleRanges: { 
+                type: 'array', 
+                description: 'Styled text ranges for mixed formatting',
+                items: {
+                  type: 'object',
+                  properties: {
+                    start: { type: 'number', description: 'Start index (0-based)' },
+                    end: { type: 'number', description: 'End index (exclusive)' },
+                    fontFamily: { type: 'string', description: 'Font family for this range' },
+                    fontStyle: { type: 'string', description: 'Font style for this range' },
+                    fontSize: { type: 'number', description: 'Font size for this range' },
+                    fillColor: { type: 'string', description: 'Text color for this range (hex)' },
+                    textDecoration: { type: 'string', description: 'Text decoration for this range' }
+                  },
+                  required: ['start', 'end']
+                }
+              },
+              createStyle: { type: 'boolean', description: 'Whether to create a text style' },
+              styleName: { type: 'string', description: 'Name for the created style (e.g., "Heading/H1")' }
+            },
+            required: ['characters']
+          },
+          examples: [
+            '{"characters": "Hello World", "fontSize": 24, "fontFamily": "Inter", "fontStyle": "Bold"}',
+            '{"characters": "Mixed Styling Example", "fontSize": 20, "styleRanges": [{"start": 0, "end": 5, "fontStyle": "Bold"}, {"start": 6, "end": 13, "fillColor": "#FF0000"}]}'
+          ]
         },
         {
           name: 'update_node',
@@ -328,10 +560,11 @@ export class FigmaMCPServer {
         },
         {
           name: 'get_selection',
-          description: 'Get currently selected nodes in Figma',
+          description: 'Get the current selection in Figma',
           inputSchema: {
             type: 'object',
-            properties: {}
+            properties: {},
+            required: []
           },
         },
         {
@@ -339,7 +572,8 @@ export class FigmaMCPServer {
           description: 'Get all nodes on the current page in Figma',
           inputSchema: {
             type: 'object',
-            properties: {}
+            properties: {},
+            required: []
           },
         },
         {
@@ -355,7 +589,11 @@ export class FigmaMCPServer {
                 default: 'PNG',
                 description: 'Export format' 
               },
-              scale: { type: 'number', default: 1, description: 'Export scale factor' }
+              scale: { 
+                type: 'number', 
+                default: 1, 
+                description: 'Export scale (1 = 100%)' 
+              }
             },
             required: ['nodeId']
           },
@@ -365,36 +603,36 @@ export class FigmaMCPServer {
           description: 'Check if the Figma plugin is connected and ready',
           inputSchema: {
             type: 'object',
-            properties: {}
+            properties: {},
+            required: []
           },
+          outputSchema: {
+            type: 'object',
+            properties: {
+              connected: { type: 'boolean' },
+              lastHeartbeat: { type: 'string' }
+            }
+          }
         }
       ];
-
+      
       return { tools };
     });
-
-    // Handle tool calls
+    
+    // Handle tool requests
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      const { name, arguments: args } = request.params;
-
-      try {
-        // Check plugin connection for write operations
-        const writeOperations = [
-          'create_node', 'update_node', 'move_node', 'delete_node', 'duplicate_node', 'set_selection'
-        ];
-
-        if (writeOperations.includes(name) && !this.pluginConnection) {
-          return {
-            content: [{
-              type: 'text',
-              text: `❌ Error executing ${name}: Figma plugin not connected. Please run the plugin in Figma.`
-            }]
-          };
-        }
-
+      const { params } = request;
+      const name = request.params.name;
+      const args = request.params.arguments || {};
+      console.error(`🔧 Executing tool: ${name}`);
+      
+      try {        
         switch (name) {
           case 'create_node':
             return await this.createNode(args);
+                  
+          case 'create_text':
+            return await this.createTextNode(args);
           case 'update_node':
             return await this.updateNode(args);
           case 'move_node':
@@ -421,10 +659,13 @@ export class FigmaMCPServer {
         console.error(`❌ Tool execution error [${name}]:`, errorMessage);
         
         return {
-          content: [{
-            type: 'text',
-            text: `❌ Error executing ${name}: ${errorMessage}`
-          }]
+          content: [
+              {
+                  type: "text",
+                  text: `❌ Error: ${errorMessage}`
+              }
+          ],
+          isError: true
         };
       }
     });
@@ -432,9 +673,27 @@ export class FigmaMCPServer {
 
   // Tool implementations
 
-  private async createNode(args: any) {
+  private async createNode(args: any): Promise<any> {
     try {
       const params = CreateNodeSchema.parse(args);
+      
+      // If this is a text node, forward to our enhanced typography handler
+      if (params.nodeType === 'text') {
+        // Map from old format to new typography format
+        const textParams = {
+          characters: params.content,
+          x: params.x,
+          y: params.y,
+          width: params.width,
+          height: params.height,
+          fontFamily: params.fontFamily,
+          fontSize: params.fontSize,
+          fontStyle: params.fontStyle,
+          textAlignHorizontal: params.textAlignHorizontal,
+          fillColor: params.fillColor
+        };
+        return await this.createTextNode(textParams);
+      }
       
       // Create a mutable copy for applying defaults
       const nodeParams = { ...params };
@@ -447,9 +706,6 @@ export class FigmaMCPServer {
             break;
           case 'ellipse':
             nodeParams.name = 'Ellipse';
-            break;
-          case 'text':
-            nodeParams.name = 'Text';
             break;
           case 'frame':
             nodeParams.name = 'Frame';
@@ -466,29 +722,25 @@ export class FigmaMCPServer {
         if (nodeParams.height === undefined) nodeParams.height = 200;
       }
 
-      // Set default text properties if not provided
-      if (nodeParams.nodeType === 'text') {
-        if (nodeParams.fontSize === undefined) nodeParams.fontSize = 16;
-        if (nodeParams.fontFamily === undefined) nodeParams.fontFamily = 'Inter';
-      }
-
+      // Send to plugin with standard operation type
       const response = await this.sendToPlugin({
         type: 'CREATE_NODE',
         payload: nodeParams
       });
 
+      if (!response.success) {
+        throw new Error(response.error || `Failed to create ${nodeParams.nodeType} node`);
+      }
+
       // Generate appropriate success message based on node type
-      let message = `✅ Created ${nodeParams.nodeType} "${nodeParams.name}" at (${nodeParams.x}, ${nodeParams.y})`;
+      let message = `Created ${nodeParams.nodeType} "${nodeParams.name}" at (${nodeParams.x}, ${nodeParams.y})`;
       
-      if (nodeParams.nodeType === 'text') {
-        message += ` with content "${nodeParams.content}"`;
-        if (nodeParams.fontSize) message += ` and font size ${nodeParams.fontSize}px`;
-      } else if (nodeParams.width && nodeParams.height) {
+      if (nodeParams.width && nodeParams.height) {
         message += ` with size ${nodeParams.width}x${nodeParams.height}`;
       }
       
-      if (params.fillColor) {
-        message += ` with color ${params.fillColor}`;
+      if (nodeParams.fillColor) {
+        message += ` with color ${nodeParams.fillColor}`;
       }
 
       return {

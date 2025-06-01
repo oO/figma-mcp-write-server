@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2025-06-01
+
+### Added
+- **Advanced Typography Tool**: New `create_text` tool with comprehensive typography features
+  - Mixed text styling with `styleRanges` for applying different fonts, sizes, and colors to text segments
+  - Advanced font properties: `fontFamily`, `fontStyle`, `fontSize`, `textCase`, `textDecoration`
+  - Text alignment controls: `textAlignHorizontal`, `textAlignVertical`
+  - Spacing controls: `letterSpacing`, `lineHeight`, `paragraphIndent`, `paragraphSpacing`
+  - Line height unit support (pixels or percentage)
+  - Text style creation and management with `createStyle` and `styleName` parameters
+  - Fixed-width text support with automatic height adjustment
+- **Enhanced Plugin Integration**: Advanced text handling in Figma plugin
+  - Unified text creation function supporting both simple and advanced typography
+  - Asynchronous font loading with proper error handling
+  - Style range application using Figma's `setRange*` methods
+  - Text style creation with comprehensive property mapping
+  - Backward compatibility with existing `create_node` text creation
+
+### Changed
+- **Text Creation Architecture**: Consolidated text creation pathways
+  - Enhanced existing `createText()` function to handle advanced typography parameters
+  - Single code path for both `CREATE_TEXT` and legacy text creation
+  - Eliminated code duplication between simple and advanced text creation
+- **Tool Documentation**: Updated `create_node` tool with typography guidance
+  - Added annotation directing users to `create_text` for advanced typography features
+  - Comprehensive schema documentation for all typography parameters
+  - Added practical examples for mixed styling and text style creation
+
+### Technical Details
+- **Font Management**: Improved font loading with support for multiple fonts in single text node
+- **Color Handling**: Enhanced color processing for both global and range-specific text colors
+- **Parameter Mapping**: Seamless conversion between MCP schema and Figma API formats
+- **Error Handling**: Robust error handling for font loading and style creation operations
+
 ## [0.9.4] - 2025-06-01
 
 ### Added
@@ -33,7 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated examples README to reflect actual content
   - Removed references to non-existent example files
 
-## [0.9.3] - 2025-01-25
+## [0.9.3] - 2025-06-01
 
 ### Added
 - **Unified Node Creation**: New `create_node` tool that consolidates all node creation functionality
@@ -56,7 +90,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Plugin Communication**: Updated to use single `CREATE_NODE` message type
 - **Tool Count**: Reduced from 14 to 10 tools with cleaner, unified interface
 
-## [0.9.2] - 2025-05-31
+## [0.9.2] - 2025-06-01
 
 ### Fixed
 - **Architecture**: Fixed broken communication between MCP server and Figma plugin
@@ -108,7 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Impact: Eliminates connection issues between Claude Desktop and MCP server
 - MCP protocol requires stdout to contain only valid JSON-RPC messages
 
-## [1.0.0] - 2025-01-28
+## [1.0.0] - 2025-05-28
 
 ### Added
 - Initial release of Figma MCP Write Server

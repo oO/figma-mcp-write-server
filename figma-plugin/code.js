@@ -33,7 +33,13 @@ async function handlePluginOperation(operation, payload, id) {
     
     switch (operation) {
       case 'CREATE_NODE':
+        console.log('🎨 Starting CREATE_NODE operation');
         result = await createNode(payload);
+        break;
+        
+      case 'CREATE_TEXT':
+        console.log('📝 Starting CREATE_TEXT operation');
+        result = await createText(payload);
         break;
         
       case 'UPDATE_NODE':
@@ -62,10 +68,12 @@ async function handlePluginOperation(operation, payload, id) {
         break;
         
       case 'GET_SELECTION':
+        console.log('🎯 Starting GET_SELECTION operation');
         result = await getSelection();
         break;
         
       case 'GET_PAGE_NODES':
+        console.log('📄 Starting GET_PAGE_NODES operation');
         result = await getPageNodes();
         break;
         
@@ -190,21 +198,132 @@ async function createEllipse(params) {
 }
 
 async function createText(params) {
+  console.log('🔤 Creating text with params:', params);
+  
   const text = figma.createText();
   
-  // Load font before setting text properties
-  await figma.loadFontAsync({ family: params.fontFamily || 'Inter', style: 'Regular' });
+  // Load default font first
+  const defaultFont = {
+    family: (params.fontName && params.fontName.family) || params.fontFamily || 'Inter',
+    style: (params.fontName && params.fontName.style) || params.fontStyle || 'Regular'
+  };
+  await figma.loadFontAsync(defaultFont);
   
+  // Set basic properties
   text.x = params.x || 0;
   text.y = params.y || 0;
-  text.characters = params.content || 'Text';
-  text.fontSize = params.fontSize || 16;
+  text.characters = params.content || params.characters || 'Text';
   text.name = params.name || 'Text';
   
-  // Set text color using fillColor
-  if (params.fillColor) {
+  // Set font properties
+  text.fontName = defaultFont;
+  text.fontSize = params.fontSize || 16;
+  
+  // Set text alignment
+  if (params.textAlignHorizontal) {
+    text.textAlignHorizontal = params.textAlignHorizontal;
+  }
+  if (params.textAlignVertical) {
+    text.textAlignVertical = params.textAlignVertical;
+  }
+  
+  // Set text case
+  if (params.textCase) {
+    text.textCase = params.textCase;
+  }
+  
+  // Set text decoration
+  if (params.textDecoration) {
+    text.textDecoration = params.textDecoration;
+  }
+  
+  // Set letter spacing
+  if (params.letterSpacing !== undefined) {
+    text.letterSpacing = { value: params.letterSpacing, unit: 'PIXELS' };
+  }
+  
+  // Set line height
+  if (params.lineHeight) {
+    text.lineHeight = params.lineHeight;
+  }
+  
+  // Set paragraph properties
+  if (params.paragraphIndent !== undefined) {
+    text.paragraphIndent = params.paragraphIndent;
+  }
+  if (params.paragraphSpacing !== undefined) {
+    text.paragraphSpacing = params.paragraphSpacing;
+  }
+  
+  // Set text color from fills or fillColor
+  if (params.fills && params.fills.length > 0) {
+    text.fills = params.fills;
+  } else if (params.fillColor) {
     const color = hexToRgb(params.fillColor);
     text.fills = [{ type: 'SOLID', color }];
+  }
+  
+  // Set fixed width if specified
+  if (params.width) {
+    text.textAutoResize = 'HEIGHT';
+    text.resize(params.width, text.height);
+  }
+  
+  // Apply style ranges if provided
+  if (params.styleRanges && params.styleRanges.length > 0) {
+    for (const range of params.styleRanges) {
+      const start = range.start;
+      const end = range.end;
+      
+      // Load font for this range if specified
+      if (range.fontName) {
+        await figma.loadFontAsync(range.fontName);
+        text.setRangeFontName(start, end, range.fontName);
+      }
+      
+      // Apply range-specific properties
+      if (range.fontSize) {
+        text.setRangeFontSize(start, end, range.fontSize);
+      }
+      if (range.textCase) {
+        text.setRangeTextCase(start, end, range.textCase);
+      }
+      if (range.textDecoration) {
+        text.setRangeTextDecoration(start, end, range.textDecoration);
+      }
+      if (range.letterSpacing !== undefined) {
+        text.setRangeLetterSpacing(start, end, { value: range.letterSpacing, unit: 'PIXELS' });
+      }
+      if (range.lineHeight) {
+        text.setRangeLineHeight(start, end, range.lineHeight);
+      }
+      if (range.fills) {
+        text.setRangeFills(start, end, range.fills);
+      }
+    }
+  }
+  
+  // Create text style if requested
+  if (params.createStyle && params.styleName) {
+    try {
+      const textStyle = figma.createTextStyle();
+      textStyle.name = params.styleName;
+      textStyle.fontName = text.fontName;
+      textStyle.fontSize = text.fontSize;
+      textStyle.textAlignHorizontal = text.textAlignHorizontal;
+      textStyle.textAlignVertical = text.textAlignVertical;
+      textStyle.textCase = text.textCase;
+      textStyle.textDecoration = text.textDecoration;
+      textStyle.letterSpacing = text.letterSpacing;
+      textStyle.lineHeight = text.lineHeight;
+      textStyle.paragraphIndent = text.paragraphIndent;
+      textStyle.paragraphSpacing = text.paragraphSpacing;
+      textStyle.fills = text.fills;
+      
+      console.log(`✅ Created text style: ${params.styleName}`);
+    } catch (styleError) {
+      console.warn('⚠️ Could not create text style:', styleError.message);
+    }
   }
   
   figma.currentPage.appendChild(text);
@@ -214,6 +333,10 @@ async function createText(params) {
   const response = formatNodeResponse(text);
   response.content = text.characters;
   response.fontSize = text.fontSize;
+  response.fontFamily = text.fontName.family;
+  response.fontStyle = text.fontName.style;
+  
+  console.log('✅ Text created successfully');
   return response;
 }
 
@@ -470,6 +593,8 @@ function hexToRgb(hex) {
     b: parseInt(result[3], 16) / 255
   } : { r: 0.5, g: 0.5, b: 0.5 }; // Default gray
 }
+
+
 
 // Unified node creation function
 async function createNode(params) {
