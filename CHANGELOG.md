@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Version Display**: Added version number to plugin UI
+- **Automated Version Management**: New build process for version handling
+  - Added build script to inject package.json version into plugin UI
+  - Created ui.template.html with version placeholder
+  - Added build:plugin-ui npm script
+
+### Changed
+- **Property Handling**: Standardized color property handling across node types
+  - Unified fillColor property for all node types (text, shapes, frames)
+  - Removed redundant textColor and backgroundColor properties
+  - Updated property descriptions for clarity
+- **Code Organization**: Improved code structure and maintainability
+  - Added formatNodeResponse helper for consistent node responses
+  - Standardized naming conventions across codebase
+  - Improved section header visibility in type definitions
+- **Documentation**: Simplified examples and documentation
+  - Removed empty unified-create-node-example.md
+  - Updated examples README to reflect actual content
+  - Removed references to non-existent example files
+
 ## [0.9.3] - 2025-01-25
 
 ### Added
@@ -14,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Built-in validation ensures required properties are provided for each node type
   - Automatic default value assignment (dimensions, names, font properties)
 - **Enhanced Documentation**: Added comprehensive examples and usage guide
-  - New `unified-create-node-example.md` with detailed usage examples
   - Updated README with unified tool documentation
   - Complete property reference guide
 
