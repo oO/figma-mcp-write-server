@@ -1,22 +1,29 @@
 import { z } from 'zod';
 
-// =====================
+// ================================================================================
 // Simple Figma Node Types (without recursive children to avoid TS infinite loop)
-// =====================
+// ================================================================================
 
 export const FigmaNodeSchema = z.object({
+  // Core node properties
   id: z.string(),
   name: z.string(),
   type: z.string(),
-  visible: z.boolean().optional(),
-  locked: z.boolean().optional(),
-  x: z.number().optional(),
-  y: z.number().optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
-  rotation: z.number().optional(),
-  opacity: z.number().optional(),
-  blendMode: z.string().optional(),
+
+  // Node state
+  visible: z.boolean().default(true),
+  locked: z.boolean().default(false),
+
+  // Position and size properties (all nodes have these)
+  x: z.number().default(0),
+  y: z.number().default(0),
+  width: z.number(),  // Required - all Figma nodes have width
+  height: z.number(), // Required - all Figma nodes have height
+  rotation: z.number().default(0),
+
+  // Visual properties
+  opacity: z.number().default(1),
+  blendMode: z.string().default('NORMAL'),
   fills: z.array(z.any()).optional(),
   strokes: z.array(z.any()).optional(),
   effects: z.array(z.any()).optional(),
@@ -26,9 +33,9 @@ export const FigmaNodeSchema = z.object({
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
 export type CreateNodeParams = z.infer<typeof CreateNodeSchema>;
 
-// =====================
+// ================================================================================
 // Plugin Communication Types
-// =====================
+// ================================================================================
 
 export const PluginMessageSchema = z.object({
   id: z.string(),
@@ -62,34 +69,33 @@ export const PluginResponseSchema = z.object({
 
 export type PluginResponse = z.infer<typeof PluginResponseSchema>;
 
-// =====================
+// ================================================================================
 // MCP Tool Input Schemas
-// =====================
+// ================================================================================
 
 export const CreateNodeSchema = z.object({
+  // Node type - determines what kind of Figma node to create
   nodeType: z.enum(['rectangle', 'ellipse', 'text', 'frame']),
-  // Common properties
+  
+  // Common positioning properties
   x: z.number().default(0),
   y: z.number().default(0),
   name: z.string().optional(),
   
-  // Size properties (for rectangle, ellipse, frame)
+  // Size properties (required for rectangle, ellipse, frame)
   width: z.number().optional(),
   height: z.number().optional(),
   
   // Visual properties
+  // fillColor: Used for background color in shapes/frames and text color in text nodes
   fillColor: z.string().optional(),
   strokeColor: z.string().optional(),
   strokeWidth: z.number().optional(),
   
-  // Text-specific properties
+  // Text-specific properties (only used when nodeType is 'text')
   content: z.string().optional(),
   fontSize: z.number().optional(),
   fontFamily: z.string().optional(),
-  textColor: z.string().optional(),
-  
-  // Frame-specific properties
-  backgroundColor: z.string().optional(),
 }).refine((data) => {
   // Validate that required properties are present for each node type
   // Allow defaults to be applied in the createNode method
@@ -142,9 +148,9 @@ export const ExportNodeSchema = z.object({
   scale: z.number().default(1),
 });
 
-// =====================
+// ================================================================================
 // Server Configuration
-// =====================
+// ================================================================================
 
 export interface ServerConfig {
   port: number;
@@ -162,9 +168,9 @@ export const DEFAULT_CONFIG: ServerConfig = {
   heartbeatInterval: 30000, // 30 seconds
 };
 
-// =====================
+// ================================================================================
 // Connection Status
-// =====================
+// ================================================================================
 
 export interface ConnectionStatus {
   pluginConnected: boolean;
