@@ -113,9 +113,21 @@ function findNodeById(nodeId) {
     console.log('✅ Found node:', node.name, node.type);
     return node;
   } catch (error) {
-    console.error('❌ Error finding node:', error);
+    console.log('❌ Error finding node:', error);
     throw error;
   }
+}
+
+// Helper function to standardize node response format
+function formatNodeResponse(node) {
+  return {
+    nodeId: node.id,
+    name: node.name,
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height
+  };
 }
 
 // Figma API operation implementations
@@ -126,6 +138,7 @@ async function createRectangle(params) {
   rect.resize(params.width || 100, params.height || 100);
   rect.name = params.name || 'Rectangle';
   
+  // Set fill color (also handles text color and frame background)
   if (params.fillColor) {
     const color = hexToRgb(params.fillColor);
     rect.fills = [{ type: 'SOLID', color }];
@@ -144,14 +157,7 @@ async function createRectangle(params) {
   figma.currentPage.selection = [rect];
   figma.viewport.scrollAndZoomIntoView([rect]);
   
-  return { 
-    nodeId: rect.id, 
-    name: rect.name,
-    x: rect.x,
-    y: rect.y,
-    width: rect.width,
-    height: rect.height
-  };
+  return formatNodeResponse(rect);
 }
 
 async function createEllipse(params) {
@@ -161,6 +167,7 @@ async function createEllipse(params) {
   ellipse.resize(params.width || 100, params.height || 100);
   ellipse.name = params.name || 'Ellipse';
   
+  // Set fill color (also handles text color and frame background)
   if (params.fillColor) {
     const color = hexToRgb(params.fillColor);
     ellipse.fills = [{ type: 'SOLID', color }];
@@ -179,14 +186,7 @@ async function createEllipse(params) {
   figma.currentPage.selection = [ellipse];
   figma.viewport.scrollAndZoomIntoView([ellipse]);
   
-  return { 
-    nodeId: ellipse.id, 
-    name: ellipse.name,
-    x: ellipse.x,
-    y: ellipse.y,
-    width: ellipse.width,
-    height: ellipse.height
-  };
+  return formatNodeResponse(ellipse);
 }
 
 async function createText(params) {
@@ -201,8 +201,9 @@ async function createText(params) {
   text.fontSize = params.fontSize || 16;
   text.name = params.name || 'Text';
   
-  if (params.textColor) {
-    const color = hexToRgb(params.textColor);
+  // Set text color using fillColor
+  if (params.fillColor) {
+    const color = hexToRgb(params.fillColor);
     text.fills = [{ type: 'SOLID', color }];
   }
   
@@ -210,14 +211,10 @@ async function createText(params) {
   figma.currentPage.selection = [text];
   figma.viewport.scrollAndZoomIntoView([text]);
   
-  return { 
-    nodeId: text.id, 
-    name: text.name,
-    content: text.characters,
-    x: text.x,
-    y: text.y,
-    fontSize: text.fontSize
-  };
+  const response = formatNodeResponse(text);
+  response.content = text.characters;
+  response.fontSize = text.fontSize;
+  return response;
 }
 
 async function createFrame(params) {
@@ -227,8 +224,9 @@ async function createFrame(params) {
   frame.resize(params.width || 200, params.height || 200);
   frame.name = params.name || 'Frame';
   
-  if (params.backgroundColor) {
-    const color = hexToRgb(params.backgroundColor);
+  // Set frame background using fillColor
+  if (params.fillColor) {
+    const color = hexToRgb(params.fillColor);
     frame.fills = [{ type: 'SOLID', color }];
   }
   
@@ -236,14 +234,7 @@ async function createFrame(params) {
   figma.currentPage.selection = [frame];
   figma.viewport.scrollAndZoomIntoView([frame]);
   
-  return { 
-    nodeId: frame.id, 
-    name: frame.name,
-    x: frame.x,
-    y: frame.y,
-    width: frame.width,
-    height: frame.height
-  };
+  return formatNodeResponse(frame);
 }
 
 async function updateNode(params) {
