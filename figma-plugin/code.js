@@ -82,6 +82,11 @@ async function handlePluginOperation(operation, payload, id) {
         result = await exportNode(payload);
         break;
         
+      case 'MANAGE_STYLES':
+        console.log('🎨 Starting MANAGE_STYLES operation');
+        result = await manageStyles(payload);
+        break;
+        
       default:
         throw new Error(`Unknown operation: ${operation}`);
     }
@@ -612,6 +617,399 @@ async function createNode(params) {
     default:
       throw new Error(`Unknown node type: ${params.nodeType}`);
   }
+}
+
+// Comprehensive style management function
+async function manageStyles(params) {
+  console.log('🎨 Managing styles:', params);
+  
+  try {
+    switch (params.operation) {
+      case 'create':
+        return await createStyle(params);
+      case 'list':
+        return await listStyles(params.styleType);
+      case 'apply':
+        return await applyStyle(params);
+      case 'delete':
+        return await deleteStyle(params);
+      case 'get':
+        return await getStyle(params);
+      default:
+        throw new Error(`Unknown style operation: ${params.operation}`);
+    }
+  } catch (error) {
+    console.error('❌ Error in manageStyles:', error);
+    throw error;
+  }
+}
+
+// Create style function
+async function createStyle(params) {
+  let style;
+  
+  switch (params.styleType) {
+    case 'paint':
+      style = figma.createPaintStyle();
+      style.name = params.styleName;
+      style.paints = [await createPaint(params)];
+      console.log(`✅ Created paint style: ${params.styleName}`);
+      break;
+      
+    case 'text':
+      style = figma.createTextStyle();
+      style.name = params.styleName;
+      await applyTextStyleProperties(style, params);
+      console.log(`✅ Created text style: ${params.styleName}`);
+      break;
+      
+    case 'effect':
+      style = figma.createEffectStyle();
+      style.name = params.styleName;
+      style.effects = params.effects ? params.effects.map(createEffect) : [];
+      console.log(`✅ Created effect style: ${params.styleName}`);
+      break;
+      
+    case 'grid':
+      style = figma.createGridStyle();
+      style.name = params.styleName;
+      style.layoutGrids = params.layoutGrids ? params.layoutGrids.map(createLayoutGrid) : [];
+      console.log(`✅ Created grid style: ${params.styleName}`);
+      break;
+      
+    default:
+      throw new Error(`Unknown style type: ${params.styleType}`);
+  }
+  
+  return formatStyleResponse(style);
+}
+
+// Create paint function
+async function createPaint(params) {
+  switch (params.paintType) {
+    case 'solid':
+      return {
+        type: 'SOLID',
+        color: hexToRgb(params.color),
+        opacity: params.opacity !== undefined ? params.opacity : 1
+      };
+      
+    case 'gradient_linear':
+      return {
+        type: 'GRADIENT_LINEAR',
+        gradientTransform: params.gradientTransform || [[1, 0, 0], [0, 1, 0]],
+        gradientStops: params.gradientStops ? params.gradientStops.map(stop => {
+          const color = hexToRgb(stop.color);
+          return {
+            position: stop.position,
+            color: { r: color.r, g: color.g, b: color.b, a: stop.opacity !== undefined ? stop.opacity : 1 }
+          };
+        }) : []
+      };
+      
+    case 'gradient_radial':
+      return {
+        type: 'GRADIENT_RADIAL',
+        gradientTransform: params.gradientTransform || [[1, 0, 0], [0, 1, 0]],
+        gradientStops: params.gradientStops ? params.gradientStops.map(stop => {
+          const color = hexToRgb(stop.color);
+          return {
+            position: stop.position,
+            color: { r: color.r, g: color.g, b: color.b, a: stop.opacity !== undefined ? stop.opacity : 1 }
+          };
+        }) : []
+      };
+      
+    case 'gradient_angular':
+      return {
+        type: 'GRADIENT_ANGULAR',
+        gradientTransform: params.gradientTransform || [[1, 0, 0], [0, 1, 0]],
+        gradientStops: params.gradientStops ? params.gradientStops.map(stop => {
+          const color = hexToRgb(stop.color);
+          return {
+            position: stop.position,
+            color: { r: color.r, g: color.g, b: color.b, a: stop.opacity !== undefined ? stop.opacity : 1 }
+          };
+        }) : []
+      };
+      
+    case 'gradient_diamond':
+      return {
+        type: 'GRADIENT_DIAMOND',
+        gradientTransform: params.gradientTransform || [[1, 0, 0], [0, 1, 0]],
+        gradientStops: params.gradientStops ? params.gradientStops.map(stop => {
+          const color = hexToRgb(stop.color);
+          return {
+            position: stop.position,
+            color: { r: color.r, g: color.g, b: color.b, a: stop.opacity !== undefined ? stop.opacity : 1 }
+          };
+        }) : []
+      };
+      
+    case 'image':
+      return {
+        type: 'IMAGE',
+        imageHash: params.imageHash,
+        scaleMode: params.scaleMode ? params.scaleMode.toUpperCase() : 'FILL'
+      };
+      
+    default:
+      throw new Error(`Unknown paint type: ${params.paintType}`);
+  }
+}
+
+// Apply text style properties
+async function applyTextStyleProperties(style, params) {
+  if (params.fontFamily && params.fontStyle) {
+    const fontName = { family: params.fontFamily, style: params.fontStyle };
+    await figma.loadFontAsync(fontName);
+    style.fontName = fontName;
+  }
+  
+  if (params.fontSize !== undefined) style.fontSize = params.fontSize;
+  if (params.fontWeight !== undefined) style.fontWeight = params.fontWeight;
+  if (params.textAlignHorizontal) style.textAlignHorizontal = params.textAlignHorizontal.toUpperCase();
+  if (params.textAlignVertical) style.textAlignVertical = params.textAlignVertical.toUpperCase();
+  if (params.textAutoResize) style.textAutoResize = params.textAutoResize.toUpperCase();
+  if (params.textCase) style.textCase = params.textCase.toUpperCase();
+  if (params.textDecoration) style.textDecoration = params.textDecoration.toUpperCase();
+  if (params.letterSpacing !== undefined) style.letterSpacing = { value: params.letterSpacing, unit: 'PIXELS' };
+  if (params.lineHeight !== undefined) {
+    const unit = params.lineHeightUnit === 'percent' ? 'PERCENT' : 'PIXELS';
+    style.lineHeight = { value: params.lineHeight, unit: unit };
+  }
+  if (params.paragraphIndent !== undefined) style.paragraphIndent = params.paragraphIndent;
+  if (params.paragraphSpacing !== undefined) style.paragraphSpacing = params.paragraphSpacing;
+  if (params.listSpacing !== undefined) style.listSpacing = params.listSpacing;
+  if (params.hangingPunctuation !== undefined) style.hangingPunctuation = params.hangingPunctuation;
+  if (params.hangingList !== undefined) style.hangingList = params.hangingList;
+  if (params.textTruncation) style.textTruncation = params.textTruncation.toUpperCase();
+  if (params.maxLines !== undefined) style.maxLines = params.maxLines;
+  if (params.fillColor) {
+    style.fills = [{
+      type: 'SOLID',
+      color: hexToRgb(params.fillColor)
+    }];
+  }
+}
+
+// Create effect function
+function createEffect(effectData) {
+  const effect = {
+    type: effectData.type.toUpperCase(),
+    visible: effectData.visible !== undefined ? effectData.visible : true
+  };
+  
+  // Add alpha field to color for shadows and other effects
+  if (effectData.color) {
+    const color = hexToRgb(effectData.color);
+    effect.color = { r: color.r, g: color.g, b: color.b, a: effectData.opacity !== undefined ? effectData.opacity : 1 };
+  }
+  
+  if (effectData.blendMode) effect.blendMode = effectData.blendMode.toUpperCase();
+  if (effectData.offset) effect.offset = effectData.offset;
+  if (effectData.radius !== undefined) effect.radius = effectData.radius;
+  if (effectData.spread !== undefined) effect.spread = effectData.spread;
+  if (effectData.showShadowBehindNode !== undefined) effect.showShadowBehindNode = effectData.showShadowBehindNode;
+  
+  // Add required defaults for shadow effects
+  const shadowTypes = ['DROP_SHADOW', 'INNER_SHADOW'];
+  if (shadowTypes.includes(effect.type)) {
+    if (!effect.offset) effect.offset = { x: 0, y: 4 };
+    if (effect.radius === undefined) effect.radius = 4;
+    if (!effect.color) {
+      effect.color = { r: 0, g: 0, b: 0, a: 0.25 }; // Default shadow color
+    }
+    if (!effect.blendMode) effect.blendMode = 'NORMAL';
+  }
+  
+  return effect;
+}
+
+// Create layout grid function
+function createLayoutGrid(gridData) {
+  const grid = {
+    pattern: gridData.pattern.toUpperCase(),
+    visible: gridData.visible !== undefined ? gridData.visible : true
+  };
+  
+  if (gridData.sectionSize !== undefined) grid.sectionSize = gridData.sectionSize;
+  if (gridData.color) grid.color = hexToRgb(gridData.color);
+  if (gridData.alignment) grid.alignment = gridData.alignment.toUpperCase();
+  if (gridData.gutterSize !== undefined) grid.gutterSize = gridData.gutterSize;
+  if (gridData.offset !== undefined) grid.offset = gridData.offset;
+  if (gridData.count !== undefined) grid.count = gridData.count;
+  
+  return grid;
+}
+
+// List styles function
+async function listStyles(styleType) {
+  let styles;
+  
+  switch (styleType) {
+    case 'paint':
+      styles = figma.getLocalPaintStyles();
+      break;
+    case 'text':
+      styles = figma.getLocalTextStyles();
+      break;
+    case 'effect':
+      styles = figma.getLocalEffectStyles();
+      break;
+    case 'grid':
+      styles = figma.getLocalGridStyles();
+      break;
+    default:
+      throw new Error(`Unknown style type: ${styleType}`);
+  }
+  
+  return styles.map(style => ({
+    id: style.id,
+    name: style.name,
+    type: styleType,
+    description: style.description || ''
+  }));
+}
+
+// Apply style function
+async function applyStyle(params) {
+  const node = figma.getNodeById(params.nodeId);
+  if (!node) {
+    throw new Error(`Node with ID ${params.nodeId} not found`);
+  }
+  
+  let style;
+  if (params.styleId) {
+    // Find style by ID
+    const allStyles = [
+      ...figma.getLocalPaintStyles(),
+      ...figma.getLocalTextStyles(),
+      ...figma.getLocalEffectStyles(),
+      ...figma.getLocalGridStyles()
+    ];
+    style = allStyles.find(s => s.id === params.styleId);
+  } else if (params.styleName) {
+    // Find style by name (less reliable but supported)
+    const allStyles = [
+      ...figma.getLocalPaintStyles(),
+      ...figma.getLocalTextStyles(),
+      ...figma.getLocalEffectStyles(),
+      ...figma.getLocalGridStyles()
+    ];
+    style = allStyles.find(s => s.name === params.styleName);
+  }
+  
+  if (!style) {
+    throw new Error(`Style not found`);
+  }
+  
+  // Apply style based on type
+  if (style.type === 'PAINT') {
+    if ('fills' in node) {
+      node.fillStyleId = style.id;
+    } else {
+      throw new Error(`Cannot apply paint style to node type ${node.type}`);
+    }
+  } else if (style.type === 'TEXT') {
+    if (node.type === 'TEXT') {
+      node.textStyleId = style.id;
+    } else {
+      throw new Error(`Cannot apply text style to non-text node`);
+    }
+  } else if (style.type === 'EFFECT') {
+    if ('effects' in node) {
+      node.effectStyleId = style.id;
+    } else {
+      throw new Error(`Cannot apply effect style to node type ${node.type}`);
+    }
+  } else if (style.type === 'GRID') {
+    if ('layoutGrids' in node) {
+      node.gridStyleId = style.id;
+    } else {
+      throw new Error(`Cannot apply grid style to node type ${node.type}`);
+    }
+  }
+  
+  console.log(`✅ Applied ${style.type.toLowerCase()} style "${style.name}" to node ${params.nodeId}`);
+  return { success: true, styleName: style.name, nodeId: params.nodeId };
+}
+
+// Delete style function
+async function deleteStyle(params) {
+  let style;
+  const allStyles = [
+    ...figma.getLocalPaintStyles(),
+    ...figma.getLocalTextStyles(),
+    ...figma.getLocalEffectStyles(),
+    ...figma.getLocalGridStyles()
+  ];
+  
+  if (params.styleId) {
+    style = allStyles.find(s => s.id === params.styleId);
+  } else if (params.styleName) {
+    style = allStyles.find(s => s.name === params.styleName);
+  }
+  
+  if (!style) {
+    throw new Error(`Style not found`);
+  }
+  
+  style.remove();
+  console.log(`✅ Deleted style "${style.name}"`);
+  return { success: true, styleName: style.name };
+}
+
+// Get style function
+async function getStyle(params) {
+  let style;
+  const allStyles = [
+    ...figma.getLocalPaintStyles(),
+    ...figma.getLocalTextStyles(),
+    ...figma.getLocalEffectStyles(),
+    ...figma.getLocalGridStyles()
+  ];
+  
+  if (params.styleId) {
+    style = allStyles.find(s => s.id === params.styleId);
+  } else if (params.styleName) {
+    style = allStyles.find(s => s.name === params.styleName);
+  }
+  
+  if (!style) {
+    throw new Error(`Style not found`);
+  }
+  
+  return formatStyleResponse(style);
+}
+
+// Format style response
+function formatStyleResponse(style) {
+  const response = {
+    id: style.id,
+    name: style.name,
+    type: style.type,
+    description: style.description || ''
+  };
+  
+  // Add type-specific properties
+  if (style.type === 'PAINT') {
+    response.paints = style.paints;
+  } else if (style.type === 'TEXT') {
+    response.fontName = style.fontName;
+    response.fontSize = style.fontSize;
+    response.textAlignHorizontal = style.textAlignHorizontal;
+    response.textAlignVertical = style.textAlignVertical;
+    response.letterSpacing = style.letterSpacing;
+    response.lineHeight = style.lineHeight;
+    response.fills = style.fills;
+  } else if (style.type === 'EFFECT') {
+    response.effects = style.effects;
+  } else if (style.type === 'GRID') {
+    response.layoutGrids = style.layoutGrids;
+  }
+  
+  return response;
 }
 
 // Plugin ready

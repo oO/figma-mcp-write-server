@@ -14,12 +14,14 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 import { 
   CreateNodeSchema,
+  CreateTextSchema,
   UpdateNodeSchema,
   MoveNodeSchema,
   DeleteNodeSchema,
   DuplicateNodeSchema,
   SetSelectionSchema,
   ExportNodeSchema,
+  ManageStylesSchema,
   ServerConfig,
   DEFAULT_CONFIG
 } from './types.js';
@@ -599,6 +601,133 @@ export class FigmaMCPServer {
           },
         },
         {
+          name: 'manage_styles',
+          description: 'Comprehensive style management for all Figma style types (paint, text, effect, grid)',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation: { 
+                type: 'string', 
+                enum: ['create', 'list', 'apply', 'delete', 'get'],
+                description: 'Style operation to perform'
+              },
+              styleType: { 
+                type: 'string', 
+                enum: ['paint', 'text', 'effect', 'grid'],
+                description: 'Type of style (required for create/list operations)'
+              },
+              styleName: { type: 'string', description: 'Style name (required for create operations)' },
+              styleId: { type: 'string', description: 'Style ID for apply/delete/get operations' },
+              nodeId: { type: 'string', description: 'Target node ID (required for apply operation)' },
+              
+              // Paint Style Properties
+              paintType: { 
+                type: 'string', 
+                enum: ['solid', 'gradient_linear', 'gradient_radial', 'gradient_angular', 'gradient_diamond', 'image'],
+                description: 'Paint type for paint styles'
+              },
+              color: { type: 'string', description: 'Color (hex) for solid paints' },
+              opacity: { type: 'number', description: 'Paint opacity (0-1)' },
+              gradientStops: { 
+                type: 'array',
+                description: 'Gradient color stops',
+                items: {
+                  type: 'object',
+                  properties: {
+                    position: { type: 'number', description: 'Stop position (0-1)' },
+                    color: { type: 'string', description: 'Stop color (hex)' },
+                    opacity: { type: 'number', description: 'Stop opacity (0-1)', default: 1 }
+                  }
+                }
+              },
+              gradientTransform: { type: 'array', description: 'Gradient transformation matrix' },
+              imageHash: { type: 'string', description: 'Image hash for image fills' },
+              scaleMode: { type: 'string', enum: ['fill', 'fit', 'crop', 'tile'], description: 'Image scale mode' },
+              
+              // Text Style Properties  
+              fontFamily: { type: 'string', description: 'Font family' },
+              fontStyle: { type: 'string', description: 'Font style (Regular, Bold, etc.)' },
+              fontSize: { type: 'number', description: 'Font size' },
+              fontWeight: { type: 'number', description: 'Font weight' },
+              textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Horizontal alignment' },
+              textAlignVertical: { type: 'string', enum: ['top', 'center', 'bottom'], description: 'Vertical alignment' },
+              textAutoResize: { type: 'string', enum: ['none', 'width_and_height', 'height'], description: 'Auto resize mode' },
+              textCase: { type: 'string', enum: ['original', 'upper', 'lower', 'title'], description: 'Text case' },
+              textDecoration: { type: 'string', enum: ['none', 'underline', 'strikethrough'], description: 'Text decoration' },
+              letterSpacing: { type: 'number', description: 'Letter spacing' },
+              lineHeight: { type: 'number', description: 'Line height value' },
+              lineHeightUnit: { type: 'string', enum: ['pixels', 'percent', 'auto'], description: 'Line height unit' },
+              paragraphIndent: { type: 'number', description: 'Paragraph indent' },
+              paragraphSpacing: { type: 'number', description: 'Paragraph spacing' },
+              listSpacing: { type: 'number', description: 'List spacing' },
+              hangingPunctuation: { type: 'boolean', description: 'Hanging punctuation' },
+              hangingList: { type: 'boolean', description: 'Hanging list' },
+              textTruncation: { type: 'string', enum: ['disabled', 'ending'], description: 'Text truncation' },
+              maxLines: { type: 'number', description: 'Maximum lines for truncation' },
+              fillColor: { type: 'string', description: 'Text fill color (hex)' },
+              
+              // Effect Style Properties
+              effects: {
+                type: 'array',
+                description: 'Array of effects',
+                items: {
+                  type: 'object',
+                  properties: {
+                    type: { 
+                      type: 'string', 
+                      enum: ['drop_shadow', 'inner_shadow', 'layer_blur', 'background_blur'],
+                      description: 'Effect type'
+                    },
+                    visible: { type: 'boolean', description: 'Effect visibility' },
+                    color: { type: 'string', description: 'Effect color (hex)' },
+                    opacity: { type: 'number', description: 'Effect opacity (0-1)', default: 1 },
+                    blendMode: { type: 'string', description: 'Blend mode' },
+                    offset: {
+                      type: 'object',
+                      description: 'Shadow offset',
+                      properties: {
+                        x: { type: 'number', description: 'X offset' },
+                        y: { type: 'number', description: 'Y offset' }
+                      }
+                    },
+                    radius: { type: 'number', description: 'Blur radius' },
+                    spread: { type: 'number', description: 'Shadow spread' },
+                    showShadowBehindNode: { type: 'boolean', description: 'Show shadow behind node' }
+                  }
+                }
+              },
+              
+              // Grid Style Properties
+              layoutGrids: {
+                type: 'array',
+                description: 'Layout grid configurations',
+                items: {
+                  type: 'object',
+                  properties: {
+                    pattern: { type: 'string', enum: ['columns', 'rows', 'grid'], description: 'Grid pattern' },
+                    sectionSize: { type: 'number', description: 'Section size' },
+                    visible: { type: 'boolean', description: 'Grid visibility' },
+                    color: { type: 'string', description: 'Grid color (hex)' },
+                    alignment: { type: 'string', enum: ['min', 'max', 'center', 'stretch'], description: 'Grid alignment' },
+                    gutterSize: { type: 'number', description: 'Gutter size' },
+                    offset: { type: 'number', description: 'Grid offset' },
+                    count: { type: 'number', description: 'Column/row count' }
+                  }
+                }
+              }
+            },
+            required: ['operation']
+          },
+          examples: [
+            '{"operation": "create", "styleType": "paint", "styleName": "Primary Blue", "paintType": "solid", "color": "#0066FF"}',
+            '{"operation": "create", "styleType": "paint", "styleName": "Blue Gradient", "paintType": "gradient_linear", "gradientStops": [{"position": 0, "color": "#0066FF", "opacity": 1}, {"position": 1, "color": "#003399", "opacity": 0.8}]}',
+            '{"operation": "create", "styleType": "effect", "styleName": "Drop Shadow", "effects": [{"type": "drop_shadow", "color": "#000000", "opacity": 0.25, "offset": {"x": 0, "y": 4}, "radius": 4}]}',
+            '{"operation": "create", "styleType": "text", "styleName": "Heading/H1", "fontSize": 32, "fontFamily": "Inter", "fontStyle": "Bold"}',
+            '{"operation": "apply", "styleId": "S:abc123", "nodeId": "1:2"}',
+            '{"operation": "list", "styleType": "paint"}'
+          ]
+        },
+        {
           name: 'get_plugin_status',
           description: 'Check if the Figma plugin is connected and ready',
           inputSchema: {
@@ -649,6 +778,8 @@ export class FigmaMCPServer {
             return await this.getPageNodes();
           case 'export_node':
             return await this.exportNode(args);
+          case 'manage_styles':
+            return await this.manageStyles(args);
           case 'get_plugin_status':
             return await this.getPluginStatus();
           default:
@@ -672,6 +803,29 @@ export class FigmaMCPServer {
   }
 
   // Tool implementations
+
+  private async manageStyles(args: any): Promise<any> {
+    try {
+      const validatedArgs = ManageStylesSchema.parse(args);
+      
+      const result = await this.sendToPlugin({
+        type: 'MANAGE_STYLES',
+        payload: validatedArgs
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: `✅ Style operation ${validatedArgs.operation} completed successfully: ${JSON.stringify(result, null, 2)}`
+          }
+        ]
+      };
+    } catch (error) {
+      console.error('❌ Error in manageStyles:', error);
+      throw error;
+    }
+  }
 
   private async createNode(args: any): Promise<any> {
     try {

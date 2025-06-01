@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2025-01-20
+
+### Added
+- **Comprehensive Style Management**: New `manage_styles` tool with full Figma style support
+  - Paint styles: solid colors, linear/radial/angular/diamond gradients, image fills
+  - Text styles: complete typography control with all Figma text properties
+  - Effect styles: drop shadows, inner shadows, layer blur, background blur
+  - Grid styles: column/row/grid layouts with full configuration
+  - CRUD operations: create, list, apply, delete, get styles
+  - Style application to any compatible node type
+  - Complete Figma Plugin API coverage for all style types
+
+### Enhanced
+- **Plugin Integration**: Comprehensive style handling in Figma plugin
+  - Full paint creation with all gradient types and image support
+  - Complete text style property mapping including OpenType features
+  - Effect system with multiple effects and blend modes
+  - Layout grid support with all alignment and sizing options
+  - Robust error handling and logging for all style operations
+
+### Technical Details
+- **Schema Validation**: Complete Zod schemas for all style operations
+- **Type Safety**: Full TypeScript support for all style properties
+- **API Completeness**: 100% coverage of Figma's style management capabilities
+
 ## [0.10.0] - 2025-06-01
 
 ### Added

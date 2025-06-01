@@ -1,4 +1,4 @@
-# Development Guide - v0.10.0 with Advanced Typography
+# Development Guide
 
 ## 🔧 Setting Up Development Environment
 
@@ -29,15 +29,13 @@ npm run dev
 figma-mcp-write-server/
 ├── src/                     # MCP Server source code
 │   ├── types.ts            # Type definitions and Zod schemas
-│   ├── mcp-server.ts       # MCP server with built-in WebSocket server and typography features
+│   ├── mcp-server.ts       # MCP server with built-in WebSocket server
 │   └── index.ts            # CLI entry point
 ├── figma-plugin/           # Figma plugin source code
 │   ├── manifest.json       # Plugin configuration
-│   ├── code.js             # Plugin WebSocket client with advanced text creation
+│   ├── code.js             # Plugin WebSocket client
 │   └── ui.html             # Plugin user interface
-├── examples/               # Usage examples and documentation
-│   ├── README.md           # Advanced typography examples
-│   └── design-system-example.md  # Design system with typography
+├── EXAMPLES.md             # Usage examples and guides
 ├── dist/                   # Compiled JavaScript output
 ├── package.json            # Node.js dependencies and scripts
 ├── tsconfig.json           # TypeScript configuration
@@ -308,23 +306,33 @@ catch (error) {
 
 ## 📦 Available MCP Tools
 
-The server provides 13 MCP tools for Figma operations:
+The server provides 11 MCP tools for Figma operations:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
-| **Create** | `create_node`, `create_text` | Create design elements with unified and advanced typography |
+| **Create** | `create_node`, `create_text` | Create design elements with typography support |
+| **Styles** | `manage_styles` | Style management (paint, text, effect, grid) |
 | **Modify** | `update_node`, `move_node`, `delete_node`, `duplicate_node` | Modify existing elements |
 | **Selection** | `get_selection`, `set_selection` | Manage element selection |
 | **Data** | `get_page_nodes`, `export_node` | Read design data |
 | **Status** | `get_plugin_status` | Monitor connection health |
 
-### Typography Features (New in v0.10.0)
-The `create_text` tool provides advanced typography capabilities:
+### Style Management Features
+The `manage_styles` tool provides style management:
+- **Paint Styles**: Solid colors, gradients (linear, radial, angular, diamond), image fills
+- **Text Styles**: Complete typography control with all Figma text properties
+- **Effect Styles**: Drop shadows, inner shadows, layer blur, background blur
+- **Grid Styles**: Column/row/grid layouts with full configuration
+- **CRUD Operations**: Create, list, apply, delete, and get styles
+- **Style Application**: Apply styles to any compatible node type
+
+### Typography Features
+The `create_text` tool provides typography capabilities:
 - **Mixed Styling**: Apply different fonts, sizes, and colors to text segments with `styleRanges`
 - **Text Styles**: Create reusable text styles with `createStyle` and `styleName`
-- **Advanced Properties**: Font families, weights, alignment, spacing, case, and decoration
+- **Typography Properties**: Font families, weights, alignment, spacing, case, and decoration
 - **Layout Control**: Fixed-width text with automatic height adjustment
-- **Professional Typography**: Line height units, letter spacing, paragraph formatting
+- **Formatting**: Line height units, letter spacing, paragraph formatting
 
 ## 🚀 Deployment
 
@@ -382,4 +390,4 @@ Set environment variables:
 
 ---
 
-This development guide covers the essential information for working with the Figma MCP Write Server. For usage examples and setup instructions, see the [README](README.md).
+This development guide covers the essential information for working with the Figma MCP Write Server. For usage examples and setup instructions, see the [README](README.md) and [EXAMPLES.md](EXAMPLES.md).
