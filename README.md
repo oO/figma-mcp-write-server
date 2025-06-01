@@ -76,18 +76,23 @@ graph LR
 - Figma desktop app or browser access
 - MCP-compatible client (Claude Desktop, Cursor, etc.)
 
-### 1. Install Dependencies
+### 1. Clone Repository
 ```bash
+git clone https://github.com/oO/figma-mcp-write-server.git
 cd figma-mcp-write-server
+```
+
+### 2. Install Dependencies
+```bash
 npm install
 ```
 
-### 2. Build the Project
+### 3. Build the Project
 ```bash
 npm run build
 ```
 
-### 3. Start the Server
+### 4. Start the Server
 
 **Production:**
 ```bash
@@ -101,13 +106,13 @@ npm start
 npm run dev
 ```
 
-### 4. Install Figma Plugin
+### 5. Install Figma Plugin
 1. Open Figma
 2. Go to **Plugins** → **Development** → **Import plugin from manifest**
 3. Select `figma-plugin/manifest.json`
 4. Run the plugin to establish connection
 
-### 5. Configure MCP Client
+### 6. Configure MCP Client
 
 For **Claude Desktop**, add to `~/.claude/claude_desktop_config.json`:
 ```json
