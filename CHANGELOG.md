@@ -5,7 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2025-06-02
+
+### Added
+- **Layer & Hierarchy Management**: New `manage_hierarchy` tool with comprehensive layer organization capabilities
+  - Grouping operations: `group`, `ungroup`, `frame` for organizing related elements
+  - Depth/Z-index management: `bring_to_front`, `send_to_back`, `bring_forward`, `send_backward`
+  - Precise positioning: `reorder`, `move_above`, `move_below` for exact layer control
+  - Hierarchy manipulation: `move_to_parent` for restructuring node relationships
+  - Tree traversal: `get_parent`, `get_children`, `get_siblings`, `get_ancestors`, `get_descendants`
+  - Layer introspection: `get_layer_index` for current position information
+  - Smart container creation with automatic sizing and coordinate adjustment
+  - Support for both GROUP and FRAME container types
+
+### Enhanced
+- **Plugin Integration**: Complete hierarchy management in Figma plugin
+  - Full grouping and ungrouping with parent-child relationship handling
+  - Frame creation with automatic bounding box calculation
+  - Layer ordering with proper index management and validation
+  - Coordinate system handling for parent transitions
+  - Robust error handling for invalid operations and missing nodes
+  - Tree traversal algorithms for ancestor/descendant queries
+
+### Technical Details
+- **API Coverage**: 17 distinct hierarchy operations covering all common use cases
+- **Validation**: Parameter validation for each operation type with clear error messages
+- **Performance**: Efficient tree traversal and batch operations
+- **Safety**: Bounds checking and parent validation to prevent invalid states
+
 ## [0.11.0] - 2025-01-20
+</edits>
 
 ### Added
 - **Comprehensive Style Management**: New `manage_styles` tool with full Figma style support

@@ -2,6 +2,8 @@
 
 A Model Context Protocol (MCP) server that provides **write access** to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically.
 
+_Designed and Architected with ❤️ by a real human. Coded by an AI Assistant._
+
 ## 🚀 Overview
 
 Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
@@ -9,6 +11,7 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Create** design elements (rectangles, ellipses, text, frames)
 - ✅ **Typography** with mixed styling and text formatting
 - ✅ **Style Management** for paint, text, effect, and grid styles
+- ✅ **Layer & Hierarchy** management (grouping, depth sorting, parent-child relationships)
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
@@ -34,10 +37,14 @@ Direct communication design eliminates complexity and improves reliability.
 
 ```mermaid
 graph LR
-    A[AI Agent/Claude] --> B[MCP Client]
+    subgraph Agent
+        A[AI Agent/Claude] --> B[MCP Client]
+    end
+    subgraph Figma
+        D[Figma Plugin] --> E[Figma Design]
+    end
     B --> C[MCP Server]
-    C --> D[Figma Plugin]
-    D --> E[Figma Design]
+    C --> D
 ```
 
 **Architecture Benefits:**
@@ -59,6 +66,7 @@ graph LR
 | `create_node` | Create nodes (rectangle, ellipse, text, frame) | nodeType, x, y, width, height, content, fillColor, etc. |
 | `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign, etc. |
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects, etc. |
+| `manage_hierarchy` | Layer & hierarchy management (grouping, depth, parent-child) | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex, etc. |
 | `update_node` | Update node properties | nodeId, properties |
 | `move_node` | Move nodes to new positions | nodeId, x, y |
 | `delete_node` | Delete nodes | nodeId |
@@ -142,7 +150,7 @@ For **Cursor**, add to MCP configuration:
 
 Common use cases:
 - **Create Layout**: "Create a header frame with title and subtitle"
-- **Typography**: "Make a styled heading with mixed formatting" 
+- **Typography**: "Make a styled heading with mixed formatting"
 - **Design System**: "Create color palette and apply styles consistently"
 - **Components**: "Build button variants with different colors and styles"
 - **Batch Operations**: "Select all text elements and update font size"
@@ -230,4 +238,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 11 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 13 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

@@ -728,6 +728,77 @@ export class FigmaMCPServer {
           ]
         },
         {
+          name: 'manage_hierarchy',
+          description: 'Comprehensive layer organization and hierarchy manipulation - grouping, depth sorting, and parent-child relationships',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation: {
+                type: 'string',
+                enum: [
+                  'group', 'ungroup', 'frame',
+                  'bring_to_front', 'send_to_back', 'bring_forward', 'send_backward',
+                  'reorder', 'move_above', 'move_below',
+                  'move_to_parent', 'get_parent', 'get_children', 'get_siblings',
+                  'get_ancestors', 'get_descendants', 'get_layer_index'
+                ],
+                description: 'Hierarchy operation to perform'
+              },
+              nodeId: {
+                type: 'string',
+                description: 'ID of the node to operate on (required for most operations)'
+              },
+              nodeIds: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Array of node IDs (required for group operations)'
+              },
+              targetNodeId: {
+                type: 'string',
+                description: 'Target node ID for relative operations (move_above, move_below)'
+              },
+              newParentId: {
+                type: 'string',
+                description: 'New parent node ID (required for move_to_parent)'
+              },
+              newIndex: {
+                type: 'number',
+                description: 'New index position for reorder or move_to_parent operations'
+              },
+              name: {
+                type: 'string',
+                description: 'Name for new groups or frames'
+              },
+              groupType: {
+                type: 'string',
+                enum: ['GROUP', 'FRAME'],
+                default: 'GROUP',
+                description: 'Type of container to create (for group operation)'
+              }
+            },
+            required: ['operation']
+          },
+          examples: [
+            '{"operation": "group", "nodeIds": ["1:2", "1:3", "1:4"], "name": "Navigation Bar", "groupType": "GROUP"}',
+            '{"operation": "ungroup", "nodeId": "1:5"}',
+            '{"operation": "frame", "nodeIds": ["1:2", "1:3"], "name": "Button Group"}',
+            '{"operation": "bring_to_front", "nodeId": "1:2"}',
+            '{"operation": "send_to_back", "nodeId": "1:3"}',
+            '{"operation": "bring_forward", "nodeId": "1:4"}',
+            '{"operation": "send_backward", "nodeId": "1:5"}',
+            '{"operation": "reorder", "nodeId": "1:2", "newIndex": 0}',
+            '{"operation": "move_above", "nodeId": "1:2", "targetNodeId": "1:3"}',
+            '{"operation": "move_below", "nodeId": "1:2", "targetNodeId": "1:3"}',
+            '{"operation": "move_to_parent", "nodeId": "1:2", "newParentId": "1:10", "newIndex": 0}',
+            '{"operation": "get_parent", "nodeId": "1:2"}',
+            '{"operation": "get_children", "nodeId": "1:5"}',
+            '{"operation": "get_siblings", "nodeId": "1:2"}',
+            '{"operation": "get_ancestors", "nodeId": "1:2"}',
+            '{"operation": "get_descendants", "nodeId": "1:5"}',
+            '{"operation": "get_layer_index", "nodeId": "1:2"}'
+          ]
+        },
+        {
           name: 'get_plugin_status',
           description: 'Check if the Figma plugin is connected and ready',
           inputSchema: {
@@ -780,6 +851,8 @@ export class FigmaMCPServer {
             return await this.exportNode(args);
           case 'manage_styles':
             return await this.manageStyles(args);
+          case 'manage_hierarchy':
+            return await this.manageHierarchy(args);
           case 'get_plugin_status':
             return await this.getPluginStatus();
           default:
@@ -1010,10 +1083,47 @@ export class FigmaMCPServer {
       type: 'GET_PAGE_NODES'
     });
 
+    const data = response.data;
+    let resultText = `📄 Page Hierarchy (${data?.totalCount || 0} total nodes, ${data?.topLevelCount || 0} top-level)\n\n`;
+    
+    if (data?.nodes && Array.isArray(data.nodes)) {
+      // Group nodes by depth for better visualization
+      const nodesByDepth: { [key: number]: any[] } = {};
+      data.nodes.forEach((node: any) => {
+        const depth = node.depth || 0;
+        if (!nodesByDepth[depth]) nodesByDepth[depth] = [];
+        nodesByDepth[depth].push(node);
+      });
+
+      // Display hierarchy with indentation
+      Object.keys(nodesByDepth).sort((a, b) => parseInt(a) - parseInt(b)).forEach(depth => {
+        const indent = '  '.repeat(parseInt(depth));
+        const nodes = nodesByDepth[parseInt(depth)];
+        
+        if (!nodes || nodes.length === 0) return;
+        
+        if (parseInt(depth) === 0) {
+          resultText += `🌳 Top Level (${nodes.length} nodes):\n`;
+        } else {
+          resultText += `${'  '.repeat(parseInt(depth) - 1)}📁 Level ${depth} (${nodes.length} nodes):\n`;
+        }
+        
+        nodes.forEach((node: any) => {
+          const childInfo = node.childCount > 0 ? ` [${node.childCount} children]` : '';
+          const position = node.x !== undefined && node.y !== undefined ? ` at (${Math.round(node.x)}, ${Math.round(node.y)})` : '';
+          resultText += `${indent}• ${node.name} (${node.type})${childInfo} - ID: ${node.id}${position}\n`;
+        });
+        resultText += '\n';
+      });
+    } else {
+      resultText += '⚠️ No node data received or invalid format\n';
+      resultText += `Raw response: ${JSON.stringify(data, null, 2)}`;
+    }
+
     return {
       content: [{
         type: 'text',
-        text: `📄 Page nodes: ${JSON.stringify(response.data, null, 2)}`
+        text: resultText
       }]
     };
   }
@@ -1030,6 +1140,243 @@ export class FigmaMCPServer {
       content: [{
         type: 'text',
         text: `✅ Exported node ${params.nodeId} as ${params.format} with scale ${params.scale}`
+      }]
+    };
+  }
+
+  private async manageHierarchy(args: any) {
+    const { operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex, name, groupType } = args;
+
+    // Validate required parameters based on operation
+    switch (operation) {
+      case 'group':
+      case 'frame':
+        if (!nodeIds || !Array.isArray(nodeIds) || nodeIds.length === 0) {
+          throw new Error(`${operation} operation requires nodeIds array`);
+        }
+        break;
+      case 'ungroup':
+      case 'bring_to_front':
+      case 'send_to_back':
+      case 'bring_forward':
+      case 'send_backward':
+      case 'get_parent':
+      case 'get_children':
+      case 'get_siblings':
+      case 'get_ancestors':
+      case 'get_descendants':
+      case 'get_layer_index':
+        if (!nodeId) {
+          throw new Error(`${operation} operation requires nodeId`);
+        }
+        break;
+      case 'reorder':
+        if (!nodeId || newIndex === undefined) {
+          throw new Error('reorder operation requires nodeId and newIndex');
+        }
+        break;
+      case 'move_above':
+      case 'move_below':
+        if (!nodeId || !targetNodeId) {
+          throw new Error(`${operation} operation requires nodeId and targetNodeId`);
+        }
+        break;
+      case 'move_to_parent':
+        if (!nodeId || !newParentId) {
+          throw new Error('move_to_parent operation requires nodeId and newParentId');
+        }
+        break;
+    }
+
+    const response = await this.sendToPlugin({
+      type: 'MANAGE_HIERARCHY',
+      payload: {
+        operation,
+        nodeId,
+        nodeIds,
+        targetNodeId,
+        newParentId,
+        newIndex,
+        name,
+        groupType: groupType || 'GROUP'
+      }
+    });
+
+    // Format response based on operation type
+    let resultText = '';
+    const data = response.data;
+    
+    switch (operation) {
+      case 'group':
+        resultText = `✅ Created ${groupType?.toLowerCase() || 'group'}: ${data?.id || 'Unknown ID'}${name ? ` (${name})` : ''}\n`;
+        if (data?.children !== undefined) {
+          resultText += `📦 Contains ${data.children} child nodes`;
+        }
+        if (data?.id) {
+          resultText += `\n🆔 Node ID: ${data.id} (use this for future operations)`;
+        }
+        break;
+      case 'ungroup':
+        resultText = `✅ Ungrouped node: ${nodeId}`;
+        if (data?.ungroupedContainer) {
+          resultText += `\n📦 Ungrouped ${data.ungroupedContainer.type}: "${data.ungroupedContainer.name}"`;
+        }
+        if (data?.movedChildren !== undefined) {
+          resultText += `\n📤 Moved ${data.movedChildren} children to parent`;
+          if (data.childrenIds && data.childrenIds.length > 0) {
+            resultText += `\n🆔 Child IDs: ${data.childrenIds.join(', ')} (now available for individual operations)`;
+          }
+        }
+        if (data?.message) {
+          resultText += `\n💡 ${data.message}`;
+        }
+        break;
+      case 'frame':
+        resultText = `✅ Created frame: ${data?.id || 'Unknown ID'}${name ? ` (${name})` : ''}\n`;
+        if (data?.children !== undefined) {
+          resultText += `📦 Contains ${data.children} child nodes`;
+        }
+        if (data?.id) {
+          resultText += `\n🆔 Node ID: ${data.id} (use this for future operations)`;
+        }
+        break;
+      case 'bring_to_front':
+        resultText = `✅ Brought to front: ${nodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+        }
+        break;
+      case 'send_to_back':
+        resultText = `✅ Sent to back: ${nodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+        }
+        break;
+      case 'bring_forward':
+        resultText = `✅ Brought forward: ${nodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+        }
+        if (data?.message) {
+          resultText += `\n💡 ${data.message}`;
+        }
+        break;
+      case 'send_backward':
+        resultText = `✅ Sent backward: ${nodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+        }
+        if (data?.message) {
+          resultText += `\n💡 ${data.message}`;
+        }
+        break;
+      case 'reorder':
+        resultText = `✅ Reordered ${nodeId}`;
+        if (data?.newIndex !== undefined && data?.requestedIndex !== undefined) {
+          resultText += `\n📊 Requested index: ${data.requestedIndex}, Actual index: ${data.newIndex}`;
+          if (data.requestedIndex !== data.newIndex) {
+            resultText += ` (adjusted by Figma - use ${data.newIndex} for future references)`;
+          }
+        }
+        break;
+      case 'move_above':
+        resultText = `✅ Moved ${nodeId} above ${targetNodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+          if (data.targetIndex !== undefined) {
+            resultText += `\n🎯 Target was at index: ${data.targetIndex}`;
+          }
+        }
+        break;
+      case 'move_below':
+        resultText = `✅ Moved ${nodeId} below ${targetNodeId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 New index: ${data.newIndex}`;
+          if (data.previousIndex !== undefined) {
+            resultText += ` (was ${data.previousIndex})`;
+          }
+          if (data.targetIndex !== undefined) {
+            resultText += `\n🎯 Target was at index: ${data.targetIndex}`;
+          }
+        }
+        break;
+      case 'move_to_parent':
+        resultText = `✅ Moved ${nodeId} to parent ${newParentId}`;
+        if (data?.newIndex !== undefined) {
+          resultText += `\n📊 Index in new parent: ${data.newIndex}`;
+          if (data.requestedIndex !== undefined && data.requestedIndex !== data.newIndex) {
+            resultText += ` (requested ${data.requestedIndex}, adjusted by Figma)`;
+          }
+        }
+        break;
+      case 'get_parent':
+        if (data) {
+          resultText = `🔍 Parent of ${nodeId}: ${data.name} (${data.type}) - ID: ${data.id}`;
+        } else {
+          resultText = `🔍 Node ${nodeId} has no parent (likely a root node)`;
+        }
+        break;
+      case 'get_children':
+        resultText = `🔍 Children of ${nodeId}: ${Array.isArray(data) ? data.length : 0} nodes`;
+        if (Array.isArray(data) && data.length > 0) {
+          resultText += `\n📋 ${data.map(child => `${child.name} (${child.type}) - ID: ${child.id}`).join(', ')}`;
+        }
+        break;
+      case 'get_siblings':
+        resultText = `🔍 Siblings of ${nodeId}: ${Array.isArray(data) ? data.length : 0} nodes`;
+        if (Array.isArray(data) && data.length > 0) {
+          resultText += `\n📋 ${data.map(sibling => `${sibling.name} (${sibling.type}) - ID: ${sibling.id}`).join(', ')}`;
+        }
+        break;
+      case 'get_ancestors':
+        resultText = `🔍 Ancestors of ${nodeId}: ${Array.isArray(data) ? data.length : 0} levels`;
+        if (Array.isArray(data) && data.length > 0) {
+          resultText += `\n🌳 ${data.map(ancestor => `${ancestor.name} (${ancestor.type}) - ID: ${ancestor.id}`).join(' ← ')}`;
+        }
+        break;
+      case 'get_descendants':
+        resultText = `🔍 Descendants of ${nodeId}: ${Array.isArray(data) ? data.length : 0} nodes`;
+        if (Array.isArray(data) && data.length > 0) {
+          const types = data.reduce((acc, desc) => {
+            acc[desc.type] = (acc[desc.type] || 0) + 1;
+            return acc;
+          }, {});
+          resultText += `\n📊 Types: ${Object.entries(types).map(([type, count]) => `${count} ${type}`).join(', ')}`;
+        }
+        break;
+      case 'get_layer_index':
+        resultText = `🔍 Layer index of ${nodeId}: ${data}`;
+        if (typeof data === 'number') {
+          resultText += ` (position in parent's children array)`;
+        }
+        break;
+      default:
+        resultText = `✅ ${operation} completed`;
+        if (data) {
+          resultText += `\n📋 Result: ${JSON.stringify(data, null, 2)}`;
+        }
+        break;
+    }
+
+    return {
+      content: [{
+        type: 'text',
+        text: resultText
       }]
     };
   }
@@ -1066,7 +1413,7 @@ ${!this.pluginConnection ?
       
       console.error('✅ MCP Server started successfully');
       console.error(`🔌 WebSocket server running on port ${this.config.port}`);
-      console.error('💡 Available tools: 13 total - create/update/move/delete/duplicate elements, manage selection, export, status');
+      console.error('💡 Available tools: 13 total - create/update/move/delete/duplicate elements, manage selection, hierarchy, export, status');
       console.error('📱 Run the Figma plugin to enable write operations');
     } catch (error) {
       console.error('❌ Failed to start server:', error);

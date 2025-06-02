@@ -153,6 +153,82 @@ The AI can perform these operations:
 - **Get**: "What are the details of the primary color style?"
 - **Delete**: "Remove the unused button style"
 
+## 🏗️ Layer & Hierarchy Management
+
+### Grouping Operations
+**User Instructions → AI Actions:**
+
+- **"Group these navigation elements together"**
+  - AI uses `manage_hierarchy` with `group` operation to create organized containers
+
+- **"Create a frame around these components"**
+  - AI uses `frame` operation to wrap elements in a frame container with proper sizing
+
+- **"Ungroup this navigation bar so I can edit individual elements"**
+  - AI uses `ungroup` operation to dissolve groups while preserving element positions
+
+### Layer Ordering
+**User Instructions → AI Actions:**
+
+- **"Bring the logo to the front"**
+  - AI uses `bring_to_front` operation to move element to top layer
+
+- **"Send this background shape behind everything"**
+  - AI uses `send_to_back` operation to move element to bottom layer
+
+- **"Move this button forward one layer"**
+  - AI uses `bring_forward` operation for precise single-step positioning
+
+- **"Move this element back one layer"**
+  - AI uses `send_backward` operation for precise single-step positioning
+
+- **"Place this element above the header"**
+  - AI uses `move_above` operation for relative positioning between specific elements
+
+- **"Place this button below the navigation"**
+  - AI uses `move_below` operation for relative positioning between specific elements
+
+### Hierarchy Reorganization
+**User Instructions → AI Actions:**
+
+- **"Move this button into the sidebar frame"**
+  - AI uses `move_to_parent` operation to restructure element relationships
+
+- **"Show me all the children of this component"**
+  - AI uses `get_children` operation to inspect hierarchy structure
+
+- **"Reorder this element to be first in its container"**
+  - AI uses `reorder` operation with index 0 for precise positioning
+
+### Hierarchy Inspection
+**User Instructions → AI Actions:**
+
+- **"What is the parent of this element?"**
+  - AI uses `get_parent` operation to find the direct parent container
+
+- **"Show me all siblings of this button"**
+  - AI uses `get_siblings` operation to list elements at the same hierarchy level
+
+- **"What is the current layer position of this element?"**
+  - AI uses `get_layer_index` operation to get the exact position in parent's children
+
+- **"Show me the complete hierarchy path for this element"**
+  - AI uses `get_ancestors` operation to trace from element to root page
+
+- **"List all nested elements inside this component"**
+  - AI uses `get_descendants` operation to recursively find all child elements
+
+### Advanced Hierarchy Workflows
+**User Instructions:**
+"Organize this messy layout - group related elements, fix layer order, and structure everything properly"
+
+**What the AI does:**
+1. **Analysis**: Uses `get_page_nodes` and hierarchy queries to understand current structure
+2. **Grouping**: Groups related elements (navigation items, buttons, content sections)
+3. **Layer Management**: Brings important elements forward, sends backgrounds back
+4. **Restructuring**: Moves elements into logical parent containers
+5. **Organization**: Creates proper hierarchy with frames for major sections
+
 ## 🔧 Batch Operations
 
 ### Selection Management
