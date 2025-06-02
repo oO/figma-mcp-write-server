@@ -33,8 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Performance**: Efficient tree traversal and batch operations
 - **Safety**: Bounds checking and parent validation to prevent invalid states
 
-## [0.11.0] - 2025-01-20
-</edits>
+## [0.11.0] - 2025-06-01
 
 ### Added
 - **Comprehensive Style Management**: New `manage_styles` tool with full Figma style support
@@ -180,7 +179,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Error Handling**: Improved timeout and reconnection logic
 - **Logging**: Better status reporting and debugging information
 
-## [1.0.1] - 2025-05-28
+## [0.2.0] - 2025-05-28
 
 ### Fixed
 - **Critical**: Fixed JSON parsing errors in MCP protocol communication
@@ -196,14 +195,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Impact: Eliminates connection issues between Claude Desktop and MCP server
 - MCP protocol requires stdout to contain only valid JSON-RPC messages
 
-## [1.0.0] - 2025-05-28
+## [0.1.0] - 2025-05-28
 
 ### Added
 - Initial release of Figma MCP Write Server
 - WebSocket bridge architecture for plugin communication
 - 13 MCP tools for full Figma write access:
   - `create_rectangle` - Create rectangle shapes
-  - `create_ellipse` - Create ellipse/circle shapes  
+  - `create_ellipse` - Create ellipse/circle shapes
   - `create_text` - Create text elements
   - `create_frame` - Create frame containers
   - `update_node` - Update existing node properties
