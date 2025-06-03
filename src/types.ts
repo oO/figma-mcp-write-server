@@ -164,6 +164,77 @@ export type Effect = z.infer<typeof EffectSchema>;
 export type LayoutGrid = z.infer<typeof LayoutGridSchema>;
 
 // ================================================================================
+// Auto Layout & Constraints Types
+// ================================================================================
+
+export const PaddingSchema = z.object({
+  top: z.number().optional(),
+  right: z.number().optional(),
+  bottom: z.number().optional(),
+  left: z.number().optional(),
+});
+
+export const ResizingSchema = z.object({
+  width: z.enum(['hug', 'fill', 'fixed']).optional(),
+  height: z.enum(['hug', 'fill', 'fixed']).optional(),
+});
+
+export const ManageAutoLayoutSchema = z.object({
+  operation: z.enum(['enable', 'disable', 'update', 'get_properties']),
+  nodeId: z.string(),
+  
+  // Layout Direction
+  direction: z.enum(['horizontal', 'vertical']).optional(),
+  
+  // Spacing & Padding
+  spacing: z.number().optional(),
+  padding: PaddingSchema.optional(),
+  
+  // Alignment
+  primaryAlignment: z.enum(['min', 'center', 'max', 'space_between']).optional(),
+  counterAlignment: z.enum(['min', 'center', 'max']).optional(),
+  
+  // Resizing Behavior
+  resizing: ResizingSchema.optional(),
+  
+  // Advanced Properties
+  strokesIncludedInLayout: z.boolean().optional(),
+  layoutWrap: z.enum(['no_wrap', 'wrap']).optional(),
+}).refine((data) => {
+  // Validation rules for different operations
+  if (data.operation === 'enable') {
+    // Enable operation should have at least direction
+    return true; // Direction will have default in implementation
+  }
+  return true;
+}, {
+  message: "Invalid parameters for the specified operation"
+});
+
+export const ManageConstraintsSchema = z.object({
+  operation: z.enum(['set', 'get', 'reset', 'get_info']),
+  nodeId: z.string(),
+  
+  // Constraint Settings
+  horizontal: z.enum(['left', 'right', 'left_right', 'center', 'scale']).optional(),
+  vertical: z.enum(['top', 'bottom', 'top_bottom', 'center', 'scale']).optional(),
+}).refine((data) => {
+  // Validation rules for different operations
+  if (data.operation === 'set') {
+    // Set operation should have at least one constraint
+    return data.horizontal !== undefined || data.vertical !== undefined;
+  }
+  return true;
+}, {
+  message: "Set operation requires at least one constraint (horizontal or vertical)"
+});
+
+export type ManageAutoLayoutParams = z.infer<typeof ManageAutoLayoutSchema>;
+export type ManageConstraintsParams = z.infer<typeof ManageConstraintsSchema>;
+export type Padding = z.infer<typeof PaddingSchema>;
+export type Resizing = z.infer<typeof ResizingSchema>;
+
+// ================================================================================
 // Simple Figma Node Types (without recursive children to avoid TS infinite loop)
 // ================================================================================
 
@@ -214,6 +285,8 @@ export const PluginMessageSchema = z.object({
     'SET_SELECTION',
     'MANAGE_STYLES',
     'EXPORT_NODE',
+    'MANAGE_AUTO_LAYOUT',
+    'MANAGE_CONSTRAINTS',
     'PLUGIN_READY',
     'HEARTBEAT'
   ]),

@@ -92,6 +92,16 @@ async function handlePluginOperation(operation, payload, id) {
         result = await manageHierarchy(payload);
         break;
         
+      case 'MANAGE_AUTO_LAYOUT':
+        console.log('📐 Starting MANAGE_AUTO_LAYOUT operation');
+        result = await manageAutoLayout(payload);
+        break;
+        
+      case 'MANAGE_CONSTRAINTS':
+        console.log('🔗 Starting MANAGE_CONSTRAINTS operation');
+        result = await manageConstraints(payload);
+        break;
+        
       default:
         throw new Error(`Unknown operation: ${operation}`);
     }
@@ -555,7 +565,7 @@ async function getPageNodes() {
     
     if ('children' in node) {
       node.children.forEach(child => {
-        result.push(...getAllNodes(child, depth + 1, node.id));
+        result = result.concat(getAllNodes(child, depth + 1, node.id));
       });
     }
     
@@ -898,21 +908,17 @@ async function applyStyle(params) {
   let style;
   if (params.styleId) {
     // Find style by ID
-    const allStyles = [
-      ...figma.getLocalPaintStyles(),
-      ...figma.getLocalTextStyles(),
-      ...figma.getLocalEffectStyles(),
-      ...figma.getLocalGridStyles()
-    ];
+    const allStyles = figma.getLocalPaintStyles()
+      .concat(figma.getLocalTextStyles())
+      .concat(figma.getLocalEffectStyles())
+      .concat(figma.getLocalGridStyles());
     style = allStyles.find(s => s.id === params.styleId);
   } else if (params.styleName) {
     // Find style by name (less reliable but supported)
-    const allStyles = [
-      ...figma.getLocalPaintStyles(),
-      ...figma.getLocalTextStyles(),
-      ...figma.getLocalEffectStyles(),
-      ...figma.getLocalGridStyles()
-    ];
+    const allStyles = figma.getLocalPaintStyles()
+      .concat(figma.getLocalTextStyles())
+      .concat(figma.getLocalEffectStyles())
+      .concat(figma.getLocalGridStyles());
     style = allStyles.find(s => s.name === params.styleName);
   }
   
@@ -954,12 +960,10 @@ async function applyStyle(params) {
 // Delete style function
 async function deleteStyle(params) {
   let style;
-  const allStyles = [
-    ...figma.getLocalPaintStyles(),
-    ...figma.getLocalTextStyles(),
-    ...figma.getLocalEffectStyles(),
-    ...figma.getLocalGridStyles()
-  ];
+  const allStyles = figma.getLocalPaintStyles()
+    .concat(figma.getLocalTextStyles())
+    .concat(figma.getLocalEffectStyles())
+    .concat(figma.getLocalGridStyles());
   
   if (params.styleId) {
     style = allStyles.find(s => s.id === params.styleId);
@@ -979,12 +983,10 @@ async function deleteStyle(params) {
 // Get style function
 async function getStyle(params) {
   let style;
-  const allStyles = [
-    ...figma.getLocalPaintStyles(),
-    ...figma.getLocalTextStyles(),
-    ...figma.getLocalEffectStyles(),
-    ...figma.getLocalGridStyles()
-  ];
+  const allStyles = figma.getLocalPaintStyles()
+    .concat(figma.getLocalTextStyles())
+    .concat(figma.getLocalEffectStyles())
+    .concat(figma.getLocalGridStyles());
   
   if (params.styleId) {
     style = allStyles.find(s => s.id === params.styleId);
@@ -1251,7 +1253,7 @@ async function ungroupNode(nodeId) {
   } else {
     // For frames, we need to manually handle ungrouping since figma.ungroup() only works on groups
     const parent = node.parent;
-    const children = [...node.children];
+    const children = Array.from(node.children);
     const insertIndex = parent.children.indexOf(node);
 
     // Store original absolute positions for coordinate restoration
@@ -1479,10 +1481,16 @@ async function moveToParent(nodeId, newParentId, newIndex) {
     throw new Error(`Target parent (${newParent.type}) cannot contain children`);
   }
 
-  // Store original absolute position for coordinate transformation
-  const oldParent = node.parent;
-  const absoluteX = node.x + (oldParent ? oldParent.x : 0);
-  const absoluteY = node.y + (oldParent ? oldParent.y : 0);
+  // Check if new parent has auto layout
+  const newParentHasAutoLayout = newParent.layoutMode && newParent.layoutMode !== 'NONE';
+  
+  // Store original absolute position for coordinate transformation (only for non-auto-layout parents)
+  let absoluteX, absoluteY;
+  if (!newParentHasAutoLayout) {
+    const oldParent = node.parent;
+    absoluteX = node.x + (oldParent ? oldParent.x : 0);
+    absoluteY = node.y + (oldParent ? oldParent.y : 0);
+  }
 
   // Move to new parent
   if (newIndex !== undefined) {
@@ -1491,18 +1499,22 @@ async function moveToParent(nodeId, newParentId, newIndex) {
     newParent.appendChild(node);
   }
 
-  // Adjust coordinates relative to new parent
-  const newAbsoluteParentX = newParent.x || 0;
-  const newAbsoluteParentY = newParent.y || 0;
-  node.x = absoluteX - newAbsoluteParentX;
-  node.y = absoluteY - newAbsoluteParentY;
+  // Adjust coordinates only for non-auto-layout parents
+  if (!newParentHasAutoLayout) {
+    const newAbsoluteParentX = newParent.x || 0;
+    const newAbsoluteParentY = newParent.y || 0;
+    node.x = absoluteX - newAbsoluteParentX;
+    node.y = absoluteY - newAbsoluteParentY;
+  }
+  // For auto layout parents, don't set x/y as auto layout handles positioning
 
   const actualIndex = newParent.children.indexOf(node);
   return { 
     success: true, 
     newParentId, 
     newIndex: actualIndex,
-    requestedIndex: newIndex 
+    requestedIndex: newIndex,
+    autoLayoutParent: newParentHasAutoLayout
   };
 }
 
@@ -1589,6 +1601,429 @@ async function getLayerIndex(nodeId) {
   }
 
   return node.parent.children.indexOf(node);
+}
+
+async function manageAutoLayout(payload) {
+  const { operation, nodeId, direction, spacing, padding, primaryAlignment, counterAlignment, resizing, strokesIncludedInLayout, layoutWrap } = payload;
+  
+  const node = findNodeById(nodeId);
+  if (!node) {
+    throw new Error(`Node not found: ${nodeId}`);
+  }
+
+  // Only frames can have auto layout (except for get_properties which can check any node)
+  if (operation !== 'get_properties' && node.type !== 'FRAME') {
+    throw new Error(`Cannot enable auto layout on non-frame node. Node type: ${node.type}`);
+  }
+
+  switch (operation) {
+    case 'enable':
+      return await enableAutoLayout(node, { direction, spacing, padding, primaryAlignment, counterAlignment, resizing, strokesIncludedInLayout, layoutWrap });
+    
+    case 'disable':
+      return await disableAutoLayout(node);
+    
+    case 'update':
+      return await updateAutoLayout(node, { direction, spacing, padding, primaryAlignment, counterAlignment, resizing, strokesIncludedInLayout, layoutWrap });
+    
+    case 'get_properties':
+      return await getAutoLayoutProperties(node);
+    
+    default:
+      throw new Error(`Unknown auto layout operation: ${operation}`);
+  }
+}
+
+async function enableAutoLayout(node, options) {
+  const { direction = 'vertical', spacing = 0, padding, primaryAlignment, counterAlignment, resizing } = options;
+  
+  // Validate direction
+  const validDirections = ['horizontal', 'vertical'];
+  if (!validDirections.includes(direction)) {
+    throw new Error(`Invalid direction: ${direction}. Must be 'horizontal' or 'vertical'`);
+  }
+  
+  // Set layout mode to enable auto layout
+  node.layoutMode = direction.toUpperCase();
+  
+  // Set spacing
+  if (spacing !== undefined) {
+    node.itemSpacing = spacing;
+  }
+  
+  // Set padding
+  if (padding) {
+    if (padding.top !== undefined) node.paddingTop = padding.top;
+    if (padding.right !== undefined) node.paddingRight = padding.right;
+    if (padding.bottom !== undefined) node.paddingBottom = padding.bottom;
+    if (padding.left !== undefined) node.paddingLeft = padding.left;
+  }
+  
+  // Set alignments
+  if (primaryAlignment) {
+    const alignmentMap = {
+      'min': 'MIN',
+      'center': 'CENTER', 
+      'max': 'MAX',
+      'space_between': 'SPACE_BETWEEN'
+    };
+    const mappedAlignment = alignmentMap[primaryAlignment];
+    if (!mappedAlignment) {
+      throw new Error(`Invalid primary alignment: ${primaryAlignment}`);
+    }
+    node.primaryAxisAlignItems = mappedAlignment;
+  }
+
+  if (counterAlignment) {
+    const counterAlignmentMap = {
+      'min': 'MIN',
+      'center': 'CENTER',
+      'max': 'MAX'
+    };
+    const mappedCounterAlignment = counterAlignmentMap[counterAlignment];
+    if (!mappedCounterAlignment) {
+      throw new Error(`Invalid counter alignment: ${counterAlignment}`);
+    }
+    node.counterAxisAlignItems = mappedCounterAlignment;
+  }
+  
+  // Set resizing behavior
+  if (resizing) {
+    const sizingMap = {
+      'hug': 'AUTO',
+      'fill': 'FIXED', // FILL is handled differently in child nodes
+      'fixed': 'FIXED'
+    };
+    
+    if (resizing.width) {
+      const mappedWidth = sizingMap[resizing.width];
+      if (!mappedWidth) {
+        throw new Error(`Invalid width resizing: ${resizing.width}`);
+      }
+      node.primaryAxisSizingMode = mappedWidth;
+    }
+    if (resizing.height) {
+      const mappedHeight = sizingMap[resizing.height];
+      if (!mappedHeight) {
+        throw new Error(`Invalid height resizing: ${resizing.height}`);
+      }
+      node.counterAxisSizingMode = mappedHeight;
+    }
+  }
+  
+  return {
+    name: node.name,
+    id: node.id,
+    direction: direction,
+    spacing: node.itemSpacing,
+    hasAutoLayout: true
+  };
+}
+
+async function disableAutoLayout(node) {
+  // Disable auto layout by setting layoutMode to 'NONE'
+  node.layoutMode = 'NONE';
+  
+  return {
+    name: node.name,
+    id: node.id,
+    hasAutoLayout: false
+  };
+}
+
+async function updateAutoLayout(node, options) {
+  const { direction, spacing, padding, primaryAlignment, counterAlignment, resizing } = options;
+  const changes = {};
+  
+  // Track changes for response
+  if (direction !== undefined) {
+    // Validate direction
+    const validDirections = ['horizontal', 'vertical'];
+    if (!validDirections.includes(direction)) {
+      throw new Error(`Invalid direction: ${direction}. Must be 'horizontal' or 'vertical'`);
+    }
+    
+    const currentDirection = node.layoutMode || 'NONE';
+    if (currentDirection !== direction.toUpperCase()) {
+      changes.direction = {
+        old: currentDirection.toLowerCase(),
+        new: direction
+      };
+      node.layoutMode = direction.toUpperCase();
+    }
+  }
+  
+  if (spacing !== undefined && node.itemSpacing !== spacing) {
+    changes.spacing = {
+      old: node.itemSpacing,
+      new: spacing
+    };
+    node.itemSpacing = spacing;
+  }
+  
+  if (padding) {
+    const oldPadding = {
+      top: node.paddingTop,
+      right: node.paddingRight,
+      bottom: node.paddingBottom,
+      left: node.paddingLeft
+    };
+    
+    if (padding.top !== undefined) node.paddingTop = padding.top;
+    if (padding.right !== undefined) node.paddingRight = padding.right;
+    if (padding.bottom !== undefined) node.paddingBottom = padding.bottom;
+    if (padding.left !== undefined) node.paddingLeft = padding.left;
+    
+    changes.padding = {
+      old: oldPadding,
+      new: {
+        top: node.paddingTop,
+        right: node.paddingRight,
+        bottom: node.paddingBottom,
+        left: node.paddingLeft
+      }
+    };
+  }
+  
+  if (primaryAlignment) {
+    const alignmentMap = {
+      'min': 'MIN',
+      'center': 'CENTER',
+      'max': 'MAX', 
+      'space_between': 'SPACE_BETWEEN'
+    };
+    const mappedAlignment = alignmentMap[primaryAlignment];
+    if (!mappedAlignment) {
+      throw new Error(`Invalid primary alignment: ${primaryAlignment}`);
+    }
+    const oldAlignment = node.primaryAxisAlignItems || 'MIN';
+    node.primaryAxisAlignItems = mappedAlignment;
+    changes.primaryAlignment = {
+      old: oldAlignment.toLowerCase(),
+      new: primaryAlignment
+    };
+  }
+
+  if (counterAlignment) {
+    const counterAlignmentMap = {
+      'min': 'MIN',
+      'center': 'CENTER',
+      'max': 'MAX'
+    };
+    const mappedCounterAlignment = counterAlignmentMap[counterAlignment];
+    if (!mappedCounterAlignment) {
+      throw new Error(`Invalid counter alignment: ${counterAlignment}`);
+    }
+    const oldAlignment = node.counterAxisAlignItems || 'MIN';
+    node.counterAxisAlignItems = mappedCounterAlignment;
+    changes.counterAlignment = {
+      old: oldAlignment.toLowerCase(),
+      new: counterAlignment
+    };
+  }
+  
+  if (resizing) {
+    const sizingMap = {
+      'hug': 'AUTO',
+      'fill': 'FIXED',
+      'fixed': 'FIXED'
+    };
+    
+    const oldResizing = {
+      width: (node.primaryAxisSizingMode === 'AUTO') ? 'hug' : 'fixed',
+      height: (node.counterAxisSizingMode === 'AUTO') ? 'hug' : 'fixed'
+    };
+    
+    if (resizing.width) {
+      const mappedWidth = sizingMap[resizing.width];
+      if (!mappedWidth) {
+        throw new Error(`Invalid width resizing: ${resizing.width}`);
+      }
+      node.primaryAxisSizingMode = mappedWidth;
+    }
+    if (resizing.height) {
+      const mappedHeight = sizingMap[resizing.height];
+      if (!mappedHeight) {
+        throw new Error(`Invalid height resizing: ${resizing.height}`);
+      }
+      node.counterAxisSizingMode = mappedHeight;
+    }
+    
+    changes.resizing = {
+      old: oldResizing,
+      new: {
+        width: (node.primaryAxisSizingMode === 'AUTO') ? 'hug' : 'fixed',
+        height: (node.counterAxisSizingMode === 'AUTO') ? 'hug' : 'fixed'
+      }
+    };
+  }
+  
+  return {
+    name: node.name,
+    id: node.id,
+    changes: changes
+  };
+}
+
+async function getAutoLayoutProperties(node) {
+  const layoutMode = node.layoutMode || 'NONE';
+  const hasAutoLayout = layoutMode !== 'NONE';
+  
+  return {
+    name: node.name,
+    id: node.id,
+    hasAutoLayout: hasAutoLayout,
+    layoutMode: hasAutoLayout ? layoutMode.toLowerCase() : null,
+    itemSpacing: hasAutoLayout ? (node.itemSpacing || 0) : null,
+    padding: hasAutoLayout ? {
+      top: node.paddingTop || 0,
+      right: node.paddingRight || 0,
+      bottom: node.paddingBottom || 0,
+      left: node.paddingLeft || 0
+    } : null,
+    primaryAxisAlignItems: hasAutoLayout ? (node.primaryAxisAlignItems || 'MIN').toLowerCase() : null,
+    counterAxisAlignItems: hasAutoLayout ? (node.counterAxisAlignItems || 'MIN').toLowerCase() : null,
+    resizing: hasAutoLayout ? {
+      width: (node.primaryAxisSizingMode === 'AUTO') ? 'hug' : 'fixed',
+      height: (node.counterAxisSizingMode === 'AUTO') ? 'hug' : 'fixed'
+    } : null
+  };
+}
+
+async function manageConstraints(payload) {
+  const { operation, nodeId, horizontal, vertical } = payload;
+  
+  const node = findNodeById(nodeId);
+  if (!node) {
+    throw new Error(`Node not found: ${nodeId}`);
+  }
+
+  switch (operation) {
+    case 'set':
+      return await setConstraints(node, { horizontal, vertical });
+    
+    case 'get':
+      return await getConstraints(node);
+    
+    case 'reset':
+      return await resetConstraints(node);
+    
+    case 'get_info':
+      return await getConstraintInfo(node);
+    
+    default:
+      throw new Error(`Unknown constraint operation: ${operation}`);
+  }
+}
+
+async function setConstraints(node, options) {
+  const { horizontal, vertical } = options;
+  
+  // Check if node can have constraints
+  if (node.parent && node.parent.layoutMode && node.parent.layoutMode !== 'NONE') {
+    throw new Error('Cannot set constraints on auto layout child (use resizing instead)');
+  }
+  
+  if (node.type === 'GROUP') {
+    throw new Error('Cannot set constraints on group nodes');
+  }
+  
+  if (!node.parent || node.parent.type !== 'FRAME') {
+    throw new Error('Parent must be a frame for constraints to work');
+  }
+  
+  // Map constraint values to Figma API values
+  const horizontalMap = {
+    'left': 'MIN',
+    'right': 'MAX',
+    'left_right': 'STRETCH',
+    'center': 'CENTER',
+    'scale': 'SCALE'
+  };
+  
+  const verticalMap = {
+    'top': 'MIN',
+    'bottom': 'MAX',
+    'top_bottom': 'STRETCH',
+    'center': 'CENTER',
+    'scale': 'SCALE'
+  };
+  
+  const constraints = Object.assign({}, node.constraints || { horizontal: 'MIN', vertical: 'MIN' });
+  
+  if (horizontal) {
+    if (!horizontalMap[horizontal]) {
+      throw new Error(`Invalid horizontal constraint: ${horizontal}`);
+    }
+    constraints.horizontal = horizontalMap[horizontal];
+  }
+  
+  if (vertical) {
+    if (!verticalMap[vertical]) {
+      throw new Error(`Invalid vertical constraint: ${vertical}`);
+    }
+    constraints.vertical = verticalMap[vertical];
+  }
+  
+  node.constraints = constraints;
+  
+  return {
+    name: node.name,
+    id: node.id,
+    constraints: {
+      horizontal: horizontal,
+      vertical: vertical
+    },
+    parentName: node.parent.name,
+    parentId: node.parent.id
+  };
+}
+
+async function getConstraints(node) {
+  const constraints = node.constraints || { horizontal: 'MIN', vertical: 'MIN' };
+  
+  return {
+    name: node.name,
+    id: node.id,
+    constraints: {
+      horizontal: constraints.horizontal,
+      vertical: constraints.vertical
+    },
+    parentName: node.parent ? node.parent.name : null,
+    parentId: node.parent ? node.parent.id : null
+  };
+}
+
+async function resetConstraints(node) {
+  // Reset to default constraints (left, top)
+  node.constraints = {
+    horizontal: 'MIN',
+    vertical: 'MIN'
+  };
+  
+  return {
+    name: node.name,
+    id: node.id
+  };
+}
+
+async function getConstraintInfo(node) {
+  const canHaveConstraints = node.type !== 'GROUP' && 
+                            node.parent && 
+                            node.parent.type === 'FRAME' &&
+                            (!node.parent.layoutMode || node.parent.layoutMode === 'NONE');
+  
+  const isAutoLayoutChild = node.parent && node.parent.layoutMode && node.parent.layoutMode !== 'NONE';
+  
+  return {
+    name: node.name,
+    id: node.id,
+    nodeType: node.type,
+    canHaveConstraints: canHaveConstraints,
+    isAutoLayoutChild: isAutoLayoutChild,
+    parentName: node.parent ? node.parent.name : null,
+    parentId: node.parent ? node.parent.id : null
+  };
 }
 
 

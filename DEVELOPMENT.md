@@ -46,6 +46,30 @@ figma-mcp-write-server/
 
 The system uses a direct communication architecture between the MCP server and Figma plugin:
 
+### MCP Tools (v0.13.0)
+The server provides 15 MCP tools covering all major Figma operations:
+
+**Core Creation & Modification:**
+- `create_node` - Create shapes, text, frames
+- `create_text` - Typography with style ranges
+- `update_node`, `move_node`, `delete_node`, `duplicate_node`
+
+**Style Management:**
+- `manage_styles` - Paint, text, effect, and grid styles
+
+**Auto Layout & Constraints (NEW v0.13.0):**
+- `manage_auto_layout` - Responsive content arrangement
+- `manage_constraints` - Element positioning and resizing
+
+**Hierarchy & Organization:**
+- `manage_hierarchy` - Grouping, layering, parent-child relationships
+
+**Selection & Export:**
+- `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
+
+**Status & Debugging:**
+- `get_plugin_status`
+
 ### Components
 
 #### 1. MCP Server (`src/`)
@@ -179,7 +203,7 @@ describe('CreateRectangleSchema', () => {
 ```
 
 ### Integration Tests
-Test complete operation flows:
+Test operation flows:
 ```typescript
 // Test MCP tool execution
 describe('create_rectangle tool', () => {
@@ -320,7 +344,7 @@ The server provides 11 MCP tools for Figma operations:
 ### Style Management Features
 The `manage_styles` tool provides style management:
 - **Paint Styles**: Solid colors, gradients (linear, radial, angular, diamond), image fills
-- **Text Styles**: Complete typography control with all Figma text properties
+- **Text Styles**: Typography control with Figma text properties
 - **Effect Styles**: Drop shadows, inner shadows, layer blur, background blur
 - **Grid Styles**: Column/row/grid layouts with full configuration
 - **CRUD Operations**: Create, list, apply, delete, and get styles

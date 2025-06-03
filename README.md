@@ -4,6 +4,14 @@ A Model Context Protocol (MCP) server that provides **write access** to Figma th
 
 _Designed and Architected with ❤️ by a real human. Coded by an AI Assistant._
 
+## 🆕 **What's New in v0.13.0**
+
+**Auto Layout & Constraints** - Build responsive designs with automatic content arrangement:
+- 🔄 **Auto Layout**: Enable frames that automatically arrange children vertically or horizontally
+- 📐 **Constraints**: Pin elements to edges, center them, or make them scale proportionally  
+- 🎯 **Integration**: Move elements into auto layout containers with automatic positioning
+- 🛠️ **Configuration**: Configure spacing, padding, alignment, and resizing behavior programmatically
+
 ## 🚀 Overview
 
 Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
@@ -11,6 +19,7 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Create** design elements (rectangles, ellipses, text, frames)
 - ✅ **Typography** with mixed styling and text formatting
 - ✅ **Style Management** for paint, text, effect, and grid styles
+- ✅ **Auto Layout & Constraints** for responsive design and automatic arrangement
 - ✅ **Layer & Hierarchy** management (grouping, depth sorting, parent-child relationships)
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
@@ -50,7 +59,7 @@ graph LR
 **Architecture Benefits:**
 - Single process design - MCP server includes WebSocket server
 - Direct WebSocket connection with auto-reconnection
-- Robust error handling and status reporting
+- Error handling and status reporting
 - No complex bridges or multiple processes
 - Standardized port 8765 for all communication
 
@@ -66,6 +75,8 @@ graph LR
 | `create_node` | Create nodes (rectangle, ellipse, text, frame) | nodeType, x, y, width, height, content, fillColor, etc. |
 | `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign, etc. |
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects, etc. |
+| `manage_auto_layout` | **NEW v0.13.0** Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing, etc. |
+| `manage_constraints` | **NEW v0.13.0** Constraints management | operation, nodeId, horizontal, vertical |
 | `manage_hierarchy` | Layer & hierarchy management (grouping, depth, parent-child) | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex, etc. |
 | `update_node` | Update node properties | nodeId, properties |
 | `move_node` | Move nodes to new positions | nodeId, x, y |
@@ -150,12 +161,14 @@ For **Cursor**, add to MCP configuration:
 
 Common use cases:
 - **Create Layout**: "Create a header frame with title and subtitle"
+- **Auto Layout**: "Make this frame arrange its children vertically with 16px spacing" **(NEW v0.13.0)**
+- **Constraints**: "Pin this sidebar to the left and stretch to full height" **(NEW v0.13.0)**
 - **Typography**: "Make a styled heading with mixed formatting"
 - **Design System**: "Create color palette and apply styles consistently"
 - **Components**: "Build button variants with different colors and styles"
 - **Batch Operations**: "Select all text elements and update font size"
 
-📚 **[Complete Examples & Usage Guide →](EXAMPLES.md)**
+📚 **[Examples & Usage Guide →](EXAMPLES.md)**
 
 ## 🔧 Configuration
 
@@ -220,7 +233,7 @@ The system provides real-time connection monitoring:
 - Requires active Figma session (desktop/browser)
 - Plugin must be manually installed and run
 - WebSocket connection can be unstable on poor networks
-- Some advanced Figma features may not be supported
+- Some Figma features may not be supported
 - Limited to single file operations (current page)
 
 ## 📚 Documentation
@@ -238,4 +251,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 13 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 15 MCP tools (including Auto Layout & Constraints added in v0.13.0) and runs a WebSocket server on port 8765 for plugin communication.

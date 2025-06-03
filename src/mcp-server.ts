@@ -22,6 +22,8 @@ import {
   SetSelectionSchema,
   ExportNodeSchema,
   ManageStylesSchema,
+  ManageAutoLayoutSchema,
+  ManageConstraintsSchema,
   ServerConfig,
   DEFAULT_CONFIG
 } from './types.js';
@@ -799,6 +801,113 @@ export class FigmaMCPServer {
           ]
         },
         {
+          name: 'manage_auto_layout',
+          description: 'Enable, configure, and manage auto layout properties on frames',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation: {
+                type: 'string',
+                enum: ['enable', 'disable', 'update', 'get_properties'],
+                description: 'Auto layout operation to perform'
+              },
+              nodeId: {
+                type: 'string',
+                description: 'ID of the frame to manage auto layout on'
+              },
+              direction: {
+                type: 'string',
+                enum: ['horizontal', 'vertical'],
+                description: 'Layout direction (required for enable operation)'
+              },
+              spacing: {
+                type: 'number',
+                description: 'Spacing between items in pixels'
+              },
+              padding: {
+                type: 'object',
+                properties: {
+                  top: { type: 'number', description: 'Top padding' },
+                  right: { type: 'number', description: 'Right padding' },
+                  bottom: { type: 'number', description: 'Bottom padding' },
+                  left: { type: 'number', description: 'Left padding' }
+                },
+                description: 'Padding configuration'
+              },
+              primaryAlignment: {
+                type: 'string',
+                enum: ['min', 'center', 'max', 'space_between'],
+                description: 'Primary axis alignment'
+              },
+              counterAlignment: {
+                type: 'string',
+                enum: ['min', 'center', 'max'],
+                description: 'Counter axis alignment'
+              },
+              resizing: {
+                type: 'object',
+                properties: {
+                  width: { type: 'string', enum: ['hug', 'fill', 'fixed'], description: 'Width resizing behavior' },
+                  height: { type: 'string', enum: ['hug', 'fill', 'fixed'], description: 'Height resizing behavior' }
+                },
+                description: 'Resizing behavior configuration'
+              },
+              strokesIncludedInLayout: {
+                type: 'boolean',
+                description: 'Whether strokes are included in layout calculations'
+              },
+              layoutWrap: {
+                type: 'string',
+                enum: ['no_wrap', 'wrap'],
+                description: 'Layout wrapping behavior'
+              }
+            },
+            required: ['operation', 'nodeId']
+          },
+          examples: [
+            '{"operation": "enable", "nodeId": "1:2", "direction": "vertical", "spacing": 16}',
+            '{"operation": "update", "nodeId": "1:2", "spacing": 24, "padding": {"top": 20, "right": 16, "bottom": 20, "left": 16}}',
+            '{"operation": "update", "nodeId": "1:2", "primaryAlignment": "center", "counterAlignment": "center"}',
+            '{"operation": "get_properties", "nodeId": "1:2"}',
+            '{"operation": "disable", "nodeId": "1:2"}'
+          ]
+        },
+        {
+          name: 'manage_constraints',
+          description: 'Set and manage constraints for responsive behavior on non-auto-layout elements',
+          inputSchema: {
+            type: 'object',
+            properties: {
+              operation: {
+                type: 'string',
+                enum: ['set', 'get', 'reset', 'get_info'],
+                description: 'Constraint operation to perform'
+              },
+              nodeId: {
+                type: 'string',
+                description: 'ID of the node to manage constraints on'
+              },
+              horizontal: {
+                type: 'string',
+                enum: ['left', 'right', 'left_right', 'center', 'scale'],
+                description: 'Horizontal constraint behavior'
+              },
+              vertical: {
+                type: 'string',
+                enum: ['top', 'bottom', 'top_bottom', 'center', 'scale'],
+                description: 'Vertical constraint behavior'
+              }
+            },
+            required: ['operation', 'nodeId']
+          },
+          examples: [
+            '{"operation": "set", "nodeId": "1:2", "horizontal": "left_right", "vertical": "top"}',
+            '{"operation": "get", "nodeId": "1:2"}',
+            '{"operation": "reset", "nodeId": "1:2"}',
+            '{"operation": "get_info", "nodeId": "1:2"}'
+          ]
+        },
+        {
           name: 'get_plugin_status',
           description: 'Check if the Figma plugin is connected and ready',
           inputSchema: {
@@ -853,6 +962,10 @@ export class FigmaMCPServer {
             return await this.manageStyles(args);
           case 'manage_hierarchy':
             return await this.manageHierarchy(args);
+          case 'manage_auto_layout':
+            return await this.manageAutoLayout(args);
+          case 'manage_constraints':
+            return await this.manageConstraints(args);
           case 'get_plugin_status':
             return await this.getPluginStatus();
           default:
@@ -1323,6 +1436,10 @@ export class FigmaMCPServer {
             resultText += ` (requested ${data.requestedIndex}, adjusted by Figma)`;
           }
         }
+        if (data?.autoLayoutParent) {
+          resultText += `\n📐 Parent has auto layout - positioning handled automatically`;
+          resultText += `\n🎯 Element will arrange according to auto layout settings`;
+        }
         break;
       case 'get_parent':
         if (data) {
@@ -1376,6 +1493,230 @@ export class FigmaMCPServer {
     return {
       content: [{
         type: 'text',
+        text: resultText
+      }]
+    };
+  }
+
+  private async manageAutoLayout(args: any) {
+    const { operation, nodeId, direction, spacing, padding, primaryAlignment, counterAlignment, resizing, strokesIncludedInLayout, layoutWrap } = args;
+
+    const response = await this.sendToPlugin({
+      type: 'MANAGE_AUTO_LAYOUT',
+      payload: {
+        operation,
+        nodeId,
+        direction,
+        spacing,
+        padding,
+        primaryAlignment,
+        counterAlignment,
+        resizing,
+        strokesIncludedInLayout,
+        layoutWrap
+      }
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to manage auto layout');
+    }
+
+    const data = response.data;
+    let resultText = '';
+
+    switch (operation) {
+      case 'enable':
+        resultText = `✅ Enabled auto layout on frame: ${data.name} (${nodeId})`;
+        if (data.direction) {
+          resultText += `\n📐 Direction: ${data.direction.charAt(0).toUpperCase() + data.direction.slice(1)}`;
+        }
+        if (data.spacing !== undefined) {
+          resultText += `\n📏 Spacing: ${data.spacing}px`;
+        }
+        resultText += `\n🎯 Ready for auto layout children`;
+        break;
+
+      case 'disable':
+        resultText = `✅ Disabled auto layout: ${data.name} (${nodeId})`;
+        resultText += `\n🔄 Converted to regular frame`;
+        resultText += `\n⚠️ Children now use absolute positioning`;
+        break;
+
+      case 'update':
+        resultText = `✅ Updated auto layout: ${data.name} (${nodeId})`;
+        if (data.changes) {
+          if (data.changes.direction) {
+            resultText += `\n📐 Direction: ${data.changes.direction.new.charAt(0).toUpperCase() + data.changes.direction.new.slice(1)}`;
+            if (data.changes.direction.old) {
+              resultText += ` (changed from ${data.changes.direction.old.charAt(0).toUpperCase() + data.changes.direction.old.slice(1)})`;
+            }
+          }
+          if (data.changes.spacing) {
+            resultText += `\n📏 Spacing: ${data.changes.spacing.new}px`;
+            if (data.changes.spacing.old !== undefined) {
+              resultText += ` (changed from ${data.changes.spacing.old}px)`;
+            }
+          }
+          if (data.changes.padding) {
+            const p = data.changes.padding.new;
+            resultText += `\n📦 Padding: Top ${p.top || 0}px, Right ${p.right || 0}px, Bottom ${p.bottom || 0}px, Left ${p.left || 0}px`;
+          }
+          if (data.changes.primaryAlignment) {
+            resultText += `\n↔️ Primary Axis: ${data.changes.primaryAlignment.new.charAt(0).toUpperCase() + data.changes.primaryAlignment.new.slice(1).replace('_', ' ')}`;
+          }
+          if (data.changes.counterAlignment) {
+            resultText += `\n↕️ Counter Axis: ${data.changes.counterAlignment.new.charAt(0).toUpperCase() + data.changes.counterAlignment.new.slice(1)}`;
+          }
+          if (data.changes.resizing) {
+            const r = data.changes.resizing.new;
+            resultText += `\n🔧 Resizing: Width: ${r.width || 'unchanged'}, Height: ${r.height || 'unchanged'}`;
+          }
+        }
+        break;
+
+      case 'get_properties':
+        resultText = `📋 Auto Layout Properties: ${data.name} (${nodeId})`;
+        if (data.layoutMode) {
+          resultText += `\n📐 Direction: ${data.layoutMode.charAt(0).toUpperCase() + data.layoutMode.slice(1)}`;
+        }
+        if (data.itemSpacing !== undefined) {
+          resultText += `\n📏 Item Spacing: ${data.itemSpacing}px`;
+        }
+        if (data.padding) {
+          const p = data.padding;
+          resultText += `\n📦 Padding: T:${p.top} R:${p.right} B:${p.bottom} L:${p.left}`;
+        }
+        if (data.primaryAxisAlignItems) {
+          resultText += `\n↔️ Primary Alignment: ${data.primaryAxisAlignItems.charAt(0).toUpperCase() + data.primaryAxisAlignItems.slice(1).replace('_', ' ')}`;
+        }
+        if (data.counterAxisAlignItems) {
+          resultText += `\n↕️ Counter Alignment: ${data.counterAxisAlignItems.charAt(0).toUpperCase() + data.counterAxisAlignItems.slice(1)}`;
+        }
+        if (data.resizing) {
+          const r = data.resizing;
+          resultText += `\n🔧 Resizing: Width: ${r.width}, Height: ${r.height}`;
+        }
+        resultText += `\n✅ Auto Layout: ${data.hasAutoLayout ? 'Enabled' : 'Disabled'}`;
+        break;
+
+      default:
+        resultText = `✅ Auto layout operation completed: ${operation}`;
+    }
+
+    return {
+      content: [{
+        type: "text",
+        text: resultText
+      }]
+    };
+  }
+
+  private async manageConstraints(args: any) {
+    const { operation, nodeId, horizontal, vertical } = args;
+
+    const response = await this.sendToPlugin({
+      type: 'MANAGE_CONSTRAINTS',
+      payload: {
+        operation,
+        nodeId,
+        horizontal,
+        vertical
+      }
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to manage constraints');
+    }
+
+    const data = response.data;
+    let resultText = '';
+
+    switch (operation) {
+      case 'set':
+        resultText = `✅ Set constraints: ${data.name} (${nodeId})`;
+        if (data.constraints) {
+          const horizontalMap: Record<string, string> = {
+            'left': 'Left',
+            'right': 'Right', 
+            'left_right': 'Left & Right (stretch)',
+            'center': 'Center',
+            'scale': 'Scale'
+          };
+          const verticalMap: Record<string, string> = {
+            'top': 'Top',
+            'bottom': 'Bottom',
+            'top_bottom': 'Top & Bottom (stretch)', 
+            'center': 'Center',
+            'scale': 'Scale'
+          };
+          
+          if (data.constraints.horizontal) {
+            resultText += `\n↔️ Horizontal: ${horizontalMap[data.constraints.horizontal] || data.constraints.horizontal}`;
+          }
+          if (data.constraints.vertical) {
+            resultText += `\n↕️ Vertical: ${verticalMap[data.constraints.vertical] || data.constraints.vertical}`;
+          }
+        }
+        if (data.parentName) {
+          resultText += `\n📐 Parent: ${data.parentName} (${data.parentId})`;
+        }
+        break;
+
+      case 'get':
+        resultText = `📋 Constraints: ${data.name} (${nodeId})`;
+        if (data.constraints) {
+          const horizontalMap: Record<string, string> = {
+            'MIN': 'Left',
+            'MAX': 'Right',
+            'STRETCH': 'Left & Right (stretch)',
+            'CENTER': 'Center',
+            'SCALE': 'Scale'
+          };
+          const verticalMap: Record<string, string> = {
+            'MIN': 'Top',
+            'MAX': 'Bottom',
+            'STRETCH': 'Top & Bottom (stretch)',
+            'CENTER': 'Center', 
+            'SCALE': 'Scale'
+          };
+          
+          resultText += `\n↔️ Horizontal: ${horizontalMap[data.constraints.horizontal] || data.constraints.horizontal}`;
+          resultText += `\n↕️ Vertical: ${verticalMap[data.constraints.vertical] || data.constraints.vertical}`;
+        }
+        if (data.parentName) {
+          resultText += `\n📐 Parent: ${data.parentName} (${data.parentId})`;
+        }
+        break;
+
+      case 'reset':
+        resultText = `✅ Reset constraints: ${data.name} (${nodeId})`;
+        resultText += `\n↔️ Horizontal: Left (default)`;
+        resultText += `\n↕️ Vertical: Top (default)`;
+        break;
+
+      case 'get_info':
+        resultText = `📋 Constraint Info: ${data.name} (${nodeId})`;
+        if (data.canHaveConstraints !== undefined) {
+          resultText += `\n✅ Can have constraints: ${data.canHaveConstraints ? 'Yes' : 'No'}`;
+        }
+        if (data.isAutoLayoutChild !== undefined) {
+          resultText += `\n🔄 Auto layout child: ${data.isAutoLayoutChild ? 'Yes (use resizing instead)' : 'No'}`;
+        }
+        if (data.nodeType) {
+          resultText += `\n📦 Node type: ${data.nodeType}`;
+        }
+        if (data.parentName) {
+          resultText += `\n📐 Parent: ${data.parentName} (${data.parentId})`;
+        }
+        break;
+
+      default:
+        resultText = `✅ Constraint operation completed: ${operation}`;
+    }
+
+    return {
+      content: [{
+        type: "text",
         text: resultText
       }]
     };

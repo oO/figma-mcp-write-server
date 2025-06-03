@@ -5,10 +5,48 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2025-06-02
+
+### Added
+- **Auto Layout & Constraints**: New responsive design capabilities with two new tools
+  - `manage_auto_layout` tool for automatic content arrangement and sizing
+    - Enable/disable auto layout on frames with `enable`, `disable` operations
+    - Configure layout direction (horizontal/vertical), spacing, and padding
+    - Set primary and counter axis alignment (min, center, max, space_between)
+    - Control resizing behavior (hug, fill, fixed) for dynamic content adaptation
+    - Update and retrieve auto layout properties with full configuration details
+  - `manage_constraints` tool for responsive behavior in non-auto-layout containers
+    - Set horizontal constraints (left, right, left_right, center, scale)
+    - Set vertical constraints (top, bottom, top_bottom, center, scale)
+    - Get current constraint settings and validate constraint compatibility
+    - Reset constraints to defaults and check constraint applicability
+  - Validation preventing invalid operations (auto layout children cannot have constraints)
+  - Rich response formatting with detailed feedback and change tracking
+
+### Enhanced
+- **Hierarchy Management**: Improved `move_to_parent` operation for auto layout compatibility
+  - Auto-detects when target parent has auto layout enabled
+  - Skips manual coordinate transformation for auto layout containers
+  - Provides clear feedback about automatic positioning behavior
+  - Maintains backward compatibility for non-auto-layout parent containers
+
+### Fixed
+- **Plugin Compatibility**: Resolved JavaScript syntax issues for Figma's plugin environment
+  - Replaced ES6 spread operator (`...`) with `Object.assign()` and `.concat()`
+  - Fixed "Unexpected token ..." errors in Figma console
+  - Enhanced error handling and input validation for auto layout properties
+  - Improved null safety and default value handling throughout plugin code
+
+### Technical Details
+- **Tool Count**: Expanded to 15 MCP tools (added 2 new auto layout tools)
+- **API Coverage**: Figma auto layout and constraints API implementation
+- **Validation**: Full parameter validation with descriptive error messages
+- **JavaScript Compatibility**: ES5-compatible code for Figma plugin environment
+
 ## [0.12.0] - 2025-06-02
 
 ### Added
-- **Layer & Hierarchy Management**: New `manage_hierarchy` tool with comprehensive layer organization capabilities
+- **Layer & Hierarchy Management**: New `manage_hierarchy` tool with layer organization capabilities
   - Grouping operations: `group`, `ungroup`, `frame` for organizing related elements
   - Depth/Z-index management: `bring_to_front`, `send_to_back`, `bring_forward`, `send_backward`
   - Precise positioning: `reorder`, `move_above`, `move_below` for exact layer control
@@ -19,12 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Support for both GROUP and FRAME container types
 
 ### Enhanced
-- **Plugin Integration**: Complete hierarchy management in Figma plugin
+- **Plugin Integration**: Hierarchy management in Figma plugin
   - Full grouping and ungrouping with parent-child relationship handling
   - Frame creation with automatic bounding box calculation
   - Layer ordering with proper index management and validation
   - Coordinate system handling for parent transitions
-  - Robust error handling for invalid operations and missing nodes
+  - Error handling for invalid operations and missing nodes
   - Tree traversal algorithms for ancestor/descendant queries
 
 ### Technical Details
@@ -36,61 +74,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.11.0] - 2025-06-01
 
 ### Added
-- **Comprehensive Style Management**: New `manage_styles` tool with full Figma style support
+- **Style Management**: New `manage_styles` tool with Figma style support
   - Paint styles: solid colors, linear/radial/angular/diamond gradients, image fills
-  - Text styles: complete typography control with all Figma text properties
+  - Text styles: typography control with Figma text properties
   - Effect styles: drop shadows, inner shadows, layer blur, background blur
   - Grid styles: column/row/grid layouts with full configuration
   - CRUD operations: create, list, apply, delete, get styles
   - Style application to any compatible node type
-  - Complete Figma Plugin API coverage for all style types
+  - Figma Plugin API coverage for style types
 
 ### Enhanced
-- **Plugin Integration**: Comprehensive style handling in Figma plugin
-  - Full paint creation with all gradient types and image support
-  - Complete text style property mapping including OpenType features
+- **Plugin Integration**: Style handling in Figma plugin
+  - Paint creation with gradient types and image support
+  - Text style property mapping including OpenType features
   - Effect system with multiple effects and blend modes
   - Layout grid support with all alignment and sizing options
-  - Robust error handling and logging for all style operations
+  - Error handling and logging for style operations
 
 ### Technical Details
-- **Schema Validation**: Complete Zod schemas for all style operations
-- **Type Safety**: Full TypeScript support for all style properties
-- **API Completeness**: 100% coverage of Figma's style management capabilities
+- **Schema Validation**: Zod schemas for style operations
+- **Type Safety**: TypeScript support for style properties
+- **API Coverage**: Coverage of Figma's style management capabilities
 
 ## [0.10.0] - 2025-06-01
 
 ### Added
-- **Advanced Typography Tool**: New `create_text` tool with comprehensive typography features
+- **Typography Tool**: New `create_text` tool with typography features
   - Mixed text styling with `styleRanges` for applying different fonts, sizes, and colors to text segments
-  - Advanced font properties: `fontFamily`, `fontStyle`, `fontSize`, `textCase`, `textDecoration`
+  - Font properties: `fontFamily`, `fontStyle`, `fontSize`, `textCase`, `textDecoration`
   - Text alignment controls: `textAlignHorizontal`, `textAlignVertical`
   - Spacing controls: `letterSpacing`, `lineHeight`, `paragraphIndent`, `paragraphSpacing`
   - Line height unit support (pixels or percentage)
   - Text style creation and management with `createStyle` and `styleName` parameters
   - Fixed-width text support with automatic height adjustment
-- **Enhanced Plugin Integration**: Advanced text handling in Figma plugin
+- **Plugin Integration**: Text handling in Figma plugin
   - Unified text creation function supporting both simple and advanced typography
   - Asynchronous font loading with proper error handling
   - Style range application using Figma's `setRange*` methods
-  - Text style creation with comprehensive property mapping
+  - Text style creation with property mapping
   - Backward compatibility with existing `create_node` text creation
 
 ### Changed
 - **Text Creation Architecture**: Consolidated text creation pathways
-  - Enhanced existing `createText()` function to handle advanced typography parameters
+  - Updated existing `createText()` function to handle advanced typography parameters
   - Single code path for both `CREATE_TEXT` and legacy text creation
   - Eliminated code duplication between simple and advanced text creation
 - **Tool Documentation**: Updated `create_node` tool with typography guidance
   - Added annotation directing users to `create_text` for advanced typography features
-  - Comprehensive schema documentation for all typography parameters
+  - Schema documentation for typography parameters
   - Added practical examples for mixed styling and text style creation
 
 ### Technical Details
 - **Font Management**: Improved font loading with support for multiple fonts in single text node
 - **Color Handling**: Enhanced color processing for both global and range-specific text colors
-- **Parameter Mapping**: Seamless conversion between MCP schema and Figma API formats
-- **Error Handling**: Robust error handling for font loading and style creation operations
+- **Parameter Mapping**: Conversion between MCP schema and Figma API formats
+- **Error Handling**: Error handling for font loading and style creation operations
 
 ## [0.9.4] - 2025-06-01
 
@@ -128,9 +166,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Uses `nodeType` parameter to specify what type of node to create
   - Built-in validation ensures required properties are provided for each node type
   - Automatic default value assignment (dimensions, names, font properties)
-- **Enhanced Documentation**: Added comprehensive examples and usage guide
+- **Documentation**: Added examples and usage guide
   - Updated README with unified tool documentation
-  - Complete property reference guide
+  - Property reference guide
 
 ### Removed
 - **Legacy Tools**: Removed individual node creation tools to simplify API
@@ -151,13 +189,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated Figma plugin to be WebSocket client that connects to MCP server
   - Fixed port configuration inconsistencies (standardized on 8765)
   - Removed broken plugin-client.ts and bridge architecture
-- **Documentation**: Comprehensive cleanup and accuracy improvements
+- **Documentation**: Cleanup and accuracy improvements
   - Removed exaggerated claims ("breakthrough", "first ever", "novel")
   - Fixed help text references to non-existent files
   - Updated architecture descriptions to match actual implementation
   - Removed redundant PROJECT_SUMMARY.md file
   - Fixed typos and improved navigation between documentation files
-- **Plugin**: Enhanced Figma plugin implementation
+- **Plugin**: Improved Figma plugin implementation
   - Added proper WebSocket client with auto-reconnection
   - Improved error handling and visual status indicators
   - Added font loading for text creation operations
@@ -182,7 +220,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.2.0] - 2025-05-28
 
 ### Fixed
-- **Critical**: Fixed JSON parsing errors in MCP protocol communication
+- **Fixed**: JSON parsing errors in MCP protocol communication
   - Redirected decorative console output from stdout to stderr
   - Prevented emoji-decorated log messages from interfering with JSON-RPC protocol
   - Resolved parsing errors: "Unexpected token '🎨'", "🚀 Startin", "🔗 Connect", etc.
@@ -218,9 +256,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - TypeScript implementation with full type safety
 - Zod schema validation for all tool inputs
 - Real-time heartbeat monitoring
-- Comprehensive error handling and logging
+- Error handling and logging
 - CLI interface with configurable options
-- Complete setup documentation
+- Setup documentation
 
 ### Changed
 - Refactored plugin communication to use WebSocket bridge instead of direct MCP server WebSocket

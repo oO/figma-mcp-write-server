@@ -63,11 +63,11 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 - **"Show me all the color styles in this file"**
   - AI lists all paint styles with their names and properties
 
-## 🏗️ Complete Workflows
+## 🏗️ Workflows
 
 ### Design System Creation
 **User Instructions:**
-"Create a complete design system with colors, typography, and components."
+"Create a design system with colors, typography, and components."
 
 **What the AI does:**
 1. **Color Palette**: Creates rectangles with primary, secondary, and neutral colors
@@ -153,6 +153,88 @@ The AI can perform these operations:
 - **Get**: "What are the details of the primary color style?"
 - **Delete**: "Remove the unused button style"
 
+## 🏗️ Auto Layout & Constraints
+
+### Auto Layout System
+**User Instructions → AI Actions:**
+
+- **"Make this frame automatically arrange its children vertically"**
+  - AI uses `manage_auto_layout` with `enable` operation, direction "vertical"
+
+- **"Create a horizontal button with proper spacing and padding"**
+  - AI enables auto layout with horizontal direction, sets spacing and padding for professional button appearance
+
+- **"Make this card layout responsive with 16px spacing between elements"**
+  - AI configures auto layout with vertical direction, 16px spacing, and proper alignment
+
+- **"Turn off auto layout so I can position elements manually"**
+  - AI uses `disable` operation to convert back to absolute positioning
+
+### Responsive Constraints
+**User Instructions → AI Actions:**
+
+- **"Make this sidebar stay on the left and stretch with the window height"**
+  - AI uses `manage_constraints` with horizontal "left" and vertical "top_bottom"
+
+- **"Pin this header to the top and make it stretch across the full width"**
+  - AI sets constraints with horizontal "left_right" and vertical "top"
+
+- **"Center this logo both horizontally and vertically"**
+  - AI applies "center" constraints for both horizontal and vertical positioning
+
+- **"Make this element scale proportionally when the container resizes"**
+  - AI uses "scale" constraints for proportional resizing behavior
+
+### Layout Workflows
+**User Instructions:**
+"Create a responsive navigation bar with logo, menu items, and a call-to-action button"
+
+**What the AI does:**
+1. **Container Setup**: Creates frame for navigation with proper dimensions
+2. **Enable Auto Layout**: Uses horizontal direction with space-between alignment
+3. **Add Spacing**: Sets consistent spacing and padding for professional appearance
+4. **Responsive Behavior**: Applies constraints to stretch across full width and pin to top
+5. **Content Alignment**: Centers elements vertically within the navigation bar
+
+**User Instructions:**
+"Build a card component that adapts to its content size automatically"
+
+**What the AI does:**
+1. **Card Frame**: Creates container frame with vertical auto layout
+2. **Content Spacing**: Sets 16px spacing between title, description, and button
+3. **Padding**: Adds 20px padding around all content
+4. **Sizing**: Configures to "hug" content so card resizes based on content
+5. **Alignment**: Centers content and stretches elements appropriately
+
+### Moving Elements into Auto Layout
+**User Instructions → AI Actions:**
+
+- **"Move this button into the navigation bar"**
+  - AI uses `move_to_parent` operation to place element in auto layout container
+  - Element automatically positions according to auto layout settings
+
+- **"Add this text to the card component"**
+  - AI moves text into auto layout frame where it arranges with other content
+  - No manual positioning needed - auto layout handles placement
+
+- **"Place this icon at the beginning of the button"**
+  - AI uses `move_to_parent` with index 0 to position element first in auto layout sequence
+
+### Layout Debugging
+**User Instructions → AI Actions:**
+
+- **"Show me the auto layout settings for this component"**
+  - AI uses `get_properties` operation to display current auto layout configuration
+
+- **"Check if this element can have constraints"**
+  - AI uses `get_info` operation to verify constraint compatibility and parent relationships
+
+- **"What constraints are currently applied to this element?"**
+  - AI uses `get` operation to show current constraint settings
+
+- **"Reset this element's constraints to defaults"**
+  - AI uses `reset` operation to return to left/top positioning
+
 ## 🏗️ Layer & Hierarchy Management
 
 ### Grouping Operations
@@ -212,13 +294,44 @@ The AI can perform these operations:
 - **"What is the current layer position of this element?"**
   - AI uses `get_layer_index` operation to get the exact position in parent's children
 
-- **"Show me the complete hierarchy path for this element"**
+- **"Show me the hierarchy path for this element"**
   - AI uses `get_ancestors` operation to trace from element to root page
 
 - **"List all nested elements inside this component"**
   - AI uses `get_descendants` operation to recursively find all child elements
 
-### Advanced Hierarchy Workflows
+### Layout Workflows
+**User Instructions:**
+"Create a dashboard layout with header, sidebar, and main content area"
+
+**What the AI does:**
+1. **Container Structure**: Creates main container frame without auto layout for absolute positioning
+2. **Header Setup**: Creates header with horizontal auto layout, pins to top with full width constraints
+3. **Sidebar Layout**: Creates sidebar with vertical auto layout, constrains to left side with full height
+4. **Main Content**: Creates content area with constraints to fill remaining space (left_right, top_bottom)
+5. **Responsive Behavior**: Ensures all elements adapt properly when container resizes
+
+**User Instructions:**
+"Create a button and then move some icons into it to make a navigation button"
+
+**What the AI does:**
+1. **Create Button Frame**: Creates frame and enables horizontal auto layout with proper spacing
+2. **Add Icon Elements**: Creates icon shapes/text elements on the canvas
+3. **Move into Button**: Uses `move_to_parent` to place icons inside the auto layout button
+4. **Automatic Arrangement**: Icons automatically arrange horizontally with consistent spacing
+5. **Automatic Positioning**: No manual coordinate adjustment needed - auto layout handles everything
+
+**User Instructions:**
+"Make a product card grid that arranges automatically and adapts to different screen sizes"
+
+**What the AI does:**
+1. **Grid Container**: Creates container with auto layout and wrap behavior enabled
+2. **Card Templates**: Creates individual cards with vertical auto layout for internal content
+3. **Responsive Cards**: Sets card constraints for proper grid behavior
+4. **Content Adaptation**: Configures cards to hug content height but maintain consistent width
+5. **Spacing System**: Applies consistent spacing between cards and internal card elements
+
+### Hierarchy Workflows
 **User Instructions:**
 "Organize this messy layout - group related elements, fix layer order, and structure everything properly"
 
@@ -262,6 +375,10 @@ The AI can perform these operations:
 - **Build Systems**: Create color and text styles first, then use them consistently
 - **Use Natural Language**: Say "make the text bigger" instead of trying to specify technical parameters
 - **Test Incrementally**: Try simple operations first to verify everything is working
+- **Layout Strategy**: Start with containers and auto layout, then add constraints for responsive behavior
+- **Auto Layout First**: Use auto layout for components that need to adapt to content changes
+- **Constraints for Responsive**: Use constraints for elements that need to respond to container size changes
+- **Mixed Approach**: Combine auto layout frames within constraint-based layouts for maximum flexibility
 
 ## 🚦 Common Workflows
 
@@ -269,6 +386,9 @@ The AI can perform these operations:
 2. **Component Creation**: "Make a container" → "Add content" → "Apply styling" → "Refine details"
 3. **Batch Updates**: "Select all buttons" → "Update properties" → "Verify results"
 4. **Style Management**: "Create styles" → "Apply to elements" → "Organize by category"
+5. **Responsive Layout**: "Create container frame" → "Enable auto layout on components" → "Set constraints for responsive behavior" → "Test different screen sizes"
+6. **Component Building**: "Create frame" → "Add auto layout" → "Add content elements" → "Configure spacing and alignment" → "Set resizing behavior"
+7. **Layout Debugging**: "Check auto layout properties" → "Verify constraint settings" → "Test responsive behavior" → "Adjust as needed"
 
 Remember: You give natural language instructions to your AI agent, and the AI uses the MCP tools to execute the operations in Figma. You don't need to write any code!
 
