@@ -5,6 +5,41 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2025-06-03
+
+### Added
+- **Modular Architecture**: Codebase refactor from monolithic to modular structure
+  - Handler system with domain-specific classes (Node, Text, Style, Layout, Hierarchy, Selection)
+  - Utility modules for color, font, node operations, and response formatting
+  - Type system with Zod schemas for runtime validation
+  - Base handler class with shared functionality and error handling patterns
+
+### Enhanced
+- **Plugin Build System**: TypeScript-first development workflow
+  - Source-based plugin development with automatic compilation
+  - ES2015 target for Figma compatibility without spread operators
+  - Watch mode for rapid development iteration
+  - Build output with source maps
+
+### Fixed
+- **Figma Plugin Compatibility**: Resolved all JavaScript syntax issues
+  - Eliminated spread operators (`...`) incompatible with Figma's environment
+  - Replaced with ES5-compatible alternatives (Object.assign, Array.concat)
+  - Fixed build process to generate clean, compatible JavaScript
+
+### Changed
+- **Documentation**: Consolidated and improved developer resources
+  - Single comprehensive DEVELOPMENT.md with architecture overview
+  - Mermaid diagrams replacing ASCII art
+  - Testing infrastructure with automated and manual test suites
+  - Clean-slate documentation approach for pre-release version
+
+### Technical Details
+- **Architecture**: Modular handler-based system with clear separation of concerns
+- **Build Process**: TypeScript compilation with Figma-compatible output
+- **Testing**: Comprehensive test suite with connectivity verification
+- **Code Quality**: TypeScript with runtime validation
+
 ## [0.13.1] - 2025-06-03
 
 ### Changed

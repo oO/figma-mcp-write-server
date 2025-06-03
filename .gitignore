@@ -3,3 +3,5 @@ dist/
 .DS_Store
 *.log
 figma-plugin/ui.html
+figma-plugin/code.js
+figma-plugin/dist/

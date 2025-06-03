@@ -1,6 +1,107 @@
 # Development Guide
 
-## 🔧 Setting Up Development Environment
+## 🏗️ Architecture Overview
+
+The Figma MCP Write Server implements a three-layer architecture connecting AI agents to Figma through the Plugin API:
+
+```mermaid
+graph TB
+    subgraph "AI Layer"
+        AI[AI Agent/Client]
+        MCP_CLIENT[Claude Desktop<br/>MCP Client]
+    end
+    
+    subgraph "Server Layer"
+        MCP_SERVER[Figma MCP Server]
+        MCP_PROTOCOL[MCP Protocol Layer<br/>stdio transport]
+        WS_SERVER[WebSocket Server<br/>Port 8765]
+        REGISTRY[Handler Registry]
+        
+        subgraph "Handlers"
+            NODE_H[Node Handler]
+            TEXT_H[Text Handler] 
+            STYLE_H[Style Handler]
+            LAYOUT_H[Layout Handler]
+            HIERARCHY_H[Hierarchy Handler]
+            SELECTION_H[Selection Handler]
+        end
+    end
+    
+    subgraph "Figma Layer"
+        PLUGIN[Figma Plugin<br/>WebSocket Client]
+        FIGMA_API[Figma API]
+    end
+    
+    AI -->|Natural Language| MCP_CLIENT
+    MCP_CLIENT -->|MCP Protocol| MCP_PROTOCOL
+    MCP_PROTOCOL --> MCP_SERVER
+    MCP_SERVER --> REGISTRY
+    REGISTRY --> NODE_H
+    REGISTRY --> TEXT_H
+    REGISTRY --> STYLE_H
+    REGISTRY --> LAYOUT_H
+    REGISTRY --> HIERARCHY_H
+    REGISTRY --> SELECTION_H
+    
+    NODE_H --> WS_SERVER
+    TEXT_H --> WS_SERVER
+    STYLE_H --> WS_SERVER
+    LAYOUT_H --> WS_SERVER
+    HIERARCHY_H --> WS_SERVER
+    SELECTION_H --> WS_SERVER
+    
+    WS_SERVER -->|JSON Messages| PLUGIN
+    PLUGIN -->|Plugin API| FIGMA_API
+```
+
+## 📁 Project Structure
+
+```
+figma-mcp-write-server/
+├── src/                           # MCP Server source code
+│   ├── mcp-server.ts             # Main MCP server implementation
+│   ├── index.ts                  # CLI entry point and configuration
+│   ├── types.ts                  # Type definitions and Zod schemas
+│   ├── handlers/                 # MCP tool handlers organized by domain
+│   │   ├── index.ts             # Handler registry and tool definitions
+│   │   ├── node-handler.ts      # Node creation and manipulation
+│   │   ├── text-handler.ts      # Text and typography operations
+│   │   ├── selection-handler.ts # Selection and page management
+│   │   ├── style-handler.ts     # Figma style management
+│   │   ├── layout-handler.ts    # Auto layout and constraints
+│   │   ├── hierarchy-handler.ts # Node hierarchy operations
+│   │   └── base-handler.ts      # Shared handler functionality
+│   ├── utils/                    # Utility functions
+│   │   ├── node-utils.ts        # Node traversal and utilities
+│   │   ├── color-utils.ts       # Color format conversions
+│   │   ├── font-utils.ts        # Typography and font handling
+│   │   └── response-utils.ts    # Response formatting helpers
+│   └── websocket/                # WebSocket communication layer
+│       └── websocket-server.ts  # WebSocket server for plugin communication
+├── figma-plugin/                 # Figma plugin source code
+│   ├── src/                     # Plugin TypeScript source
+│   │   ├── main.ts              # Plugin entry point
+│   │   ├── types.ts             # Plugin type definitions
+│   │   ├── handlers/            # Plugin-side operation handlers
+│   │   ├── utils/               # Plugin utilities
+│   │   └── websocket/           # Plugin WebSocket client
+│   ├── manifest.json            # Plugin configuration
+│   ├── code.js                  # Compiled plugin code (auto-generated)
+│   ├── ui.html                  # Plugin user interface
+│   ├── build.js                 # Plugin build script
+│   └── tsconfig.json            # Plugin TypeScript config
+├── tests/                        # Testing infrastructure
+│   ├── mcp-test-suite.md        # Comprehensive manual test guide
+│   └── connectivity-test.js     # Automated connectivity verification
+├── tools/                        # Build and utility scripts
+├── dist/                         # Compiled JavaScript output
+├── EXAMPLES.md                   # Usage examples and guides
+├── package.json                  # Node.js dependencies and scripts
+├── tsconfig.json                 # TypeScript configuration
+└── README.md                     # Project documentation
+```
+
+## 🔧 Development Environment Setup
 
 ### Prerequisites
 - Node.js 18+ with npm
@@ -17,291 +118,399 @@ cd figma-mcp-write-server
 # Install dependencies
 npm install
 
-# Build TypeScript
+# Build everything
 npm run build
 
 # Start development server with watch mode
 npm run dev
 ```
 
-### Project Structure
-```
-figma-mcp-write-server/
-├── src/                     # MCP Server source code
-│   ├── types.ts            # Type definitions and Zod schemas
-│   ├── mcp-server.ts       # MCP server with built-in WebSocket server
-│   └── index.ts            # CLI entry point
-├── figma-plugin/           # Figma plugin source code
-│   ├── manifest.json       # Plugin configuration
-│   ├── code.js             # Plugin WebSocket client
-│   └── ui.html             # Plugin user interface
-├── EXAMPLES.md             # Usage examples and guides
-├── dist/                   # Compiled JavaScript output
-├── package.json            # Node.js dependencies and scripts
-├── tsconfig.json           # TypeScript configuration
-└── README.md               # Project documentation
+### Development Scripts
+```bash
+npm run build              # Build everything (TypeScript + Plugin)
+npm run build:ts          # Build TypeScript only
+npm run build:plugin      # Build Figma plugin only
+npm run build:plugin:watch # Watch mode for plugin development
+npm run dev               # Development mode with auto-restart
+npm start                 # Start production server
+npm test                  # Run connectivity tests
+npm run type-check        # TypeScript validation only
 ```
 
-## 🏗️ Architecture Overview
+## 🏗️ Core Components
 
-The system uses a direct communication architecture between the MCP server and Figma plugin:
+### MCP Server (`src/mcp-server.ts`)
+The main orchestrator implementing the Model Context Protocol:
 
-### MCP Tools (v0.13.0)
-The server provides 15 MCP tools covering all major Figma operations:
+- **Protocol Implementation**: Handles MCP tool registration and execution
+- **Transport Layer**: Uses stdio transport for MCP client communication
+- **WebSocket Integration**: Manages communication with Figma plugin
+- **Lifecycle Management**: Coordinates startup/shutdown of all components
 
-**Core Creation & Modification:**
-- `create_node` - Create shapes, text, frames
-- `create_text` - Typography with style ranges
-- `update_node`, `move_node`, `delete_node`, `duplicate_node`
+### CLI Entry Point (`src/index.ts`)
+Command-line interface and application bootstrap:
 
-**Style Management:**
-- `manage_styles` - Paint, text, effect, and grid styles
+- **Argument Parsing**: Handles --port, --help, --check-port flags
+- **Port Management**: Automatic port detection and conflict resolution
+- **Process Management**: Graceful shutdown and error handling
+- **Help System**: Usage documentation
 
-**Auto Layout & Constraints (NEW v0.13.0):**
-- `manage_auto_layout` - Responsive content arrangement
-- `manage_constraints` - Element positioning and resizing
+### WebSocket Server (`src/websocket/websocket-server.ts`)
+Dedicated server for Figma plugin communication:
 
-**Hierarchy & Organization:**
-- `manage_hierarchy` - Grouping, layering, parent-child relationships
+- **Connection Management**: Handles plugin connections on port 8765
+- **Message Routing**: Bidirectional communication with plugin
+- **Status Monitoring**: Tracks plugin connection state
+- **Error Recovery**: Automatic reconnection handling
 
-**Selection & Export:**
-- `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
+## 📋 Handler System
 
-**Status & Debugging:**
-- `get_plugin_status`
+### Handler Registry (`src/handlers/index.ts`)
+Central registry managing all MCP tools:
 
-### Components
+- **Tool Registration**: Defines 15 MCP tools with schemas
+- **Request Routing**: Dispatches tool calls to appropriate handlers
+- **Schema Validation**: Parameter validation
+- **Response Formatting**: Standardizes return values
 
-#### 1. MCP Server (`src/`)
-- **MCP Server** (`mcp-server.ts`) - Implements MCP protocol with built-in WebSocket server
-- **Entry Point** (`index.ts`) - CLI interface and startup logic with help text
-- **Type Definitions** (`types.ts`) - Shared types and Zod schemas
+### Available MCP Tools (v0.13.1)
 
-#### 2. Figma Plugin (`figma-plugin/`)
-- **Plugin** (`code.js`) - WebSocket client that connects to MCP server on port 8765
-- **UI** (`ui.html`) - Real-time status monitoring and connection feedback
-- **Manifest** (`manifest.json`) - Plugin configuration and permissions
+| Category | Tool | Handler | Description |
+|----------|------|---------|-------------|
+| **Node Creation** | `create_node` | NodeHandler | Create rectangles, ellipses, frames |
+| | `create_text` | TextHandler | Create text with typography |
+| **Node Modification** | `update_node` | NodeHandler | Update node properties |
+| | `move_node` | NodeHandler | Change node position |
+| | `delete_node` | NodeHandler | Remove nodes |
+| | `duplicate_node` | NodeHandler | Copy nodes with offset |
+| **Style Management** | `manage_styles` | StyleHandler | Create, apply, delete styles |
+| **Layout System** | `manage_auto_layout` | LayoutHandler | Configure auto layout |
+| | `manage_constraints` | LayoutHandler | Set positioning constraints |
+| **Hierarchy** | `manage_hierarchy` | HierarchyHandler | Group, ungroup, reorder nodes |
+| **Selection** | `get_selection` | SelectionHandler | Get selected nodes |
+| | `set_selection` | SelectionHandler | Set node selection |
+| | `get_page_nodes` | SelectionHandler | List all page nodes |
+| **Export** | `export_node` | SelectionHandler | Export nodes as images |
+| **Status** | `get_plugin_status` | Registry | Check plugin connection |
 
-### Communication Flow
+### Handler Classes
+
+#### Base Handler (`src/handlers/base-handler.ts`)
+Shared functionality for all handlers:
+- **Parameter Validation**: Common validation patterns using Zod schemas
+- **Error Handling**: Standardized error responses with logging
+- **Operation Wrapping**: Consistent async operation patterns
+- **Default Values**: Parameter default handling
+
+#### Node Handler (`src/handlers/node-handler.ts`)
+Core Figma node operations:
+- **Node Creation**: Rectangle, ellipse, frame creation with styling
+- **Property Updates**: Modify existing node properties
+- **Positioning**: Move and position nodes
+- **Lifecycle**: Delete and duplicate operations
+
+#### Text Handler (`src/handlers/text-handler.ts`)
+Typography and text management:
+- **Text Creation**: Rich text with mixed styling support
+- **Style Ranges**: Apply different styles to text segments
+- **Font Management**: Load and apply custom fonts
+- **Typography**: Font size, weight, alignment, spacing
+
+#### Style Handler (`src/handlers/style-handler.ts`)
+Figma style system integration:
+- **Style Types**: Paint, text, effect, and grid styles
+- **CRUD Operations**: Create, read, update, delete styles
+- **Style Application**: Apply styles to compatible nodes
+- **Style Discovery**: List and search existing styles
+
+#### Layout Handler (`src/handlers/layout-handler.ts`)
+Auto layout and constraint system:
+- **Auto Layout**: Enable and configure responsive layouts
+- **Constraints**: Pin elements and control resizing behavior
+- **Spacing**: Configure padding, gaps, and alignment
+- **Responsive Design**: Create layouts that adapt to content
+
+#### Hierarchy Handler (`src/handlers/hierarchy-handler.ts`)
+Node organization and structure:
+- **Grouping**: Create and dissolve groups
+- **Layer Order**: Reorder nodes in layer hierarchy
+- **Parent-Child**: Move nodes between containers
+- **Depth Management**: Control node nesting
+
+#### Selection Handler (`src/handlers/selection-handler.ts`)
+Selection and data retrieval:
+- **Selection Management**: Get and set selected nodes
+- **Page Traversal**: Navigate node hierarchy
+- **Data Export**: Extract design information
+- **Node Discovery**: Find nodes by criteria
+
+## 🛠️ Utility System
+
+### Node Utilities (`src/utils/node-utils.ts`)
+Node traversal and manipulation:
+```typescript
+findNodeById(id: string): SceneNode | null
+getAllNodes(node: BaseNode, depth: number): NodeInfo[]
+getNodeIndex(node: SceneNode): number
+```
+
+### Color Utilities (`src/utils/color-utils.ts`)
+Color format conversions:
+```typescript
+hexToRgb(hex: string): RGB
+hexToRgba(hex: string, alpha: number): RGBA
+rgbToHex(color: RGB): string
+```
+
+### Font Utilities (`src/utils/font-utils.ts`)
+Typography support:
+```typescript
+loadFont(fontName: FontName): Promise<void>
+ensureFontLoaded(fontName: FontName): Promise<void>
+getFontFromParams(params: TextParams): FontName
+```
+
+### Response Utilities (`src/utils/response-utils.ts`)
+Response formatting and validation:
+```typescript
+createSuccessResponse(data?: any): OperationResult
+createErrorResponse(error: string | Error): OperationResult
+formatNodeInfo(node: SceneNode): NodeInfo
+```
+
+## 📊 Type System (`src/types.ts`)
+
+Comprehensive TypeScript definitions using Zod schemas for runtime validation:
+
+### Configuration
+```typescript
+interface ServerConfig {
+  port: number;
+  enableHeartbeat: boolean;
+  heartbeatInterval: number;
+  maxReconnectAttempts: number;
+}
+```
+
+### Operation Parameters
+```typescript
+interface NodeParams {
+  nodeType: 'rectangle' | 'ellipse' | 'frame';
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  fillColor?: string;
+  // ... additional properties
+}
+```
+
+### Response Types
+```typescript
+interface OperationResult {
+  success: boolean;
+  data?: any;
+  error?: string;
+}
+```
+
+## 🔄 Communication Protocol
+
+### MCP Tool Execution Flow
+
 ```mermaid
 sequenceDiagram
     participant AI as AI Agent
-    participant MCP as MCP Server
+    participant MCP as MCP Client
+    participant Server as MCP Server
+    participant Handler as Handler
+    participant WS as WebSocket Server
     participant Plugin as Figma Plugin
     participant Figma as Figma API
 
-    AI->>MCP: create_rectangle(params)
-    MCP->>MCP: Validate parameters
-    MCP->>Plugin: WebSocket message
-    Plugin->>Figma: figma.createRectangle()
-    Figma-->>Plugin: Rectangle node
-    Plugin-->>MCP: Success response
-    MCP-->>AI: Formatted response
+    AI->>MCP: Natural language request
+    MCP->>Server: MCP tool call (stdio)
+    Server->>Handler: Route to handler
+    Handler->>Handler: Validate parameters
+    Handler->>WS: Send message
+    WS->>Plugin: JSON over WebSocket
+    Plugin->>Figma: Plugin API call
+    Figma-->>Plugin: Result
+    Plugin-->>WS: Response
+    WS-->>Handler: Response
+    Handler-->>Server: Formatted result
+    Server-->>MCP: MCP response
+    MCP-->>AI: Natural language result
 ```
 
-## 🔌 Communication Protocol
-
-### Message Types
-
-#### Request Messages
+### WebSocket Message Format
 ```typescript
-interface PluginMessage {
-  id: string;              // UUID for request tracking
-  type: 'CREATE_RECTANGLE' | 'UPDATE_NODE' | ...;
-  payload?: any;           // Operation-specific parameters
+// Request to plugin
+{
+  id: "uuid",
+  type: "CREATE_NODE",
+  operation: "createNode", 
+  payload: {
+    nodeType: "rectangle",
+    x: 0, y: 0,
+    width: 100, height: 100,
+    fillColor: "#FF0000"
+  }
+}
+
+// Response from plugin
+{
+  id: "uuid",
+  success: true,
+  data: {
+    nodeId: "figma-node-id",
+    message: "Rectangle created successfully"
+  }
 }
 ```
 
-#### Response Messages
-```typescript
-interface PluginResponse {
-  id: string;              // Matching request ID
-  success: boolean;        // Operation status
-  data?: any;              // Result data
-  error?: string;          // Error message if failed
-}
-```
+## 🧪 Development Workflow
 
-## 🛠️ Adding New Operations
+### Adding New MCP Tools
 
-### 1. Define Types
-Add new schemas to `types.ts`:
+1. **Define Schema** in `src/types.ts`:
 ```typescript
 export const CreateComponentSchema = z.object({
   name: z.string(),
-  width: z.number(),
-  height: z.number(),
-  // ... other properties
+  width: z.number().positive(),
+  height: z.number().positive(),
 });
 ```
 
-### 2. Update Message Types
-Add to the PluginMessage type enum:
-```typescript
-type: z.enum([
-  // ... existing types
-  'CREATE_COMPONENT',
-])
-```
-
-### 3. Implement MCP Tool
-Add to `mcp-server.ts`:
+2. **Register Tool** in `src/handlers/index.ts`:
 ```typescript
 {
   name: 'create_component',
   description: 'Create a new component',
-  inputSchema: CreateComponentSchema,
+  inputSchema: zodToJsonSchema(CreateComponentSchema),
 }
 ```
 
-### 4. Add Tool Handler
+3. **Implement Handler** method:
 ```typescript
-case 'create_component':
-  return await this.createComponent(args);
-
-private async createComponent(args: any) {
-  const params = CreateComponentSchema.parse(args);
-  const response = await this.pluginClient.sendToPlugin({
-    id: uuidv4(),
-    type: 'CREATE_COMPONENT',
-    payload: params
-  });
-  // ... handle response
+async createComponent(params: any): Promise<OperationResult> {
+  const validated = CreateComponentSchema.parse(params);
+  // Implementation
 }
 ```
 
-### 5. Implement Plugin Handler
-Add to `code.js`:
+4. **Add Plugin Handler** in `figma-plugin/src/handlers/`:
 ```typescript
-case 'CREATE_COMPONENT':
-  await createComponent(id, payload);
-  break;
-
-async function createComponent(id, params) {
+export async function createComponent(payload: any): Promise<any> {
   const component = figma.createComponent();
-  component.name = params.name;
-  component.resize(params.width, params.height);
-  // ... implementation
-  sendResponse(id, true, { nodeId: component.id });
+  // Implementation
 }
 ```
 
-## 🧪 Testing Strategy
+### Testing New Features
 
-### Unit Tests
-Test individual components in isolation:
+1. **Unit Tests** for handlers:
 ```typescript
-// Test schema validation
-describe('CreateRectangleSchema', () => {
-  it('should validate correct parameters', () => {
-    const result = CreateRectangleSchema.parse({
-      x: 0, y: 0, width: 100, height: 100
-    });
-    expect(result).toBeDefined();
-  });
-});
-```
-
-### Integration Tests
-Test operation flows:
-```typescript
-// Test MCP tool execution
-describe('create_rectangle tool', () => {
-  it('should create rectangle in Figma', async () => {
-    const server = new FigmaMCPServer();
-    const result = await server.handleToolCall({
-      name: 'create_rectangle',
-      arguments: { x: 0, y: 0, width: 100, height: 100 }
+describe('NodeHandler', () => {
+  it('should create rectangle', async () => {
+    const handler = new NodeHandler(mockSendToPlugin);
+    const result = await handler.createNode({
+      nodeType: 'rectangle',
+      width: 100,
+      height: 100
     });
     expect(result.success).toBe(true);
   });
 });
 ```
 
-### Manual Testing
-1. Start development server: `npm run dev`
-2. Load plugin in Figma
-3. Test each MCP tool through your MCP client
-4. Verify results in Figma
-5. Check error handling
+2. **Integration Tests** with actual plugin:
+```bash
+# Start development server
+npm run dev
+
+# In separate terminal, run connectivity test
+npm test
+
+# Manual testing through MCP client
+```
+
+3. **Manual Testing** using test suite:
+Follow procedures in `tests/mcp-test-suite.md` for validation.
 
 ## 🐛 Debugging
 
-### MCP Server Debugging
+### Server-Side Debugging
 ```bash
 # Enable debug logging
-npm run dev
+DEBUG=* npm run dev
 
 # Check WebSocket connections
 netstat -an | grep 8765
+
+# Monitor process health
+ps aux | grep figma-mcp
 ```
 
-### Plugin Debugging
-1. Open Figma Plugin Console: **Plugins** → **Development** → **Open Console**
-2. Check WebSocket connection status in plugin UI
-3. Monitor message flow in console logs
-4. Test individual operations
+### Plugin-Side Debugging
+1. **Figma Console**: Plugins → Development → Open Console
+2. **WebSocket Status**: Check plugin UI connection indicator
+3. **Message Flow**: Monitor request/response logs
+4. **Network Tab**: Verify WebSocket connection in browser dev tools
 
 ### Common Issues
 
-#### Plugin Won't Connect
-- Check WebSocket port availability (default: 8765)
-- Verify MCP server is running
-- Verify plugin is running in Figma
-- Check network connectivity
-- Look for connection errors in plugin console
+#### Plugin Connection Failures
+- **Port Conflicts**: Use `--check-port 8765` to identify conflicts
+- **Firewall**: Ensure localhost connections allowed
+- **Plugin State**: Restart plugin if connection stuck
+- **Server State**: Restart server to clear zombie processes
 
-#### Operations Fail
-- Validate parameter schemas in `types.ts`
-- Check Figma API permissions in manifest
-- Verify node IDs exist before operations
-- Ensure file is not in Dev Mode
+#### Tool Execution Errors
+- **Parameter Validation**: Check Zod schema compliance
+- **Node Access**: Verify node IDs exist and are accessible
+- **Permissions**: Ensure plugin has required Figma permissions
+- **File State**: Check file isn't in Dev Mode or locked
 
-#### Performance Problems
-- Monitor message queue size
-- Check heartbeat timing
-- Optimize batch operations
-- Reduce WebSocket message frequency
+#### Performance Issues
+- **Message Queue**: Monitor WebSocket message backlog
+- **Memory Usage**: Check for memory leaks in long-running sessions
+- **Connection Stability**: Monitor reconnection frequency
+- **Batch Operations**: Group multiple operations when possible
 
 ## 📊 Performance Optimization
 
 ### Message Batching
-Group multiple operations:
 ```typescript
-// Instead of multiple individual calls
-await createRectangle(params1);
-await createRectangle(params2);
-await createRectangle(params3);
+// Instead of individual calls
+await createNode(params1);
+await createNode(params2);
 
-// Use batch operation (if implemented)
-await batchCreate([params1, params2, params3]);
+// Batch operations when possible
+await batchCreateNodes([params1, params2]);
 ```
 
 ### Connection Management
-Optimize WebSocket usage:
 ```typescript
-class PluginClient {
-  private connection: WebSocket;
-  
-  async ensureConnection() {
-    if (!this.connection || this.connection.readyState !== WebSocket.OPEN) {
-      await this.connect();
+class WebSocketServer {
+  private ensureConnection() {
+    if (!this.isConnected()) {
+      this.reconnect();
     }
   }
 }
 ```
 
-### Caching
-Cache frequently accessed data:
+### Caching Strategies
 ```typescript
 class NodeCache {
-  private cache = new Map();
+  private cache = new Map<string, NodeInfo>();
   
-  async getNode(id: string) {
+  async getNode(id: string): Promise<NodeInfo> {
     if (this.cache.has(id)) {
-      return this.cache.get(id);
+      return this.cache.get(id)!;
     }
-    // Fetch from Figma and cache
+    // Fetch and cache
   }
 }
 ```
@@ -309,109 +518,99 @@ class NodeCache {
 ## 🔒 Security Best Practices
 
 ### Input Validation
-Always validate inputs with Zod schemas:
+All inputs validated with Zod schemas:
 ```typescript
 const params = CreateRectangleSchema.parse(args);
 ```
 
 ### Connection Security
-- Use localhost-only connections
-- Implement connection timeouts
-- Validate message origins
+- **Localhost Only**: WebSocket server binds to localhost
+- **No Authentication**: Local development only
+- **Sandbox**: Plugin runs in Figma's security sandbox
+- **Process Isolation**: Server runs as separate process
 
 ### Error Handling
-Never expose internal errors to clients:
+Never expose internal errors:
 ```typescript
 catch (error) {
   console.error('Internal error:', error);
-  return { error: 'Operation failed' };
+  return createErrorResponse('Operation failed');
 }
 ```
 
-## 📦 Available MCP Tools
-
-The server provides 11 MCP tools for Figma operations:
-
-| Category | Tools | Description |
-|----------|-------|-------------|
-| **Create** | `create_node`, `create_text` | Create design elements with typography support |
-| **Styles** | `manage_styles` | Style management (paint, text, effect, grid) |
-| **Modify** | `update_node`, `move_node`, `delete_node`, `duplicate_node` | Modify existing elements |
-| **Selection** | `get_selection`, `set_selection` | Manage element selection |
-| **Data** | `get_page_nodes`, `export_node` | Read design data |
-| **Status** | `get_plugin_status` | Monitor connection health |
-
-### Style Management Features
-The `manage_styles` tool provides style management:
-- **Paint Styles**: Solid colors, gradients (linear, radial, angular, diamond), image fills
-- **Text Styles**: Typography control with Figma text properties
-- **Effect Styles**: Drop shadows, inner shadows, layer blur, background blur
-- **Grid Styles**: Column/row/grid layouts with full configuration
-- **CRUD Operations**: Create, list, apply, delete, and get styles
-- **Style Application**: Apply styles to any compatible node type
-
-### Typography Features
-The `create_text` tool provides typography capabilities:
-- **Mixed Styling**: Apply different fonts, sizes, and colors to text segments with `styleRanges`
-- **Text Styles**: Create reusable text styles with `createStyle` and `styleName`
-- **Typography Properties**: Font families, weights, alignment, spacing, case, and decoration
-- **Layout Control**: Fixed-width text with automatic height adjustment
-- **Formatting**: Line height units, letter spacing, paragraph formatting
-
 ## 🚀 Deployment
-
-### Production Build
-```bash
-npm run build
-npm start
-```
 
 ### Development Mode
 ```bash
-npm run dev  # Watch mode with auto-restart
+npm run dev          # Auto-restart on changes
+npm run dev:plugin   # Plugin watch mode
 ```
 
-### Configuration
-Set environment variables:
-- `FIGMA_MCP_PORT` - WebSocket port (default: 8765)
+### Production Build
+```bash
+npm run build        # Build everything
+npm start           # Start production server
+```
 
-## 📚 Additional Resources
+### Environment Configuration
+```bash
+# Set custom WebSocket port
+FIGMA_MCP_PORT=9000 npm start
 
-### Figma Plugin API
-- [Official Plugin API Docs](https://www.figma.com/plugin-docs/)
+# Enable debug logging
+DEBUG=figma-mcp:* npm start
+```
+
+### Monitoring
+```bash
+# Check server status
+curl -f http://localhost:8765/health || echo "Server down"
+
+# Monitor WebSocket connections
+ss -tulpn | grep :8765
+
+# Check process health
+pgrep -f figma-mcp-write-server
+```
+
+## 🧪 Testing Strategy
+
+### Automated Tests
+```bash
+npm test                    # Run all tests
+npm run test:connectivity   # WebSocket connection test
+npm run test:manual        # Display manual test guide
+```
+
+### Manual Testing Workflow
+1. **Setup**: Start server and load plugin
+2. **Basic Operations**: Test core functionality
+3. **Advanced Features**: Test auto layout, styles, hierarchy
+4. **Error Handling**: Test invalid inputs and edge cases
+5. **Performance**: Test with large files and many operations
+
+### Test Coverage Areas
+- **Parameter Validation**: All Zod schemas
+- **Tool Execution**: Each MCP tool
+- **Error Handling**: Invalid inputs and failures
+- **Connection Management**: WebSocket reliability
+- **Plugin Integration**: Figma API compatibility
+
+## 📚 Resources
+
+### Figma Plugin Development
 - [Plugin API Reference](https://www.figma.com/plugin-docs/api/api-reference/)
 - [Plugin Development Guide](https://www.figma.com/plugin-docs/how-plugins-run/)
+- [TypeScript for Plugins](https://www.figma.com/plugin-docs/typescript/)
 
 ### Model Context Protocol
 - [MCP Specification](https://modelcontextprotocol.io/)
-- [MCP SDK Documentation](https://github.com/modelcontextprotocol/typescript-sdk)
-- [MCP Examples](https://github.com/modelcontextprotocol/servers)
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [MCP Server Examples](https://github.com/modelcontextprotocol/servers)
 
-### WebSocket Communication
-- [WebSocket API](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
-- [Node.js ws Library](https://github.com/websockets/ws)
+### Development Tools
+- [WebSocket Testing](https://developer.mozilla.org/en-US/docs/Web/API/WebSocket)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+- [Zod Validation](https://zod.dev/)
 
-## 🤝 Contributing
-
-### Code Style
-- Use TypeScript for type safety
-- Follow existing code patterns
-- Add Zod schemas for new data types
-- Include error handling for all operations
-
-### Pull Request Process
-1. Fork the repository
-2. Create a feature branch
-3. Add tests for new functionality
-4. Update documentation as needed
-5. Submit pull request with clear description
-
-### Reporting Issues
-- Use GitHub issues for bug reports
-- Include steps to reproduce
-- Provide error logs and console output
-- Specify Figma version and OS
-
----
-
-This development guide covers the essential information for working with the Figma MCP Write Server. For usage examples and setup instructions, see the [README](README.md) and [EXAMPLES.md](EXAMPLES.md).
+This development guide provides information for understanding, modifying, and extending the Figma MCP Write Server system.
