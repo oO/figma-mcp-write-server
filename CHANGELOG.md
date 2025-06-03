@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.1] - 2025-06-03
+
+### Changed
+- **Plugin UI**: Completely redesigned Figma plugin interface
+  - Simplified flat design with consistent 8px spacing
+  - Removed complex nested sections and rounded corners
+  - Clean layout prioritizing activity log visibility
+  - Fixed flexbox layout to prevent content clipping
+  - Removed timestamps from log entries for cleaner display
+  - Improved visual hierarchy with better typography and spacing
+
 ## [0.13.0] - 2025-06-02
 
 ### Added

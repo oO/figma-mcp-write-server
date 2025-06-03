@@ -1,8 +1,8 @@
 // Figma MCP Write Plugin - Complete Implementation with Debug Logging
 console.log('🎨 Figma MCP Write Plugin starting...');
 
-// Show UI for connection monitoring
-figma.showUI(__html__, { width: 320, height: 450 });
+// Show UI for connection monitoring - fixed size
+figma.showUI(__html__, { width: 320, height: 300 });
 
 // Handle messages from UI thread (which runs the WebSocket server)
 figma.ui.onmessage = async (msg) => {
