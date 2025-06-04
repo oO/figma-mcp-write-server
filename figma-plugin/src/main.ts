@@ -7,16 +7,14 @@ import { SelectionHandler } from './handlers/selection-handler.js';
 import { StyleHandler } from './handlers/style-handler.js';
 import { HierarchyHandler } from './handlers/hierarchy-handler.js';
 import { LayoutHandler } from './handlers/layout-handler.js';
-import { MessageRouter } from './websocket/message-router.js';
 import { HandlerRegistry } from './types.js';
 
 class FigmaPlugin {
-  private messageRouter: MessageRouter;
   private handlers: HandlerRegistry = {};
 
   constructor() {
     this.initializeHandlers();
-    this.messageRouter = new MessageRouter(this.handlers);
+    this.setupUIMessageHandler();
   }
 
   private initializeHandlers(): void {
@@ -38,16 +36,72 @@ class FigmaPlugin {
       layoutHandler.getOperations()
     );
 
-    console.log(`✅ Registered ${Object.keys(this.handlers).length} operations`);
+    console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers));
+  }
+
+  private setupUIMessageHandler(): void {
+    // Handle messages from UI thread (which manages WebSocket connection)
+    figma.ui.onmessage = async (msg) => {
+      console.log('📨 Received from UI:', msg.type);
+      
+      switch (msg.type) {
+        case 'PLUGIN_OPERATION':
+          console.log('🔧 About to handle operation:', msg.operation);
+          await this.handlePluginOperation(msg.operation, msg.payload, msg.id);
+          break;
+          
+        case 'CLOSE':
+          console.log('👋 Closing plugin');
+          figma.closePlugin();
+          break;
+          
+        default:
+          console.log('❓ Unknown message type:', msg.type);
+      }
+    };
+  }
+
+  // Handle operations from MCP server via UI thread
+  private async handlePluginOperation(operation: string, payload: any, id: string): Promise<void> {
+    console.log(`🔧 Executing ${operation}:`, payload);
+    
+    try {
+      const handler = this.handlers[operation];
+      
+      if (!handler) {
+        throw new Error(`Unknown operation: ${operation}`);
+      }
+
+      const result = await handler(payload);
+      
+      // Send success response back to UI thread
+      figma.ui.postMessage({
+        type: 'OPERATION_RESPONSE',
+        id,
+        success: result.success,
+        data: result.success ? result.data : result,
+        error: result.success ? undefined : result.error
+      });
+      
+      console.log(`✅ ${operation} completed successfully`);
+      
+    } catch (error) {
+      console.error(`❌ ${operation} failed:`, error);
+      
+      // Send error response back to UI thread
+      figma.ui.postMessage({
+        type: 'OPERATION_RESPONSE',
+        id,
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 
   async start(): Promise<void> {
     try {
-      // Show UI for connection monitoring
+      // Show UI for WebSocket connection and monitoring
       figma.showUI(__html__, { width: 320, height: 300 });
-
-      // Initialize message router and WebSocket connection
-      await this.messageRouter.initialize();
 
       // Set up plugin lifecycle handlers
       this.setupLifecycleHandlers();
@@ -61,9 +115,8 @@ class FigmaPlugin {
 
   private setupLifecycleHandlers(): void {
     // Handle plugin close
-    figma.on('close', async () => {
+    figma.on('close', () => {
       console.log('👋 Plugin closing...');
-      await this.messageRouter.close();
     });
 
     // Handle selection changes (optional - for debugging)
@@ -76,7 +129,6 @@ class FigmaPlugin {
   getStatus(): any {
     return {
       handlers: Object.keys(this.handlers),
-      connection: this.messageRouter.getConnectionStatus(),
       timestamp: Date.now()
     };
   }

@@ -98,14 +98,26 @@ export function logOperation(operation: string, params: any, result: OperationRe
   console.log(`${status} ${operation}:`, { params, result });
 }
 
-export function createPageNodesResponse(nodes: NodeInfo[]): any {
+export function createPageNodesResponse(nodes: any[], detail: string = 'standard'): any {
   const topLevelNodes = nodes.filter(node => node.depth === 0);
   
-  return {
+  const response = {
     nodes,
     totalCount: nodes.length,
-    topLevelCount: topLevelNodes.length
+    topLevelCount: topLevelNodes.length,
+    detail
   };
+
+  // For simple mode, also provide a flat list of just the essential info
+  if (detail === 'simple') {
+    response.nodeList = nodes.map(node => ({
+      id: node.id,
+      name: node.name,
+      type: node.type
+    }));
+  }
+
+  return response;
 }
 
 export function formatExportResponse(nodeId: string, format: string, scale: number): any {

@@ -12,7 +12,7 @@ export class SelectionHandler extends BaseHandler {
     return {
       GET_SELECTION: () => this.getSelection(),
       SET_SELECTION: (params) => this.setSelection(params),
-      GET_PAGE_NODES: () => this.getPageNodes(),
+      GET_PAGE_NODES: (params) => this.getPageNodes(params),
       EXPORT_NODE: (params) => this.exportNode(params)
     };
   }
@@ -46,10 +46,29 @@ export class SelectionHandler extends BaseHandler {
     });
   }
 
-  private async getPageNodes(): Promise<OperationResult> {
-    return this.executeOperation('getPageNodes', {}, async () => {
-      const allNodes = getAllNodes(figma.currentPage);
-      const pageData = createPageNodesResponse(allNodes);
+  private async getPageNodes(params: any = {}): Promise<OperationResult> {
+    return this.executeOperation('getPageNodes', params, async () => {
+      const {
+        detail = 'standard',
+        includeHidden = false,
+        includePages = false,
+        nodeTypes = [],
+        maxDepth = null
+      } = params;
+
+      let allNodes = getAllNodes(figma.currentPage, detail, includeHidden, maxDepth);
+      
+      // Filter out the page node unless explicitly requested
+      if (!includePages) {
+        allNodes = allNodes.filter(node => node.type !== 'PAGE');
+      }
+      
+      // Filter by node types if specified
+      if (nodeTypes.length > 0) {
+        allNodes = allNodes.filter(node => nodeTypes.includes(node.type));
+      }
+      
+      const pageData = createPageNodesResponse(allNodes, detail);
       
       return pageData;
     });

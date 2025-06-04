@@ -261,10 +261,13 @@ export class NodeHandlers {
       payload: params
     });
 
+    // Extract the properties that were actually updated (exclude nodeId)
+    const { nodeId, ...updatedProperties } = params;
+    
     return {
       content: [{
         type: 'text',
-        text: `✅ Updated node ${params.nodeId} with properties: ${JSON.stringify(params.properties)}`
+        text: `✅ Updated node ${params.nodeId} with properties: ${JSON.stringify(updatedProperties)}`
       }]
     };
   }

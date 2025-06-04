@@ -266,6 +266,21 @@ export const FigmaNodeSchema = z.object({
 
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
 export type CreateNodeParams = z.infer<typeof CreateNodeSchema>;
+export type UpdateNodeParams = z.infer<typeof UpdateNodeSchema>;
+
+// ================================================================================
+// Enhanced Response Types
+// ================================================================================
+
+export interface NodeOperationResult {
+  success: boolean;
+  nodeId?: string;        // for create_node
+  message: string;
+  warnings?: string[];    // for non-critical issues (e.g., clamped values)
+  properties?: {          // echo back applied properties
+    [key: string]: any;
+  };
+}
 
 // ================================================================================
 // Plugin Communication Types
@@ -277,6 +292,8 @@ export const PluginMessageSchema = z.object({
     'GET_SELECTION',
     'CREATE_NODE',
     'CREATE_TEXT',
+    'CREATE_STAR',
+    'CREATE_POLYGON',
     'UPDATE_NODE',
     'DELETE_NODE',
     'MOVE_NODE',
@@ -309,38 +326,68 @@ export type PluginResponse = z.infer<typeof PluginResponseSchema>;
 // ================================================================================
 
 export const CreateNodeSchema = z.object({
-  // Node type - determines what kind of Figma node to create
-  nodeType: z.enum(['rectangle', 'ellipse', 'text', 'frame']),
-  
-  // Common positioning properties
-  x: z.number().default(0),
-  y: z.number().default(0),
+  // === BASIC PROPERTIES ===
+  nodeType: z.enum(['rectangle', 'ellipse', 'text', 'frame', 'star', 'polygon']),
   name: z.string().optional(),
   
-  // Size properties (required for rectangle, ellipse, frame)
-  width: z.number().optional(),
-  height: z.number().optional(),
+  // === SIZE & POSITION ===
+  width: z.number().optional(),    // required for rectangle, ellipse, frame
+  height: z.number().optional(),   // required for rectangle, ellipse, frame
+  x: z.number().default(0),        // position X
+  y: z.number().default(0),        // position Y
   
-  // Visual properties
-  // fillColor: Used for background color in shapes/frames and text color in text nodes
-  fillColor: z.string().optional(),
-  strokeColor: z.string().optional(),
-  strokeWidth: z.number().optional(),
+  // === CORNER PROPERTIES ===
+  // Basic corner radius (applies to all corners)
+  cornerRadius: z.number().min(0).optional(),
   
-  // Text-specific properties (only used when nodeType is 'text')
-  content: z.string().optional(),
-  fontSize: z.number().optional(),
-  fontFamily: z.string().optional(),
-  // Basic text style properties (for backward compatibility)
-  fontStyle: z.string().optional(),
-  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
+  // Individual corner radii (overrides cornerRadius if specified)
+  topLeftRadius: z.number().min(0).optional(),
+  topRightRadius: z.number().min(0).optional(),
+  bottomLeftRadius: z.number().min(0).optional(),
+  bottomRightRadius: z.number().min(0).optional(),
+  
+  // Corner smoothing (0-1, where 0.6 = iOS squircle)
+  cornerSmoothing: z.number().min(0).max(1).optional(),
+  
+  // === BASIC STYLING ===
+  // Basic fill (single color only - advanced fills via manage_fills)
+  fillColor: z.string().optional(), // hex color string
+  opacity: z.number().min(0).max(1).optional(), // 0-1 transparency
+  visible: z.boolean().default(true), // show/hide node
+  
+  // Basic stroke (advanced strokes via manage_strokes)
+  strokeColor: z.string().optional(), // hex color string
+  strokeWidth: z.number().min(0).optional(), // stroke thickness
+  
+  // === TRANSFORM ===
+  rotation: z.number().optional(), // rotation in degrees
+  
+  // === INTERACTION ===
+  locked: z.boolean().default(false), // prevent user interaction
+  
+  // === FRAME-SPECIFIC PROPERTIES ===
+  clipsContent: z.boolean().optional(), // clip children to frame bounds (frames only)
+  
+  // === SHAPE-SPECIFIC PROPERTIES ===
+  // Star nodes
+  pointCount: z.number().min(3).optional(), // number of star points (stars only)
+  innerRadius: z.number().min(0).max(1).optional(), // inner radius ratio 0-1 (stars only)
+  
+  // === TEXT PROPERTIES ===
+  // (Keep existing text properties for backward compatibility)
+  content: z.string().optional(),         // text content (text only)
+  fontFamily: z.string().optional(),      // font family (text only)
+  fontSize: z.number().optional(),        // font size (text only)
+  fontStyle: z.string().optional(),       // font style (text only)
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(), // text only
 }).refine((data) => {
   // Validate that required properties are present for each node type
-  // Allow defaults to be applied in the createNode method
   switch (data.nodeType) {
     case 'rectangle':
     case 'ellipse':
     case 'frame':
+    case 'star':
+    case 'polygon':
       // These node types are valid (defaults will be applied if width/height missing)
       return true;
     case 'text':
@@ -356,8 +403,54 @@ export const CreateNodeSchema = z.object({
 
 
 export const UpdateNodeSchema = z.object({
-  nodeId: z.string(),
-  properties: z.record(z.any()),
+  nodeId: z.string(), // required - ID of node to update
+  
+  // === BASIC PROPERTIES ===
+  name: z.string().optional(),
+  
+  // === SIZE & POSITION ===
+  width: z.number().optional(),
+  height: z.number().optional(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  
+  // === CORNER PROPERTIES ===
+  cornerRadius: z.number().min(0).optional(),
+  topLeftRadius: z.number().min(0).optional(),
+  topRightRadius: z.number().min(0).optional(),
+  bottomLeftRadius: z.number().min(0).optional(),
+  bottomRightRadius: z.number().min(0).optional(),
+  cornerSmoothing: z.number().min(0).max(1).optional(),
+  
+  // === BASIC STYLING ===
+  fillColor: z.string().optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().optional(),
+  strokeColor: z.string().optional(),
+  strokeWidth: z.number().min(0).optional(),
+  
+  // === TRANSFORM ===
+  rotation: z.number().optional(),
+  
+  // === INTERACTION ===
+  locked: z.boolean().optional(),
+  
+  // === FRAME-SPECIFIC ===
+  clipsContent: z.boolean().optional(),
+  
+  // === SHAPE-SPECIFIC ===
+  pointCount: z.number().min(3).optional(),
+  innerRadius: z.number().min(0).max(1).optional(),
+  
+  // === TEXT PROPERTIES ===
+  content: z.string().optional(),
+  fontFamily: z.string().optional(),
+  fontSize: z.number().optional(),
+  fontStyle: z.string().optional(),
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
+  
+  // === LEGACY SUPPORT ===
+  properties: z.record(z.any()).optional(), // backward compatibility
 });
 
 export const MoveNodeSchema = z.object({

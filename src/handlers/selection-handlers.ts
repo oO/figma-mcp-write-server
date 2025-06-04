@@ -36,36 +36,49 @@ export class SelectionHandlers {
     };
   }
 
-  async getPageNodes() {
+  async getPageNodes(args: any = {}) {
     const response = await this.sendToPlugin({
-      type: 'GET_PAGE_NODES'
+      type: 'GET_PAGE_NODES',
+      payload: args
     });
 
     const data = response.data;
-    let resultText = `📄 Page Hierarchy (${data?.totalCount || 0} total nodes, ${data?.topLevelCount || 0} top-level)\n\n`;
+    const detail = data?.detail || 'standard';
+    
+    let resultText = `📄 Page Hierarchy (${data?.totalCount || 0} total nodes, ${data?.topLevelCount || 0} top-level)\n`;
+    resultText += `📊 Detail Level: ${detail}\n\n`;
     
     if (data?.nodes && Array.isArray(data.nodes)) {
-      // Group nodes by depth for better visualization
-      const nodesByDepth: { [key: number]: any[] } = {};
-      data.nodes.forEach((node: any) => {
-        const depth = node.depth || 0;
-        if (!nodesByDepth[depth]) nodesByDepth[depth] = [];
-        nodesByDepth[depth].push(node);
-      });
+      if (detail === 'simple') {
+        // Simple format: just list all nodes with basic info
+        resultText += '📋 Nodes:\n';
+        data.nodes.forEach((node: any) => {
+          resultText += `• ${node.name} (${node.type}) [${node.id}]\n`;
+        });
+      } else {
+        // Standard/detailed format: group by depth for hierarchy visualization
+        const nodesByDepth: { [key: number]: any[] } = {};
+        data.nodes.forEach((node: any) => {
+          const depth = node.depth || 0;
+          if (!nodesByDepth[depth]) nodesByDepth[depth] = [];
+          nodesByDepth[depth].push(node);
+        });
 
-      // Display nodes grouped by depth
-      const maxDepth = Math.max(...Object.keys(nodesByDepth).map(Number));
-      for (let depth = 0; depth <= maxDepth; depth++) {
-        const nodesAtDepth = nodesByDepth[depth];
-        if (nodesAtDepth) {
-          resultText += `📊 Level ${depth} (${nodesAtDepth.length} nodes):\n`;
-          nodesAtDepth.forEach((node: any) => {
-            const indent = '  '.repeat(depth);
-            const size = node.width && node.height ? ` [${Math.round(node.width)}×${Math.round(node.height)}]` : '';
-            const pos = node.x !== undefined && node.y !== undefined ? ` at (${Math.round(node.x)}, ${Math.round(node.y)})` : '';
-            resultText += `${indent}• ${node.name} (${node.type})${size}${pos}\n`;
-          });
-          resultText += '\n';
+        // Display nodes grouped by depth
+        const maxDepth = Math.max(...Object.keys(nodesByDepth).map(Number));
+        for (let depth = 0; depth <= maxDepth; depth++) {
+          const nodesAtDepth = nodesByDepth[depth];
+          if (nodesAtDepth) {
+            resultText += `📊 Level ${depth} (${nodesAtDepth.length} nodes):\n`;
+            nodesAtDepth.forEach((node: any) => {
+              const indent = '  '.repeat(depth);
+              const size = node.width && node.height ? ` [${Math.round(node.width)}×${Math.round(node.height)}]` : '';
+              const pos = node.x !== undefined && node.y !== undefined ? ` at (${Math.round(node.x)}, ${Math.round(node.y)})` : '';
+              const id = detail === 'detailed' ? ` {${node.id}}` : '';
+              resultText += `${indent}• ${node.name} (${node.type})${size}${pos}${id}\n`;
+            });
+            resultText += '\n';
+          }
         }
       }
     } else {

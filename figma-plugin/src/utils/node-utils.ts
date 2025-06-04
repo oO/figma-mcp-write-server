@@ -1,16 +1,13 @@
-import { NodeInfo } from '../types.js';
+import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
 
 export function findNodeById(nodeId: string): SceneNode {
-  console.log('🔍 Looking for node ID:', nodeId);
   try {
     const node = figma.getNodeById(nodeId);
     if (!node) {
       throw new Error(`Node with ID ${nodeId} not found`);
     }
-    console.log('✅ Found node:', node.name, node.type);
     return node as SceneNode;
   } catch (error) {
-    console.log('❌ Error finding node:', error);
     throw error;
   }
 }
@@ -33,26 +30,94 @@ export function validateNodeType(node: SceneNode, expectedTypes: string[]): void
   }
 }
 
-export function getAllNodes(node: BaseNode, depth: number = 0, parentId: string | null = null): NodeInfo[] {
-  const result: NodeInfo[] = [{
+export function getAllNodes(
+  node: BaseNode, 
+  detail: string = 'standard', 
+  includeHidden: boolean = false,
+  maxDepth: number | null = null,
+  depth: number = 0, 
+  parentId: string | null = null
+): any[] {
+  // Stop if max depth reached
+  if (maxDepth !== null && depth > maxDepth) {
+    return [];
+  }
+
+  // Skip hidden nodes unless explicitly requested
+  if (!includeHidden && 'visible' in node && !(node as any).visible) {
+    return [];
+  }
+
+  const nodeData = createNodeData(node, detail, depth, parentId);
+  const result = [nodeData];
+
+  if ('children' in node) {
+    for (const child of node.children) {
+      result.push(...getAllNodes(child, detail, includeHidden, maxDepth, depth + 1, node.id));
+    }
+  }
+
+  return result;
+}
+
+function createNodeData(node: BaseNode, detail: string, depth: number, parentId: string | null): any {
+  const baseData = {
     id: node.id,
     name: node.name,
-    type: node.type,
+    type: node.type
+  };
+
+  if (detail === 'simple') {
+    return baseData;
+  }
+
+  const standardData = {
+    ...baseData,
     x: 'x' in node ? (node as any).x : 0,
     y: 'y' in node ? (node as any).y : 0,
     width: 'width' in node ? (node as any).width : 0,
     height: 'height' in node ? (node as any).height : 0,
     depth,
-    parentId
-  }];
+    parentId: parentId || undefined,
+    visible: 'visible' in node ? (node as any).visible : true,
+    locked: 'locked' in node ? (node as any).locked : false
+  };
 
-  if ('children' in node) {
-    for (const child of node.children) {
-      result.push.apply(result, getAllNodes(child, depth + 1, node.id));
-    }
+  if (detail === 'standard') {
+    return standardData;
   }
 
-  return result;
+  // Detailed mode - include all available properties
+  const detailedData = { ...standardData };
+
+  // Add optional properties if they exist
+  if ('opacity' in node) detailedData.opacity = (node as any).opacity;
+  if ('rotation' in node) detailedData.rotation = (node as any).rotation;
+  if ('cornerRadius' in node) detailedData.cornerRadius = (node as any).cornerRadius;
+  if ('fills' in node) detailedData.fills = (node as any).fills;
+  if ('strokes' in node) detailedData.strokes = (node as any).strokes;
+  if ('effects' in node) detailedData.effects = (node as any).effects;
+  if ('constraints' in node) detailedData.constraints = (node as any).constraints;
+  if ('absoluteTransform' in node) detailedData.absoluteTransform = (node as any).absoluteTransform;
+  if ('relativeTransform' in node) detailedData.relativeTransform = (node as any).relativeTransform;
+
+  // Layout properties for frames
+  if ('layoutMode' in node) detailedData.layoutMode = (node as any).layoutMode;
+  if ('itemSpacing' in node) detailedData.itemSpacing = (node as any).itemSpacing;
+  if ('paddingLeft' in node) detailedData.paddingLeft = (node as any).paddingLeft;
+  if ('paddingRight' in node) detailedData.paddingRight = (node as any).paddingRight;
+  if ('paddingTop' in node) detailedData.paddingTop = (node as any).paddingTop;
+  if ('paddingBottom' in node) detailedData.paddingBottom = (node as any).paddingBottom;
+  if ('clipsContent' in node) detailedData.clipsContent = (node as any).clipsContent;
+
+  // Text properties
+  if ('characters' in node) detailedData.characters = (node as any).characters;
+  if ('fontSize' in node) detailedData.fontSize = (node as any).fontSize;
+  if ('fontName' in node) detailedData.fontName = (node as any).fontName;
+  if ('textAlignHorizontal' in node) detailedData.textAlignHorizontal = (node as any).textAlignHorizontal;
+  if ('textAlignVertical' in node) detailedData.textAlignVertical = (node as any).textAlignVertical;
+
+  return detailedData;
 }
 
 export function selectAndFocus(nodes: SceneNode[]): void {
@@ -69,11 +134,6 @@ export function getNodeParent(node: SceneNode): BaseNode & ChildrenMixin | null 
 export function validateParentChildRelationship(parentNode: BaseNode, childNode: SceneNode): void {
   if (!('children' in parentNode)) {
     throw new Error(`Parent node ${parentNode.id} cannot contain children`);
-  }
-  
-  // Additional validation for specific node types
-  if (parentNode.type === 'TEXT') {
-    throw new Error('Text nodes cannot contain children');
   }
 }
 
@@ -132,7 +192,6 @@ export function getNodeBounds(node: SceneNode): { x: number; y: number; width: n
     };
   }
   
-  // Fallback for nodes without position/size
   return { x: 0, y: 0, width: 0, height: 0 };
 }
 
@@ -141,7 +200,7 @@ export function moveNodeToPosition(node: SceneNode, x: number, y: number): void 
     (node as any).x = x;
     (node as any).y = y;
   } else {
-    throw new Error(`Node type ${node.type} does not support positioning`);
+    throw new Error(`Node type ${(node as any).type} does not support positioning`);
   }
 }
 

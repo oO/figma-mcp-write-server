@@ -1,6 +1,6 @@
 {
   "name": "figma-mcp-write-server",
-  "version": "0.14.0",
+  "version": "0.15.1",
   "description": "MCP server for Figma with write access via Plugin API",
   "main": "dist/index.js",
   "type": "module",
@@ -34,6 +34,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@figma/plugin-typings": "^1.113.0",
     "@types/node": "^20.12.0",
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.10",

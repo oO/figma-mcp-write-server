@@ -14,15 +14,43 @@ export interface OperationResult {
 }
 
 export interface NodeParams {
+  // === BASIC PROPERTIES ===
   nodeType?: string;
-  x?: number;
-  y?: number;
+  name?: string;
+  
+  // === SIZE & POSITION ===
   width?: number;
   height?: number;
-  name?: string;
+  x?: number;
+  y?: number;
+  
+  // === CORNER PROPERTIES ===
+  cornerRadius?: number;
+  topLeftRadius?: number;
+  topRightRadius?: number;
+  bottomLeftRadius?: number;
+  bottomRightRadius?: number;
+  cornerSmoothing?: number;
+  
+  // === BASIC STYLING ===
   fillColor?: string;
+  opacity?: number;
+  visible?: boolean;
   strokeColor?: string;
   strokeWidth?: number;
+  
+  // === TRANSFORM ===
+  rotation?: number;
+  
+  // === INTERACTION ===
+  locked?: boolean;
+  
+  // === FRAME-SPECIFIC PROPERTIES ===
+  clipsContent?: boolean;
+  
+  // === SHAPE-SPECIFIC PROPERTIES ===
+  pointCount?: number;
+  innerRadius?: number;
 }
 
 export interface TextParams extends NodeParams {
@@ -213,16 +241,60 @@ export interface DuplicateNodeParams {
   offsetY?: number;
 }
 
-export interface NodeInfo {
+export interface SimpleNodeInfo {
   id: string;
   name: string;
   type: string;
+}
+
+export interface NodeInfo extends SimpleNodeInfo {
   x: number;
   y: number;
   width: number;
   height: number;
   depth?: number;
   parentId?: string;
+  visible?: boolean;
+  locked?: boolean;
+  opacity?: number;
+  rotation?: number;
+  cornerRadius?: number;
+  fillColor?: string;
+  strokeColor?: string;
+  strokeWidth?: number;
+}
+
+export interface DetailedNodeInfo extends NodeInfo {
+  absoluteX?: number;
+  absoluteY?: number;
+  absoluteTransform?: number[][];
+  relativeTransform?: number[][];
+  effects?: any[];
+  fills?: any[];
+  strokes?: any[];
+  constraints?: any;
+  layoutMode?: string;
+  layoutGrow?: number;
+  layoutAlign?: string;
+  itemSpacing?: number;
+  paddingLeft?: number;
+  paddingRight?: number;
+  paddingTop?: number;
+  paddingBottom?: number;
+  clipsContent?: boolean;
+  characters?: string; // for text nodes
+  fontSize?: number;
+  fontName?: any;
+  textAlignHorizontal?: string;
+  textAlignVertical?: string;
+}
+
+export interface GetPageNodesParams {
+  detail?: 'simple' | 'standard' | 'detailed';
+  includeHidden?: boolean;
+  includePages?: boolean;
+  nodeTypes?: string[];
+  maxDepth?: number;
 }
 
 export interface PageNodesResult {

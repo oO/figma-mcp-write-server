@@ -72,21 +72,91 @@ graph LR
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `create_node` | Create nodes (rectangle, ellipse, text, frame) | nodeType, x, y, width, height, content, fillColor, etc. |
+| `create_node` | **ENHANCED** Create nodes with advanced visual properties | nodeType (rectangle/ellipse/text/frame/star/polygon), position, size, corners, opacity, rotation, styling, etc. |
 | `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign, etc. |
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects, etc. |
 | `manage_auto_layout` | **NEW v0.13.0** Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing, etc. |
 | `manage_constraints` | **NEW v0.13.0** Constraints management | operation, nodeId, horizontal, vertical |
 | `manage_hierarchy` | Layer & hierarchy management (grouping, depth, parent-child) | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex, etc. |
-| `update_node` | Update node properties | nodeId, properties |
+| `update_node` | **ENHANCED** Update nodes with advanced visual properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked, etc. |
 | `move_node` | Move nodes to new positions | nodeId, x, y |
 | `delete_node` | Delete nodes | nodeId |
 | `duplicate_node` | Duplicate nodes | nodeId, offsetX, offsetY |
 | `get_selection` | Get currently selected nodes | - |
 | `set_selection` | Set node selection | nodeIds |
-| `get_page_nodes` | List all nodes on current page | - |
+| `get_page_nodes` | List all nodes on current page with filtering options | detail, includeHidden, includePages, nodeTypes, maxDepth |
 | `export_node` | Export nodes as images | nodeId, format, scale |
 | `get_plugin_status` | Check plugin connection | - |
+
+## ✨ Enhanced Node Creation & Updates
+
+### New Features in create_node and update_node:
+- **🔸 Corner Properties**: Basic `cornerRadius` or individual corner radii (`topLeftRadius`, `topRightRadius`, etc.)
+- **🔸 Corner Smoothing**: iOS-style squircle effect with `cornerSmoothing` (0-1)
+- **🔸 Visual Controls**: `opacity` (transparency), `visible` (show/hide), `rotation` (degrees)
+- **🔸 Interaction**: `locked` state to prevent user modifications
+- **🔸 Shape Types**: Create `star` and `polygon` nodes with `pointCount` and `innerRadius`
+- **🔸 Frame Features**: `clipsContent` to control overflow behavior
+- **🔸 Enhanced Responses**: Warnings for clamped values, echo back applied properties
+
+### Example: Enhanced Rectangle
+```json
+{
+  "nodeType": "rectangle",
+  "width": 200, "height": 100,
+  "cornerRadius": 12,
+  "cornerSmoothing": 0.6,
+  "fillColor": "#FFFFFF",
+  "opacity": 0.9,
+  "rotation": 5
+}
+```
+
+### Example: Custom Star
+```json
+{
+  "nodeType": "star",
+  "width": 50, "height": 50,
+  "pointCount": 5,
+  "innerRadius": 0.4,
+  "fillColor": "#FFD700"
+}
+```
+
+## 📄 Enhanced Page Navigation
+
+### get_page_nodes Parameters
+The `get_page_nodes` tool now supports advanced filtering and detail control:
+
+**Detail Levels:**
+- `simple`: Returns only `id`, `name`, `type` for each node
+- `standard` (default): Includes position, size, hierarchy info
+- `detailed`: All available properties including fills, effects, layout properties
+
+**Filtering Options:**
+- `includeHidden`: Include invisible nodes (default: false)
+- `includePages`: Include the page node itself (default: false)  
+- `nodeTypes`: Filter by specific types like `["FRAME", "TEXT"]`
+- `maxDepth`: Limit hierarchy traversal depth
+
+### Example: Simple Node List
+```json
+{
+  "detail": "simple",
+  "nodeTypes": ["FRAME", "TEXT"]
+}
+```
+Returns: `[{"id": "123:1", "name": "Header", "type": "FRAME"}, ...]`
+
+### Example: Detailed Analysis
+```json
+{
+  "detail": "detailed",
+  "includeHidden": true,
+  "maxDepth": 2
+}
+```
+Returns: Full node properties with hierarchy limited to 2 levels
 
 ## 🛠️ Installation & Setup
 

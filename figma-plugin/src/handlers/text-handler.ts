@@ -27,7 +27,7 @@ export class TextHandler extends BaseHandler {
       
       // Set basic properties
       text.fontName = defaultFont;
-      text.characters = params.characters;
+      text.characters = params.characters || '';
       text.fontSize = params.fontSize || 16;
       
       // Set position
@@ -107,14 +107,18 @@ export class TextHandler extends BaseHandler {
     // Line height
     if (params.lineHeight) {
       if (typeof params.lineHeight === 'object') {
-        text.lineHeight = params.lineHeight;
+        const lineHeight = params.lineHeight;
+        text.lineHeight = {
+          value: lineHeight.value,
+          unit: lineHeight.unit === 'px' ? 'PIXELS' : 'PERCENT'
+        } as LineHeight;
       } else {
         // Convert number to appropriate line height object
         const unit = params.lineHeight > 10 ? 'PIXELS' : 'PERCENT';
         text.lineHeight = {
-          unit: unit as any,
+          unit: unit,
           value: params.lineHeight
-        };
+        } as LineHeight;
       }
     }
     
@@ -214,20 +218,34 @@ export class TextHandler extends BaseHandler {
       textStyle.name = styleName;
       
       // Copy properties from the text node
-      textStyle.fontName = text.fontName;
-      textStyle.fontSize = text.fontSize;
-      textStyle.letterSpacing = text.letterSpacing;
-      textStyle.lineHeight = text.lineHeight;
-      textStyle.paragraphIndent = text.paragraphIndent;
-      textStyle.paragraphSpacing = text.paragraphSpacing;
-      textStyle.textCase = text.textCase;
-      textStyle.textDecoration = text.textDecoration;
-      textStyle.textAlignHorizontal = text.textAlignHorizontal;
-      textStyle.textAlignVertical = text.textAlignVertical;
+      // Only set properties if they are not mixed
+      if (text.fontName !== figma.mixed) {
+        textStyle.fontName = text.fontName as FontName;
+      }
+      if (text.fontSize !== figma.mixed) {
+        textStyle.fontSize = text.fontSize as number;
+      }
+      if (text.letterSpacing !== figma.mixed) {
+        textStyle.letterSpacing = text.letterSpacing as LetterSpacing;
+      }
+      if (text.lineHeight !== figma.mixed) {
+        textStyle.lineHeight = text.lineHeight as LineHeight;
+      }
       
-      // Apply fills if any
-      if (text.fills && text.fills.length > 0) {
-        textStyle.fills = text.fills;
+      // Text case and decoration
+      if (text.textCase !== figma.mixed) {
+        textStyle.textCase = text.textCase as TextCase;
+      }
+      if (text.textDecoration !== figma.mixed) {
+        textStyle.textDecoration = text.textDecoration as TextDecoration;
+      }
+      
+      // Note: textAlignHorizontal and textAlignVertical are not supported on TextStyle
+      
+      // Fills
+      if (text.fills !== figma.mixed && Array.isArray(text.fills) && text.fills.length > 0) {
+        // TextStyle doesn't have fills property - we'll skip this
+        // Fills are managed at the node level, not style level
       }
       
       console.log(`✅ Created text style: ${styleName}`);
@@ -252,7 +270,7 @@ export class TextHandler extends BaseHandler {
       return FontCache.loadAndCache({ family, style });
     });
     
-    await Promise.allSettled(fontPromises);
+    await Promise.all(fontPromises.map(p => p.catch(() => null)));
   }
 
   private validateStyleRange(range: any, textLength: number): boolean {

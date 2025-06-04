@@ -68,7 +68,14 @@ export class HierarchyHandler extends BaseHandler {
       group = figma.createFrame();
       group.resize(bounds.width, bounds.height);
     } else {
-      group = figma.createGroup();
+      // Use group() method on selected nodes instead of createGroup
+      if (figma.group) {
+        group = figma.group(nodes, figma.currentPage);
+      } else {
+        // Fallback: create a frame if group() is not available
+        group = figma.createFrame();
+        group.resize(bounds.width, bounds.height);
+      }
     }
     
     group.name = groupName;

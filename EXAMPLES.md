@@ -22,6 +22,74 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 - **"Add a white frame container 300x200 pixels"**
   - AI creates frame with specified dimensions and white background
 
+### Enhanced Shape Creation (New Features)
+**User Instructions → AI Actions:**
+
+- **"Create a rounded rectangle with 12px corners"**
+  ```json
+  {
+    "nodeType": "rectangle",
+    "width": 200,
+    "height": 100,
+    "fillColor": "#FFFFFF",
+    "cornerRadius": 12
+  }
+  ```
+
+- **"Make a card with different corner radii - rounded top, square bottom"**
+  ```json
+  {
+    "nodeType": "rectangle",
+    "width": 300,
+    "height": 200,
+    "fillColor": "#F8F9FA",
+    "topLeftRadius": 16,
+    "topRightRadius": 16,
+    "bottomLeftRadius": 0,
+    "bottomRightRadius": 0,
+    "cornerSmoothing": 0.6
+  }
+  ```
+
+- **"Create a 5-pointed star with golden color"**
+  ```json
+  {
+    "nodeType": "star",
+    "width": 50,
+    "height": 50,
+    "pointCount": 5,
+    "innerRadius": 0.4,
+    "fillColor": "#FFD700",
+    "strokeColor": "#DAA520",
+    "strokeWidth": 2
+  }
+  ```
+
+- **"Add a hexagon (6-sided polygon) for an icon"**
+  ```json
+  {
+    "nodeType": "polygon",
+    "width": 60,
+    "height": 60,
+    "pointCount": 6,
+    "fillColor": "#4F46E5",
+    "rotation": 30
+  }
+  ```
+
+- **"Create a semi-transparent overlay frame"**
+  ```json
+  {
+    "nodeType": "frame",
+    "width": 400,
+    "height": 300,
+    "fillColor": "#000000",
+    "opacity": 0.5,
+    "clipsContent": true,
+    "locked": false
+  }
+  ```
+
 ### Text Creation
 **User Instructions → AI Actions:**
 
@@ -353,6 +421,66 @@ The AI can perform these operations:
 2. Uses `set_selection` to select all found text elements
 3. Uses `update_node` to modify font size property for all selected items
 
+### Enhanced Node Updates (New Features)
+**User Instructions → AI Actions:**
+
+- **"Make this rectangle have rounded corners with 16px radius"**
+  ```json
+  {
+    "nodeId": "123:456",
+    "cornerRadius": 16
+  }
+  ```
+
+- **"Update this card to have different corner radii - rounded top, square bottom"**
+  ```json
+  {
+    "nodeId": "789:012",
+    "topLeftRadius": 12,
+    "topRightRadius": 12,
+    "bottomLeftRadius": 0,
+    "bottomRightRadius": 0,
+    "cornerSmoothing": 0.6
+  }
+  ```
+
+- **"Rotate this element 45 degrees and make it semi-transparent"**
+  ```json
+  {
+    "nodeId": "345:678",
+    "rotation": 45,
+    "opacity": 0.7
+  }
+  ```
+
+- **"Change this star to have 8 points instead of 5"**
+  ```json
+  {
+    "nodeId": "901:234",
+    "pointCount": 8,
+    "innerRadius": 0.5
+  }
+  ```
+
+- **"Lock this element and hide it temporarily"**
+  ```json
+  {
+    "nodeId": "567:890",
+    "locked": true,
+    "visible": false
+  }
+  ```
+
+- **"Update this frame to clip its content and change background"**
+  ```json
+  {
+    "nodeId": "111:222",
+    "clipsContent": true,
+    "fillColor": "#F3F4F6",
+    "cornerRadius": 8
+  }
+  ```
+
 ### Bulk Updates
 **User Instructions:**
 "Update all buttons to have rounded corners and consistent spacing"
@@ -362,6 +490,7 @@ The AI can perform these operations:
 2. Applies corner radius updates to all button frames
 3. Standardizes internal padding and text positioning
 4. Ensures consistent styling across all variants
+</edits>
 
 
 

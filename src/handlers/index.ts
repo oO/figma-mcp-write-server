@@ -104,9 +104,32 @@ export class HandlerRegistry {
           type: 'object',
           properties: {
             nodeId: { type: 'string', description: 'ID of the node to update' },
-            properties: { type: 'object', description: 'Properties to update' }
+            width: { type: 'number', description: 'Width of the node' },
+            height: { type: 'number', description: 'Height of the node' },
+            x: { type: 'number', description: 'X position' },
+            y: { type: 'number', description: 'Y position' },
+            cornerRadius: { type: 'number', minimum: 0, description: 'Corner radius (applies to all corners)' },
+            topLeftRadius: { type: 'number', minimum: 0, description: 'Top left corner radius' },
+            topRightRadius: { type: 'number', minimum: 0, description: 'Top right corner radius' },
+            bottomLeftRadius: { type: 'number', minimum: 0, description: 'Bottom left corner radius' },
+            bottomRightRadius: { type: 'number', minimum: 0, description: 'Bottom right corner radius' },
+            cornerSmoothing: { type: 'number', minimum: 0, maximum: 1, description: 'Corner smoothing (0-1)' },
+            fillColor: { type: 'string', description: 'Fill color (hex)' },
+            opacity: { type: 'number', minimum: 0, maximum: 1, description: 'Opacity (0-1)' },
+            visible: { type: 'boolean', description: 'Visibility' },
+            strokeColor: { type: 'string', description: 'Stroke color (hex)' },
+            strokeWidth: { type: 'number', minimum: 0, description: 'Stroke width' },
+            rotation: { type: 'number', description: 'Rotation in degrees' },
+            locked: { type: 'boolean', description: 'Lock state' },
+            clipsContent: { type: 'boolean', description: 'Clips content (frames only)' },
+            content: { type: 'string', description: 'Text content (text nodes only)' },
+            fontFamily: { type: 'string', description: 'Font family (text nodes)' },
+            fontSize: { type: 'number', description: 'Font size (text nodes)' },
+            fontStyle: { type: 'string', description: 'Font style (text nodes)' },
+            textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Horizontal text alignment' },
+            textAlignVertical: { type: 'string', enum: ['top', 'center', 'bottom'], description: 'Vertical text alignment' }
           },
-          required: ['nodeId', 'properties']
+          required: ['nodeId']
         }
       },
       {
@@ -165,7 +188,36 @@ export class HandlerRegistry {
       {
         name: 'get_page_nodes',
         description: 'Get all nodes in the current page with hierarchy information',
-        inputSchema: { type: 'object', properties: {} }
+        inputSchema: {
+          type: 'object',
+          properties: {
+            detail: {
+              type: 'string',
+              enum: ['simple', 'standard', 'detailed'],
+              default: 'standard',
+              description: 'Level of detail: simple (id, name, type), standard (includes position/size), detailed (all properties)'
+            },
+            includeHidden: {
+              type: 'boolean',
+              default: false,
+              description: 'Include hidden/invisible nodes'
+            },
+            includePages: {
+              type: 'boolean',
+              default: false,
+              description: 'Include the page node itself in results'
+            },
+            nodeTypes: {
+              type: 'array',
+              items: { type: 'string' },
+              description: 'Filter by specific node types (e.g., ["FRAME", "TEXT"])'
+            },
+            maxDepth: {
+              type: 'number',
+              description: 'Maximum traversal depth (null for unlimited)'
+            }
+          }
+        }
       },
       {
         name: 'export_node',
@@ -268,7 +320,7 @@ export class HandlerRegistry {
       case 'set_selection':
         return await this.selectionHandlers.setSelection(args);
       case 'get_page_nodes':
-        return await this.selectionHandlers.getPageNodes();
+        return await this.selectionHandlers.getPageNodes(args);
       case 'export_node':
         return await this.selectionHandlers.exportNode(args);
       case 'manage_styles':

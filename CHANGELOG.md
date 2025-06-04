@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.1] - 2025-01-27
+
+### Fixed
+- **update_node Schema Fix**: Fixed `cornerRadius` being treated as string instead of number
+  - Updated tool schema to match `UpdateNodeSchema` with flat properties
+  - Removed nested `properties` object requirement for proper type validation
+  - Fixed response message to show actual updated properties
+- **get_page_nodes Communication Fix**: Fixed function returning 0 nodes instead of actual count
+  - Fixed WebSocket response handling where success status wasn't properly forwarded
+  - Plugin now correctly sends `success: result.success` instead of always `true`
+  - Proper error handling and response structure validation
+
+### Added
+- **Enhanced get_page_nodes**: Advanced filtering and detail control options
+  - **Detail Levels**: `simple` (id, name, type), `standard` (+ position/size), `detailed` (all properties)
+  - **Filtering Options**: `includeHidden`, `includePages`, `nodeTypes` array, `maxDepth` limit
+  - **Flexible Output**: Hierarchical view for standard/detailed, flat list for simple mode
+  - **Performance**: Configurable traversal depth and node type filtering
+
+### Updated
+- **Documentation**: Updated README.md and examples to reflect current API capabilities
+  - Added comprehensive `get_page_nodes` parameter documentation
+  - Fixed tool parameter descriptions to match actual schemas
+  - Added usage examples for new filtering options
+
+## [0.15.0] - 2025-01-27
+
+### Added
+- **Enhanced Node Creation**: Comprehensive visual and layout properties for `create_node`
+  - **Corner Properties**: Basic `cornerRadius` and individual corner radii (`topLeftRadius`, `topRightRadius`, `bottomLeftRadius`, `bottomRightRadius`)
+  - **Corner Smoothing**: iOS-style squircle effect with `cornerSmoothing` parameter (0-1)
+  - **Visual Controls**: `opacity` (0-1 transparency), `visible` (show/hide), `rotation` (degrees)
+  - **Interaction Controls**: `locked` state to prevent user modifications
+  - **New Shape Types**: `star` and `polygon` node creation with `pointCount` and `innerRadius` properties
+  - **Frame Features**: `clipsContent` property to control overflow behavior
+  - **Enhanced Positioning**: Direct `x` and `y` positioning support
+
+- **Enhanced Node Updates**: All new visual properties available in `update_node`
+  - Parameter validation with automatic clamping for out-of-range values
+  - Backward compatibility with legacy `properties` object format
+  - Enhanced response format with warnings for adjusted values
+  - Echo back of applied properties for confirmation
+
+- **Improved Plugin Operations**: New operation types for specialized node creation
+  - `CREATE_STAR` operation for star node creation
+  - `CREATE_POLYGON` operation for polygon node creation
+  - Enhanced parameter validation and error handling
+
+### Enhanced
+- **Type System**: Updated Zod schemas with comprehensive validation
+  - Range validation for opacity, corner smoothing, and shape properties
+  - Node-type specific property validation
+  - Enhanced error messages and warnings system
+
+- **Tool Schemas**: Updated MCP tool definitions with all new parameters
+  - Comprehensive parameter documentation with examples
+  - Clear parameter descriptions and constraints
+  - Enhanced examples showcasing new capabilities
+
 ## [0.14.0] - 2025-06-03
 
 ### Added

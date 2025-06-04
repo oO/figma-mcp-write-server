@@ -70,10 +70,13 @@ export class MessageRouter {
   private async handleMessage(message: PluginMessage): Promise<void> {
     console.log('📨 Received message:', message.type);
 
-    if (message.type === 'PLUGIN_OPERATION' && message.operation) {
-      const result = await this.executeOperation(message.operation, message.payload);
+    if (this.handlers[message.type]) {
+      const result = await this.executeOperation(message.type, message.payload);
       this.sendResponse(message.id!, result);
+      return;
     }
+
+    console.warn('⚠️ Unhandled message type:', message.type);
   }
 
   private async executeOperation(operation: string, payload: any): Promise<OperationResult> {

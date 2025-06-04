@@ -98,13 +98,8 @@ export class StyleHandler extends BaseHandler {
       style.fontSize = params.fontSize;
     }
     
-    if (params.textAlignHorizontal) {
-      style.textAlignHorizontal = params.textAlignHorizontal.toUpperCase() as any;
-    }
-    
-    if (params.textAlignVertical) {
-      style.textAlignVertical = params.textAlignVertical.toUpperCase() as any;
-    }
+    // Note: textAlignHorizontal and textAlignVertical are not supported on TextStyle
+    // These properties are set directly on TextNode instances
     
     return {
       styleId: style.id,
@@ -244,10 +239,11 @@ export class StyleHandler extends BaseHandler {
         styles = figma.getLocalGridStyles();
         break;
       default:
-        styles = figma.getLocalPaintStyles()
-          .concat(figma.getLocalTextStyles())
-          .concat(figma.getLocalEffectStyles())
-          .concat(figma.getLocalGridStyles());
+        const paintStyles = figma.getLocalPaintStyles();
+        const textStyles = figma.getLocalTextStyles();
+        const effectStyles = figma.getLocalEffectStyles();
+        const gridStyles = figma.getLocalGridStyles();
+        styles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
     }
     
     return {
@@ -265,16 +261,18 @@ export class StyleHandler extends BaseHandler {
     
     // Find style by ID or name
     if (params.styleId) {
-      const allStyles = figma.getLocalPaintStyles()
-        .concat(figma.getLocalTextStyles())
-        .concat(figma.getLocalEffectStyles())
-        .concat(figma.getLocalGridStyles());
+      const paintStyles = figma.getLocalPaintStyles();
+      const textStyles = figma.getLocalTextStyles();
+      const effectStyles = figma.getLocalEffectStyles();
+      const gridStyles = figma.getLocalGridStyles();
+      const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
       style = allStyles.find(s => s.id === params.styleId);
     } else if (params.styleName) {
-      const allStyles = figma.getLocalPaintStyles()
-        .concat(figma.getLocalTextStyles())
-        .concat(figma.getLocalEffectStyles())
-        .concat(figma.getLocalGridStyles());
+      const paintStyles = figma.getLocalPaintStyles();
+      const textStyles = figma.getLocalTextStyles();
+      const effectStyles = figma.getLocalEffectStyles();
+      const gridStyles = figma.getLocalGridStyles();
+      const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
       style = allStyles.find(s => s.name === params.styleName);
     }
     
@@ -318,10 +316,11 @@ export class StyleHandler extends BaseHandler {
   private async deleteStyle(params: StyleParams): Promise<any> {
     let style: PaintStyle | TextStyle | EffectStyle | GridStyle | undefined;
     
-    const allStyles = figma.getLocalPaintStyles()
-      .concat(figma.getLocalTextStyles())
-      .concat(figma.getLocalEffectStyles())
-      .concat(figma.getLocalGridStyles());
+    const paintStyles = figma.getLocalPaintStyles();
+    const textStyles = figma.getLocalTextStyles();
+    const effectStyles = figma.getLocalEffectStyles();
+    const gridStyles = figma.getLocalGridStyles();
+    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
     
     if (params.styleId) {
       style = allStyles.find(s => s.id === params.styleId);
@@ -350,10 +349,11 @@ export class StyleHandler extends BaseHandler {
   private async getStyle(params: StyleParams): Promise<any> {
     let style: PaintStyle | TextStyle | EffectStyle | GridStyle | undefined;
     
-    const allStyles = figma.getLocalPaintStyles()
-      .concat(figma.getLocalTextStyles())
-      .concat(figma.getLocalEffectStyles())
-      .concat(figma.getLocalGridStyles());
+    const paintStyles = figma.getLocalPaintStyles();
+    const textStyles = figma.getLocalTextStyles();
+    const effectStyles = figma.getLocalEffectStyles();
+    const gridStyles = figma.getLocalGridStyles();
+    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
     
     if (params.styleId) {
       style = allStyles.find(s => s.id === params.styleId);
