@@ -1,11 +1,154 @@
-import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, MoveNodeSchema, DeleteNodeSchema, DuplicateNodeSchema } from '../types.js';
+import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, MoveNodeSchema, DeleteNodeSchema, DuplicateNodeSchema, ToolHandler, ToolResult, Tool } from '../types.js';
 import { hexToRgb } from '../utils/color-utils.js';
 
-export class NodeHandlers {
+export class NodeHandlers implements ToolHandler {
   private sendToPlugin: (request: any) => Promise<any>;
 
   constructor(sendToPluginFn: (request: any) => Promise<any>) {
     this.sendToPlugin = sendToPluginFn;
+  }
+
+  getTools(): Tool[] {
+    return [
+      {
+        name: 'create_node',
+        description: 'Create a new node in Figma (rectangle, ellipse, text, or frame)',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeType: {
+              type: 'string',
+              enum: ['rectangle', 'ellipse', 'text', 'frame'],
+              description: 'Type of node to create'
+            },
+            name: { type: 'string', description: 'Node name' },
+            width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
+            height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
+            fillColor: { type: 'string', description: 'Fill color (hex) - Use for all node types including text and frame fills' },
+            strokeColor: { type: 'string', description: 'Stroke color (hex)' },
+            strokeWidth: { type: 'number', description: 'Stroke width' },
+            content: { type: 'string', description: 'Text content (required for text nodes)' },
+            fontSize: { type: 'number', default: 16, description: 'Font size (for text nodes)' },
+            fontFamily: { type: 'string', default: 'Inter', description: 'Font family (for text nodes)' },
+            fontStyle: { type: 'string', description: 'Font style (for text nodes, e.g., Regular, Bold)' },
+            textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Text alignment (for text nodes)' }
+          },
+          required: ['nodeType']
+        },
+        annotations: {
+          description_extra: "For advanced typography features, use the create_text tool instead."
+        },
+        examples: [
+          '{"nodeType": "rectangle", "width": 100, "height": 100, "fillColor": "#FF0000"}',
+          '{"nodeType": "text", "content": "Hello, World!", "fontSize": 24}'
+        ]
+      },
+      {
+        name: 'create_text',
+        description: 'Create a text node with advanced typography features',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            characters: { type: 'string', description: 'Text content' },
+            x: { type: 'number', default: 0, description: 'X position' },
+            y: { type: 'number', default: 0, description: 'Y position' },
+            width: { type: 'number', description: 'Width (optional, for fixed width text)' },
+            height: { type: 'number', description: 'Height (optional)' },
+            fontFamily: { type: 'string', default: 'Inter', description: 'Font family' },
+            fontStyle: { type: 'string', default: 'Regular', description: 'Font style (e.g., Regular, Bold, Medium, Italic)' },
+            fontSize: { type: 'number', default: 16, description: 'Font size in pixels' },
+            textAlignHorizontal: { type: 'string', enum: ['left', 'center', 'right', 'justified'], description: 'Horizontal text alignment' },
+            textAlignVertical: { type: 'string', enum: ['top', 'center', 'bottom'], description: 'Vertical text alignment' },
+            textCase: { type: 'string', enum: ['original', 'upper', 'lower', 'title'], description: 'Text case transformation' },
+            textDecoration: { type: 'string', enum: ['none', 'underline', 'strikethrough'], description: 'Text decoration' },
+            letterSpacing: { type: 'number', description: 'Letter spacing in pixels' },
+            lineHeight: { type: 'number', description: 'Line height value' },
+            lineHeightUnit: { type: 'string', enum: ['px', 'percent'], default: 'percent', description: 'Line height unit' },
+            fillColor: { type: 'string', description: 'Text color (hex)' },
+            createStyle: { type: 'boolean', description: 'Whether to create a text style' },
+            styleName: { type: 'string', description: 'Name for the created style (e.g., "Heading/H1")' }
+          },
+          required: ['characters']
+        }
+      },
+      {
+        name: 'update_node',
+        description: 'Update properties of an existing node',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: { type: 'string', description: 'ID of the node to update' },
+            width: { type: 'number', description: 'Width of the node' },
+            height: { type: 'number', description: 'Height of the node' },
+            x: { type: 'number', description: 'X position' },
+            y: { type: 'number', description: 'Y position' },
+            cornerRadius: { type: 'number', minimum: 0, description: 'Corner radius (applies to all corners)' },
+            fillColor: { type: 'string', description: 'Fill color (hex)' },
+            opacity: { type: 'number', minimum: 0, maximum: 1, description: 'Opacity (0-1)' },
+            visible: { type: 'boolean', description: 'Visibility' },
+            rotation: { type: 'number', description: 'Rotation in degrees' },
+            locked: { type: 'boolean', description: 'Lock state' }
+          },
+          required: ['nodeId']
+        }
+      },
+      {
+        name: 'move_node',
+        description: 'Move a node to a new position',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: { type: 'string', description: 'ID of the node to move' },
+            x: { type: 'number', description: 'New X position' },
+            y: { type: 'number', description: 'New Y position' }
+          },
+          required: ['nodeId', 'x', 'y']
+        }
+      },
+      {
+        name: 'delete_node',
+        description: 'Delete a node from the design',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: { type: 'string', description: 'ID of the node to delete' }
+          },
+          required: ['nodeId']
+        }
+      },
+      {
+        name: 'duplicate_node',
+        description: 'Duplicate an existing node',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            nodeId: { type: 'string', description: 'ID of the node to duplicate' },
+            offsetX: { type: 'number', default: 10, description: 'X offset for the duplicate' },
+            offsetY: { type: 'number', default: 10, description: 'Y offset for the duplicate' }
+          },
+          required: ['nodeId']
+        }
+      }
+    ];
+  }
+
+  async handle(toolName: string, args: any): Promise<any> {
+    switch (toolName) {
+      case 'create_node':
+        return this.createNode(args);
+      case 'create_text':
+        return this.createTextNode(args);
+      case 'update_node':
+        return this.updateNode(args);
+      case 'move_node':
+        return this.moveNode(args);
+      case 'delete_node':
+        return this.deleteNode(args);
+      case 'duplicate_node':
+        return this.duplicateNode(args);
+      default:
+        throw new Error(`Unknown tool: ${toolName}`);
+    }
   }
 
   async createNode(args: any): Promise<any> {
@@ -253,7 +396,7 @@ export class NodeHandlers {
     }
   }
 
-  async updateNode(args: any) {
+  async updateNode(args: any): Promise<any> {
     const params = UpdateNodeSchema.parse(args);
     
     const response = await this.sendToPlugin({
@@ -272,7 +415,7 @@ export class NodeHandlers {
     };
   }
 
-  async moveNode(args: any) {
+  async moveNode(args: any): Promise<any> {
     const params = MoveNodeSchema.parse(args);
     
     const response = await this.sendToPlugin({
@@ -288,7 +431,7 @@ export class NodeHandlers {
     };
   }
 
-  async deleteNode(args: any) {
+  async deleteNode(args: any): Promise<any> {
     const params = DeleteNodeSchema.parse(args);
     
     const response = await this.sendToPlugin({
@@ -304,7 +447,7 @@ export class NodeHandlers {
     };
   }
 
-  async duplicateNode(args: any) {
+  async duplicateNode(args: any): Promise<any> {
     const params = DuplicateNodeSchema.parse(args);
     
     const response = await this.sendToPlugin({

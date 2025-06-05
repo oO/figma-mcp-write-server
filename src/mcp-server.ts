@@ -45,7 +45,8 @@ export class FigmaMCPServer {
 
     // Initialize handler registry with WebSocket communication
     this.handlerRegistry = new HandlerRegistry(
-      (request: any) => this.wsServer.sendToPlugin(request)
+      (request: any) => this.wsServer.sendToPlugin(request),
+      this.wsServer
     );
 
     this.setupHandlers();

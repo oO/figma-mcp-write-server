@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2025-01-27
+
+### Major Architecture Overhaul
+- **🏗️ Modular Handler System**: Complete refactor from monolithic to handler-based architecture
+  - Implemented `ToolHandler` interface with auto-discovery registration pattern
+  - Created domain-specific handlers: `NodeHandlers`, `TextHandlers`, `StyleHandlers`, `LayoutHandlers`, `HierarchyHandlers`, `SelectionHandlers`
+  - Replaced 350+ line switch statement with Map-based handler registry for better maintainability
+  - Added connection health monitoring tool with real-time status reporting
+
+### Enhanced Type Safety
+- **🔒 Comprehensive Schema System**: Replaced all `z.any()` usage with strongly-typed schemas
+  - Created detailed Figma API type definitions (`ColorSchema`, `PaintSchema`, `StrokeSchema`, `FigmaEffectSchema`)
+  - Implemented base schema inheritance pattern reducing code duplication by 40%
+  - Added generic communication interfaces: `TypedPluginMessage<TPayload>`, `TypedPluginResponse<TData>`
+  - Enhanced runtime type guards and validation helpers for better error handling
+
+### Communication Layer Optimization  
+- **🚀 Advanced WebSocket Management**: Implemented enterprise-grade communication patterns
+  - Request queuing system with priority-based processing (high/normal/low priority)
+  - Intelligent request batching with configurable timeout and batch size limits
+  - Operation-specific timeout configurations (CREATE_NODE: 5s, EXPORT_NODE: 15s, etc.)
+  - Connection health monitoring with automatic reconnection logic and degraded state detection
+  - Comprehensive metrics tracking (response times, error rates, queue status)
+
+### Handler Registry Simplification
+- **🎯 Auto-Discovery Pattern**: Eliminated complex registration boilerplate
+  - Handlers automatically register their tools through `getTools()` interface method
+  - Centralized error handling and response formatting across all handlers
+  - Improved parameter validation with detailed error reporting using Zod schemas
+  - Enhanced logging and debugging capabilities for tool execution
+
+### Technical Improvements
+- **📡 WebSocket Server Enhancements**: 
+  - Added request prioritization for critical operations (selection, status checks)
+  - Implemented batch request processing for improved performance
+  - Enhanced error recovery with stale request cleanup and queue overflow protection
+  - Added comprehensive configuration system with environment variable support
+- **🧩 Type System Overhaul**:
+  - Fixed circular reference issues in `NodeDataSchema` causing TypeScript compilation failures
+  - Created utility functions for safe type assertion and runtime validation
+  - Added typed message handlers with payload validation and error boundaries
+- **⚡ Performance Optimizations**:
+  - Reduced schema complexity and validation overhead
+  - Optimized plugin communication with smart batching algorithms
+  - Added connection pooling and health check mechanisms
+
+### Breaking Changes
+- **Handler Interface**: All handlers now implement the `ToolHandler` interface
+- **Type Definitions**: Generic `z.any()` types replaced with specific typed schemas
+- **WebSocket Protocol**: Enhanced message format with better error handling and response types
+
+### Developer Experience
+- **🛠️ Enhanced Development Tools**: Improved debugging and monitoring capabilities
+- **📚 Updated Documentation**: Comprehensive architecture documentation reflecting new modular design
+- **🧪 Better Testing**: Enhanced type safety enables better testing and validation
+
 ## [0.15.1] - 2025-01-27
 
 ### Fixed

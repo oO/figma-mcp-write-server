@@ -4,14 +4,6 @@ A Model Context Protocol (MCP) server that provides **write access** to Figma th
 
 _Designed and Architected with ❤️ by a real human. Coded by an AI Assistant._
 
-## 🆕 **What's New in v0.13.0**
-
-**Auto Layout & Constraints** - Build responsive designs with automatic content arrangement:
-- 🔄 **Auto Layout**: Enable frames that automatically arrange children vertically or horizontally
-- 📐 **Constraints**: Pin elements to edges, center them, or make them scale proportionally  
-- 🎯 **Integration**: Move elements into auto layout containers with automatic positioning
-- 🛠️ **Configuration**: Configure spacing, padding, alignment, and resizing behavior programmatically
-
 ## 🚀 Overview
 
 Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
@@ -19,30 +11,14 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Create** design elements (rectangles, ellipses, text, frames)
 - ✅ **Typography** with mixed styling and text formatting
 - ✅ **Style Management** for paint, text, effect, and grid styles
-- ✅ **Auto Layout & Constraints** for responsive design and automatic arrangement
-- ✅ **Layer & Hierarchy** management (grouping, depth sorting, parent-child relationships)
+- ✅ **Auto Layout & Constraints** for responsive design
+- ✅ **Layer & Hierarchy** management (grouping, reordering)
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
 - ✅ **Export** designs programmatically
 
 ## 🏗️ Architecture
-
-Direct communication design eliminates complexity and improves reliability.
-
-### Components
-
-#### 1. MCP Server (`src/`)
-- **MCP Server** (`mcp-server.ts`) - Built-in WebSocket server with direct plugin communication
-- **Entry Point** (`index.ts`) - CLI interface with configuration options
-- **Type Definitions** (`types.ts`) - Shared types and Zod schemas
-
-#### 2. Figma Plugin (`figma-plugin/`)
-- **Plugin** (`code.js`) - WebSocket client that connects to MCP server
-- **UI** (`ui.html`) - Real-time status monitoring and connection feedback
-- **Plugin Manifest** (`manifest.json`) - Standard Figma plugin configuration
-
-## 🔄 How It Works
 
 ```mermaid
 graph LR
@@ -56,107 +32,43 @@ graph LR
     C --> D
 ```
 
-**Architecture Benefits:**
-- Single process design - MCP server includes WebSocket server
-- Direct WebSocket connection with auto-reconnection
-- Error handling and status reporting
-- No complex bridges or multiple processes
-- Standardized port 8765 for all communication
-
 1. **AI Agent** calls MCP tools (e.g., `create_node`)
-2. **MCP Server** validates parameters and connects to plugin
-3. **Figma Plugin** receives message and executes operation using Plugin API
-4. **Results** are sent back to the MCP server and then to the AI agent
+2. **MCP Server** validates parameters and routes to handlers
+3. **Figma Plugin** receives message and executes operation
+4. **Results** are sent back to the MCP server and AI agent
 
 ## 📋 Available MCP Tools
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `create_node` | **ENHANCED** Create nodes with advanced visual properties | nodeType (rectangle/ellipse/text/frame/star/polygon), position, size, corners, opacity, rotation, styling, etc. |
-| `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign, etc. |
-| `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects, etc. |
-| `manage_auto_layout` | **NEW v0.13.0** Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing, etc. |
-| `manage_constraints` | **NEW v0.13.0** Constraints management | operation, nodeId, horizontal, vertical |
-| `manage_hierarchy` | Layer & hierarchy management (grouping, depth, parent-child) | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex, etc. |
-| `update_node` | **ENHANCED** Update nodes with advanced visual properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked, etc. |
+| `create_node` | Create nodes with visual properties | nodeType (rectangle/ellipse/text/frame/star/polygon), position, size, corners, opacity, rotation, styling |
+| `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign |
+| `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
+| `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
+| `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
+| `manage_hierarchy` | Layer & hierarchy management | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex |
+| `update_node` | Update node properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked |
 | `move_node` | Move nodes to new positions | nodeId, x, y |
 | `delete_node` | Delete nodes | nodeId |
 | `duplicate_node` | Duplicate nodes | nodeId, offsetX, offsetY |
 | `get_selection` | Get currently selected nodes | - |
 | `set_selection` | Set node selection | nodeIds |
-| `get_page_nodes` | List all nodes on current page with filtering options | detail, includeHidden, includePages, nodeTypes, maxDepth |
+| `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
 | `export_node` | Export nodes as images | nodeId, format, scale |
 | `get_plugin_status` | Check plugin connection | - |
 
-## ✨ Enhanced Node Creation & Updates
+## 🎯 Usage Examples
 
-### New Features in create_node and update_node:
-- **🔸 Corner Properties**: Basic `cornerRadius` or individual corner radii (`topLeftRadius`, `topRightRadius`, etc.)
-- **🔸 Corner Smoothing**: iOS-style squircle effect with `cornerSmoothing` (0-1)
-- **🔸 Visual Controls**: `opacity` (transparency), `visible` (show/hide), `rotation` (degrees)
-- **🔸 Interaction**: `locked` state to prevent user modifications
-- **🔸 Shape Types**: Create `star` and `polygon` nodes with `pointCount` and `innerRadius`
-- **🔸 Frame Features**: `clipsContent` to control overflow behavior
-- **🔸 Enhanced Responses**: Warnings for clamped values, echo back applied properties
+Common use cases:
+- **Create Layout**: "Create a header frame with title and subtitle"
+- **Auto Layout**: "Make this frame arrange its children vertically with 16px spacing"
+- **Constraints**: "Pin this sidebar to the left and stretch to full height"
+- **Typography**: "Make a styled heading with mixed formatting"
+- **Design System**: "Create color palette and apply styles consistently"
+- **Components**: "Build button variants with different colors and styles"
+- **Batch Operations**: "Select all text elements and update font size"
 
-### Example: Enhanced Rectangle
-```json
-{
-  "nodeType": "rectangle",
-  "width": 200, "height": 100,
-  "cornerRadius": 12,
-  "cornerSmoothing": 0.6,
-  "fillColor": "#FFFFFF",
-  "opacity": 0.9,
-  "rotation": 5
-}
-```
-
-### Example: Custom Star
-```json
-{
-  "nodeType": "star",
-  "width": 50, "height": 50,
-  "pointCount": 5,
-  "innerRadius": 0.4,
-  "fillColor": "#FFD700"
-}
-```
-
-## 📄 Enhanced Page Navigation
-
-### get_page_nodes Parameters
-The `get_page_nodes` tool now supports advanced filtering and detail control:
-
-**Detail Levels:**
-- `simple`: Returns only `id`, `name`, `type` for each node
-- `standard` (default): Includes position, size, hierarchy info
-- `detailed`: All available properties including fills, effects, layout properties
-
-**Filtering Options:**
-- `includeHidden`: Include invisible nodes (default: false)
-- `includePages`: Include the page node itself (default: false)  
-- `nodeTypes`: Filter by specific types like `["FRAME", "TEXT"]`
-- `maxDepth`: Limit hierarchy traversal depth
-
-### Example: Simple Node List
-```json
-{
-  "detail": "simple",
-  "nodeTypes": ["FRAME", "TEXT"]
-}
-```
-Returns: `[{"id": "123:1", "name": "Header", "type": "FRAME"}, ...]`
-
-### Example: Detailed Analysis
-```json
-{
-  "detail": "detailed",
-  "includeHidden": true,
-  "maxDepth": 2
-}
-```
-Returns: Full node properties with hierarchy limited to 2 levels
+📚 **[Examples & Usage Guide →](EXAMPLES.md)**
 
 ## 🛠️ Installation & Setup
 
@@ -321,4 +233,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 15 MCP tools (including Auto Layout & Constraints added in v0.13.0) and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 15 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

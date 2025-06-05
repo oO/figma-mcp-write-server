@@ -62,44 +62,47 @@ figma-mcp-write-server/
 │   ├── mcp-server.ts             # Main MCP server implementation
 │   ├── index.ts                  # CLI entry point and configuration
 │   ├── types.ts                  # Type definitions and Zod schemas
-│   ├── handlers/                 # MCP tool handlers organized by domain
-│   │   ├── index.ts             # Handler registry and tool definitions
-│   │   ├── node-handler.ts      # Node creation and manipulation
-│   │   ├── text-handler.ts      # Text and typography operations
-│   │   ├── selection-handler.ts # Selection and page management
-│   │   ├── style-handler.ts     # Figma style management
-│   │   ├── layout-handler.ts    # Auto layout and constraints
-│   │   ├── hierarchy-handler.ts # Node hierarchy operations
-│   │   └── base-handler.ts      # Shared handler functionality
-│   ├── utils/                    # Utility functions
-│   │   ├── node-utils.ts        # Node traversal and utilities
-│   │   ├── color-utils.ts       # Color format conversions
-│   │   ├── font-utils.ts        # Typography and font handling
-│   │   └── response-utils.ts    # Response formatting helpers
+│   ├── handlers/                 # Domain-specific tool handlers
+│   │   └── index.ts             # Handler registry with auto-discovery
+│   ├── utils/                    # Utility functions (color, font, response formatting)
 │   └── websocket/                # WebSocket communication layer
-│       └── websocket-server.ts  # WebSocket server for plugin communication
-├── figma-plugin/                 # Figma plugin source code
+├── figma-plugin/                 # Figma plugin source and build
 │   ├── src/                     # Plugin TypeScript source
 │   │   ├── main.ts              # Plugin entry point
-│   │   ├── types.ts             # Plugin type definitions
 │   │   ├── handlers/            # Plugin-side operation handlers
-│   │   ├── utils/               # Plugin utilities
+│   │   ├── utils/               # Plugin utilities (ES5 compatible)
 │   │   └── websocket/           # Plugin WebSocket client
 │   ├── manifest.json            # Plugin configuration
-│   ├── code.js                  # Compiled plugin code (auto-generated)
-│   ├── ui.html                  # Plugin user interface
+│   ├── code.js                  # Compiled plugin code (generated at build)
+│   ├── ui.html                  # Plugin UI (generated from template)
 │   ├── build.js                 # Plugin build script
-│   └── tsconfig.json            # Plugin TypeScript config
+│   └── tsconfig.json            # Plugin TypeScript config (ES2015 target)
 ├── tests/                        # Testing infrastructure
-│   ├── mcp-test-suite.md        # Comprehensive manual test guide
-│   └── connectivity-test.js     # Automated connectivity verification
 ├── tools/                        # Build and utility scripts
-├── dist/                         # Compiled JavaScript output
-├── EXAMPLES.md                   # Usage examples and guides
-├── package.json                  # Node.js dependencies and scripts
-├── tsconfig.json                 # TypeScript configuration
-└── README.md                     # Project documentation
+├── dist/                         # Compiled server output (generated at build)
+└── [documentation files]
 ```
+
+### Architecture Organization
+
+**MCP Server (`src/`)**
+- Main server orchestrates MCP protocol and WebSocket communication
+- Handlers organize tools by domain (nodes, text, styles, layout, hierarchy, selection)
+- Handler registry uses auto-discovery pattern for tool registration
+- WebSocket server manages plugin communication with queuing and batching
+- Type system provides comprehensive validation with Zod schemas
+
+**Figma Plugin (`figma-plugin/`)**
+- TypeScript source compiled to ES2015 (Figma compatibility requirement)
+- **Important**: No spread operator (`...`) usage - Figma's environment doesn't support it
+- Build process generates `code.js` and `ui.html` from source and templates
+- WebSocket client handles reconnection and message routing
+- Plugin handlers execute actual Figma API operations
+
+**Build Process**
+- Server: TypeScript compilation to `dist/`
+- Plugin: Custom build script compiles TypeScript and generates UI
+- UI generation: Injects version from package.json into template
 
 ## 🔧 Development Environment Setup
 
@@ -166,14 +169,15 @@ Dedicated server for Figma plugin communication:
 ## 📋 Handler System
 
 ### Handler Registry (`src/handlers/index.ts`)
-Central registry managing all MCP tools:
+Central registry with auto-discovery pattern (v0.16.0):
 
-- **Tool Registration**: Defines 15 MCP tools with schemas
-- **Request Routing**: Dispatches tool calls to appropriate handlers
-- **Schema Validation**: Parameter validation
-- **Response Formatting**: Standardizes return values
+- **Auto-Discovery**: Handlers automatically register via `getTools()` interface method
+- **Map-Based Routing**: Replaced switch statement with efficient Map-based request routing
+- **Connection Monitoring**: Built-in `get_plugin_status` tool for real-time connection health
+- **Enhanced Error Handling**: Comprehensive error reporting with detailed validation messages
+- **Type Safety**: Full TypeScript integration with runtime validation using Zod schemas
 
-### Available MCP Tools (v0.13.1)
+### Available MCP Tools (v0.16.0)
 
 | Category | Tool | Handler | Description |
 |----------|------|---------|-------------|
@@ -280,7 +284,13 @@ formatNodeInfo(node: SceneNode): NodeInfo
 
 ## 📊 Type System (`src/types.ts`)
 
-Comprehensive TypeScript definitions using Zod schemas for runtime validation:
+Enhanced type system with comprehensive validation (v0.16.0):
+
+- **Strongly-Typed Schemas**: Replaced all `z.any()` usage with specific Figma API types
+- **Base Schema Inheritance**: Reduced code duplication by 40% through reusable base schemas
+- **Generic Communication Types**: `TypedPluginMessage<TPayload>`, `TypedPluginResponse<TData>`
+- **Runtime Type Guards**: Safe type checking with detailed error reporting
+- **Validation Helpers**: Utility functions for schema parsing and error handling
 
 ### Configuration
 ```typescript

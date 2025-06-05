@@ -7,6 +7,8 @@ export class MessageRouter {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private heartbeatInterval: number | null = null;
+  private lastHeartbeat = Date.now();
 
   constructor(handlers: HandlerRegistry) {
     this.handlers = handlers;
@@ -26,6 +28,7 @@ export class MessageRouter {
         this.isConnected = true;
         this.reconnectAttempts = 0;
         this.sendHello();
+        this.startHeartbeat();
         this.notifyUI('connected', 'Connected to MCP server');
       };
 
@@ -41,6 +44,7 @@ export class MessageRouter {
       this.ws.onclose = () => {
         console.log('❌ Disconnected from MCP server');
         this.isConnected = false;
+        this.stopHeartbeat();
         this.notifyUI('disconnected', 'Disconnected from MCP server');
         this.attemptReconnect();
       };
@@ -70,6 +74,25 @@ export class MessageRouter {
   private async handleMessage(message: PluginMessage): Promise<void> {
     console.log('📨 Received message:', message.type);
 
+    // Handle heartbeat
+    if (message.type === 'HEARTBEAT') {
+      this.handleHeartbeat();
+      return;
+    }
+
+    // Handle batch requests
+    if (message.type === 'BATCH_REQUEST') {
+      await this.handleBatchRequest(message);
+      return;
+    }
+
+    // Handle connection acknowledgment
+    if (message.type === 'CONNECTED') {
+      console.log('✅ Server acknowledged connection');
+      return;
+    }
+
+    // Handle individual operations
     if (this.handlers[message.type]) {
       const result = await this.executeOperation(message.type, message.payload);
       this.sendResponse(message.id!, result);
@@ -168,10 +191,87 @@ export class MessageRouter {
   }
 
   async close(): Promise<void> {
+    this.stopHeartbeat();
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
     this.isConnected = false;
+  }
+  
+  private startHeartbeat(): void {
+    this.stopHeartbeat();
+    this.heartbeatInterval = setInterval(() => {
+      this.sendHeartbeat();
+    }, 30000) as any; // Send heartbeat every 30 seconds
+  }
+  
+  private stopHeartbeat(): void {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval);
+      this.heartbeatInterval = null;
+    }
+  }
+  
+  private sendHeartbeat(): void {
+    this.sendToServer({
+      type: 'HEARTBEAT',
+      timestamp: Date.now()
+    });
+  }
+  
+  private handleHeartbeat(): void {
+    this.lastHeartbeat = Date.now();
+    this.sendToServer({
+      type: 'HEARTBEAT_ACK',
+      timestamp: Date.now()
+    });
+  }
+  
+  private async handleBatchRequest(message: any): Promise<void> {
+    const batchId = message.payload?.batchId || message.batchId;
+    const requests = message.payload?.requests || message.requests;
+    
+    if (!batchId || !requests) {
+      console.error('❌ Invalid batch request format');
+      return;
+    }
+    
+    console.log(`📦 Processing batch with ${requests.length} requests`);
+    
+    const responses = [];
+    
+    for (const request of requests) {
+      try {
+        if (this.handlers[request.type]) {
+          const result = await this.executeOperation(request.type, request.payload);
+          responses.push({
+            id: request.id,
+            success: result.success,
+            data: result.data,
+            error: result.error
+          });
+        } else {
+          responses.push({
+            id: request.id,
+            success: false,
+            error: `Unknown operation: ${request.type}`
+          });
+        }
+      } catch (error) {
+        responses.push({
+          id: request.id,
+          success: false,
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+    
+    // Send batch response
+    this.sendToServer({
+      type: 'BATCH_RESPONSE',
+      batchId,
+      responses
+    });
   }
 }

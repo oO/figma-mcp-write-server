@@ -1,4 +1,259 @@
 import { z } from 'zod';
+import { Tool } from '@modelcontextprotocol/sdk/types.js';
+
+// ================================================================================
+// Figma API Types (Strongly Typed)
+// ================================================================================
+
+// Color representation in Figma
+export const ColorSchema = z.object({
+  r: z.number().min(0).max(1),
+  g: z.number().min(0).max(1),
+  b: z.number().min(0).max(1),
+  a: z.number().min(0).max(1).optional().default(1)
+});
+
+// Paint types used in Figma
+export const SolidPaintSchema = z.object({
+  type: z.literal('SOLID'),
+  color: ColorSchema,
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().optional().default(true)
+});
+
+export const GradientPaintSchema = z.object({
+  type: z.enum(['GRADIENT_LINEAR', 'GRADIENT_RADIAL', 'GRADIENT_ANGULAR', 'GRADIENT_DIAMOND']),
+  gradientStops: z.array(z.object({
+    position: z.number().min(0).max(1),
+    color: ColorSchema
+  })),
+  gradientTransform: z.array(z.array(z.number())).optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().optional().default(true)
+});
+
+export const ImagePaintSchema = z.object({
+  type: z.literal('IMAGE'),
+  imageHash: z.string(),
+  scaleMode: z.enum(['FILL', 'FIT', 'CROP', 'TILE']),
+  imageTransform: z.array(z.array(z.number())).optional(),
+  scalingFactor: z.number().optional(),
+  rotation: z.number().optional(),
+  filters: z.object({
+    exposure: z.number().optional(),
+    contrast: z.number().optional(),
+    saturation: z.number().optional(),
+    temperature: z.number().optional(),
+    tint: z.number().optional(),
+    highlights: z.number().optional(),
+    shadows: z.number().optional()
+  }).optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().optional().default(true)
+});
+
+export const PaintSchema = z.union([SolidPaintSchema, GradientPaintSchema, ImagePaintSchema]);
+
+// Stroke properties
+export const StrokeSchema = z.object({
+  type: z.enum(['SOLID', 'GRADIENT_LINEAR', 'GRADIENT_RADIAL', 'GRADIENT_ANGULAR', 'GRADIENT_DIAMOND']),
+  color: ColorSchema.optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().optional().default(true)
+});
+
+// Effect types
+export const DropShadowEffectSchema = z.object({
+  type: z.literal('DROP_SHADOW'),
+  color: ColorSchema,
+  offset: z.object({ x: z.number(), y: z.number() }),
+  radius: z.number().min(0),
+  spread: z.number().optional(),
+  visible: z.boolean().default(true),
+  blendMode: z.enum(['NORMAL', 'MULTIPLY', 'SCREEN', 'OVERLAY', 'SOFT_LIGHT', 'HARD_LIGHT', 'COLOR_DODGE', 'COLOR_BURN', 'DARKEN', 'LIGHTEN', 'DIFFERENCE', 'EXCLUSION', 'HUE', 'SATURATION', 'COLOR', 'LUMINOSITY']).optional()
+});
+
+export const InnerShadowEffectSchema = z.object({
+  type: z.literal('INNER_SHADOW'),
+  color: ColorSchema,
+  offset: z.object({ x: z.number(), y: z.number() }),
+  radius: z.number().min(0),
+  spread: z.number().optional(),
+  visible: z.boolean().default(true),
+  blendMode: z.enum(['NORMAL', 'MULTIPLY', 'SCREEN', 'OVERLAY', 'SOFT_LIGHT', 'HARD_LIGHT', 'COLOR_DODGE', 'COLOR_BURN', 'DARKEN', 'LIGHTEN', 'DIFFERENCE', 'EXCLUSION', 'HUE', 'SATURATION', 'COLOR', 'LUMINOSITY']).optional()
+});
+
+export const BlurEffectSchema = z.object({
+  type: z.enum(['LAYER_BLUR', 'BACKGROUND_BLUR']),
+  radius: z.number().min(0),
+  visible: z.boolean().default(true)
+});
+
+export const FigmaEffectSchema = z.union([DropShadowEffectSchema, InnerShadowEffectSchema, BlurEffectSchema]);
+
+// Font and typography
+export const FontNameSchema = z.object({
+  family: z.string(),
+  style: z.string()
+});
+
+export const TypeStyleSchema = z.object({
+  fontName: FontNameSchema,
+  fontSize: z.number(),
+  textAlignHorizontal: z.enum(['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED']).optional(),
+  textAlignVertical: z.enum(['TOP', 'CENTER', 'BOTTOM']).optional(),
+  letterSpacing: z.number().optional(),
+  lineHeight: z.union([
+    z.object({ value: z.number(), unit: z.literal('PIXELS') }),
+    z.object({ value: z.number(), unit: z.literal('PERCENT') }),
+    z.object({ unit: z.literal('AUTO') })
+  ]).optional(),
+  paragraphIndent: z.number().optional(),
+  paragraphSpacing: z.number().optional(),
+  textCase: z.enum(['ORIGINAL', 'UPPER', 'LOWER', 'TITLE']).optional(),
+  textDecoration: z.enum(['NONE', 'UNDERLINE', 'STRIKETHROUGH']).optional(),
+  fills: z.array(PaintSchema).optional()
+});
+
+// Plugin communication payloads
+export const NodeCreationPayloadSchema = z.object({
+  nodeType: z.string(),
+  name: z.string().optional(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  fillColor: z.string().optional(),
+  strokeColor: z.string().optional(),
+  strokeWidth: z.number().optional(),
+  cornerRadius: z.number().optional(),
+  content: z.string().optional(),
+  fontFamily: z.string().optional(),
+  fontSize: z.number().optional(),
+  fontStyle: z.string().optional()
+});
+
+export const NodeUpdatePayloadSchema = z.object({
+  nodeId: z.string(),
+  properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()]))
+});
+
+export const SelectionPayloadSchema = z.object({
+  nodeIds: z.array(z.string()).optional()
+});
+
+export const ExportPayloadSchema = z.object({
+  nodeId: z.string(),
+  format: z.enum(['PNG', 'JPG', 'SVG', 'PDF']).optional(),
+  scale: z.number().optional()
+});
+
+// Plugin response data
+export const NodeDataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string(),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  width: z.number().optional(),
+  height: z.number().optional(),
+  rotation: z.number().optional(),
+  opacity: z.number().optional(),
+  visible: z.boolean().optional(),
+  locked: z.boolean().optional(),
+  fills: z.array(PaintSchema).optional(),
+  strokes: z.array(StrokeSchema).optional(),
+  effects: z.array(FigmaEffectSchema).optional(),
+  children: z.array(z.record(z.unknown())).optional() // Simplified to avoid circular reference
+});
+
+export const SelectionDataSchema = z.object({
+  selectedNodes: z.array(NodeDataSchema),
+  count: z.number()
+});
+
+export const ExportDataSchema = z.object({
+  imageData: z.string(), // Base64 encoded image
+  format: z.string(),
+  scale: z.number(),
+  width: z.number(),
+  height: z.number()
+});
+
+export const StyleDataSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.enum(['PAINT', 'TEXT', 'EFFECT', 'GRID']),
+  description: z.string().optional(),
+  properties: z.record(z.unknown())
+});
+
+// ================================================================================
+// Base Schema Components
+// ================================================================================
+
+// Common position and size properties
+export const BasePositionSchema = z.object({
+  x: z.number().default(0),
+  y: z.number().default(0),
+});
+
+export const BaseSizeSchema = z.object({
+  width: z.number().optional(),
+  height: z.number().optional(),
+});
+
+// Common visual properties
+export const BaseVisualSchema = z.object({
+  fillColor: z.string().optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().default(true),
+  rotation: z.number().optional(),
+  locked: z.boolean().default(false),
+});
+
+// Common stroke properties
+export const BaseStrokeSchema = z.object({
+  strokeColor: z.string().optional(),
+  strokeWidth: z.number().min(0).optional(),
+});
+
+// Common corner properties
+export const BaseCornerSchema = z.object({
+  cornerRadius: z.number().min(0).optional(),
+  topLeftRadius: z.number().min(0).optional(),
+  topRightRadius: z.number().min(0).optional(),
+  bottomLeftRadius: z.number().min(0).optional(),
+  bottomRightRadius: z.number().min(0).optional(),
+  cornerSmoothing: z.number().min(0).max(1).optional(),
+});
+
+// Common text alignment properties
+export const BaseTextAlignmentSchema = z.object({
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
+  textAlignVertical: z.enum(["top", "center", "bottom"]).optional(),
+});
+
+// Text styling properties
+export const BaseTextStyleSchema = z.object({
+  fontFamily: z.string().optional(),
+  fontStyle: z.string().optional(),
+  fontSize: z.number().optional(),
+  textCase: z.enum(["original", "upper", "lower", "title"]).optional(),
+  textDecoration: z.enum(["none", "underline", "strikethrough"]).optional(),
+  letterSpacing: z.number().optional(),
+  lineHeight: z.number().optional(),
+});
+
+// Base node properties (combination of all common properties)
+export const BaseNodePropertiesSchema = BasePositionSchema
+  .merge(BaseSizeSchema)
+  .merge(BaseVisualSchema)
+  .merge(BaseStrokeSchema)
+  .merge(BaseCornerSchema)
+  .extend({
+    name: z.string().optional(),
+  });
 
 // ================================================================================
 // Typography Types
@@ -19,46 +274,34 @@ export const TextStyleRangeSchema = z.object({
 
 export type TextStyleRange = z.infer<typeof TextStyleRangeSchema>;
 
-export const CreateTextSchema = z.object({
-  // Core content
-  characters: z.string(),
-  
-  // Positioning
-  x: z.number().default(0),
-  y: z.number().default(0),
-  width: z.number().optional(),
-  height: z.number().optional(),
-  
-  // Basic styling
-  fontFamily: z.string().default("Inter"),
-  fontStyle: z.string().optional().default("Regular"),
-  fontSize: z.number().default(16),
-  
-  // Text alignment
-  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
-  textAlignVertical: z.enum(["top", "center", "bottom"]).optional(),
-  
-  // Text styling
-  textCase: z.enum(["original", "upper", "lower", "title"]).optional(),
-  textDecoration: z.enum(["none", "underline", "strikethrough"]).optional(),
-  
-  // Spacing
-  letterSpacing: z.number().optional(),
-  lineHeight: z.number().optional(),
-  lineHeightUnit: z.enum(["px", "percent"]).optional().default("percent"),
-  paragraphIndent: z.number().optional(),
-  paragraphSpacing: z.number().optional(),
-  
-  // Visual
-  fillColor: z.string().optional(),
-  
-  // Advanced styling with ranges
-  styleRanges: z.array(TextStyleRangeSchema).optional(),
-  
-  // Style management
-  createStyle: z.boolean().optional(),
-  styleName: z.string().optional(),
-});
+export const CreateTextSchema = BasePositionSchema
+  .merge(BaseSizeSchema)
+  .merge(BaseTextAlignmentSchema)
+  .merge(BaseTextStyleSchema)
+  .extend({
+    // Core content
+    characters: z.string(),
+    
+    // Text-specific defaults
+    fontFamily: z.string().default("Inter"),
+    fontStyle: z.string().optional().default("Regular"),
+    fontSize: z.number().default(16),
+    
+    // Spacing
+    lineHeightUnit: z.enum(["px", "percent"]).optional().default("percent"),
+    paragraphIndent: z.number().optional(),
+    paragraphSpacing: z.number().optional(),
+    
+    // Visual
+    fillColor: z.string().optional(),
+    
+    // Advanced styling with ranges
+    styleRanges: z.array(TextStyleRangeSchema).optional(),
+    
+    // Style management
+    createStyle: z.boolean().optional(),
+    styleName: z.string().optional(),
+  });
 
 export type CreateTextParams = z.infer<typeof CreateTextSchema>;
 
@@ -139,24 +382,9 @@ export const ManageStylesSchema = z.object({
   
   // Grid Style Properties
   layoutGrids: z.array(LayoutGridSchema).optional(),
-}).refine((data) => {
-  // Validation rules for different operations
-  if (data.operation === 'create') {
-    return data.styleType !== undefined && data.styleName !== undefined;
-  }
-  if (data.operation === 'apply') {
-    return data.nodeId !== undefined && (data.styleId !== undefined || data.styleName !== undefined);
-  }
-  if (data.operation === 'delete' || data.operation === 'get') {
-    return data.styleId !== undefined || data.styleName !== undefined;
-  }
-  if (data.operation === 'list') {
-    return data.styleType !== undefined;
-  }
-  return true;
-}, {
-  message: "Invalid parameters for the specified operation"
 });
+
+// Validation logic moved to handler layer
 
 export type ManageStylesParams = z.infer<typeof ManageStylesSchema>;
 export type GradientStop = z.infer<typeof GradientStopSchema>;
@@ -200,16 +428,9 @@ export const ManageAutoLayoutSchema = z.object({
   // Advanced Properties
   strokesIncludedInLayout: z.boolean().optional(),
   layoutWrap: z.enum(['no_wrap', 'wrap']).optional(),
-}).refine((data) => {
-  // Validation rules for different operations
-  if (data.operation === 'enable') {
-    // Enable operation should have at least direction
-    return true; // Direction will have default in implementation
-  }
-  return true;
-}, {
-  message: "Invalid parameters for the specified operation"
 });
+
+// Validation logic moved to handler layer
 
 export const ManageConstraintsSchema = z.object({
   operation: z.enum(['set', 'get', 'reset', 'get_info']),
@@ -218,16 +439,9 @@ export const ManageConstraintsSchema = z.object({
   // Constraint Settings
   horizontal: z.enum(['left', 'right', 'left_right', 'center', 'scale']).optional(),
   vertical: z.enum(['top', 'bottom', 'top_bottom', 'center', 'scale']).optional(),
-}).refine((data) => {
-  // Validation rules for different operations
-  if (data.operation === 'set') {
-    // Set operation should have at least one constraint
-    return data.horizontal !== undefined || data.vertical !== undefined;
-  }
-  return true;
-}, {
-  message: "Set operation requires at least one constraint (horizontal or vertical)"
 });
+
+// Validation logic moved to handler layer
 
 export type ManageAutoLayoutParams = z.infer<typeof ManageAutoLayoutSchema>;
 export type ManageConstraintsParams = z.infer<typeof ManageConstraintsSchema>;
@@ -258,9 +472,9 @@ export const FigmaNodeSchema = z.object({
   // Visual properties
   opacity: z.number().default(1),
   blendMode: z.string().default('NORMAL'),
-  fills: z.array(z.any()).optional(),
-  strokes: z.array(z.any()).optional(),
-  effects: z.array(z.any()).optional(),
+  fills: z.array(PaintSchema).optional(),
+  strokes: z.array(StrokeSchema).optional(),
+  effects: z.array(FigmaEffectSchema).optional(),
   // Removed recursive children to fix TypeScript compilation
 });
 
@@ -307,7 +521,13 @@ export const PluginMessageSchema = z.object({
     'PLUGIN_READY',
     'HEARTBEAT'
   ]),
-  payload: z.any().optional(),
+  payload: z.union([
+    NodeCreationPayloadSchema,
+    NodeUpdatePayloadSchema,
+    SelectionPayloadSchema,
+    ExportPayloadSchema,
+    z.record(z.unknown())
+  ]).optional(),
 });
 
 export type PluginMessage = z.infer<typeof PluginMessageSchema>;
@@ -315,7 +535,14 @@ export type PluginMessage = z.infer<typeof PluginMessageSchema>;
 export const PluginResponseSchema = z.object({
   id: z.string(),
   success: z.boolean(),
-  data: z.any().optional(),
+  data: z.union([
+    NodeDataSchema,
+    SelectionDataSchema,
+    ExportDataSchema,
+    StyleDataSchema,
+    z.array(NodeDataSchema),
+    z.record(z.unknown())
+  ]).optional(),
   error: z.string().optional(),
 });
 
@@ -325,132 +552,54 @@ export type PluginResponse = z.infer<typeof PluginResponseSchema>;
 // MCP Tool Input Schemas
 // ================================================================================
 
-export const CreateNodeSchema = z.object({
-  // === BASIC PROPERTIES ===
+export const CreateNodeSchema = BaseNodePropertiesSchema.extend({
+  // Node type
   nodeType: z.enum(['rectangle', 'ellipse', 'text', 'frame', 'star', 'polygon']),
-  name: z.string().optional(),
   
-  // === SIZE & POSITION ===
-  width: z.number().optional(),    // required for rectangle, ellipse, frame
-  height: z.number().optional(),   // required for rectangle, ellipse, frame
-  x: z.number().default(0),        // position X
-  y: z.number().default(0),        // position Y
+  // Frame-specific properties
+  clipsContent: z.boolean().optional(),
   
-  // === CORNER PROPERTIES ===
-  // Basic corner radius (applies to all corners)
-  cornerRadius: z.number().min(0).optional(),
+  // Shape-specific properties
+  pointCount: z.number().min(3).optional(), // star nodes
+  innerRadius: z.number().min(0).max(1).optional(), // star nodes
   
-  // Individual corner radii (overrides cornerRadius if specified)
-  topLeftRadius: z.number().min(0).optional(),
-  topRightRadius: z.number().min(0).optional(),
-  bottomLeftRadius: z.number().min(0).optional(),
-  bottomRightRadius: z.number().min(0).optional(),
-  
-  // Corner smoothing (0-1, where 0.6 = iOS squircle)
-  cornerSmoothing: z.number().min(0).max(1).optional(),
-  
-  // === BASIC STYLING ===
-  // Basic fill (single color only - advanced fills via manage_fills)
-  fillColor: z.string().optional(), // hex color string
-  opacity: z.number().min(0).max(1).optional(), // 0-1 transparency
-  visible: z.boolean().default(true), // show/hide node
-  
-  // Basic stroke (advanced strokes via manage_strokes)
-  strokeColor: z.string().optional(), // hex color string
-  strokeWidth: z.number().min(0).optional(), // stroke thickness
-  
-  // === TRANSFORM ===
-  rotation: z.number().optional(), // rotation in degrees
-  
-  // === INTERACTION ===
-  locked: z.boolean().default(false), // prevent user interaction
-  
-  // === FRAME-SPECIFIC PROPERTIES ===
-  clipsContent: z.boolean().optional(), // clip children to frame bounds (frames only)
-  
-  // === SHAPE-SPECIFIC PROPERTIES ===
-  // Star nodes
-  pointCount: z.number().min(3).optional(), // number of star points (stars only)
-  innerRadius: z.number().min(0).max(1).optional(), // inner radius ratio 0-1 (stars only)
-  
-  // === TEXT PROPERTIES ===
-  // (Keep existing text properties for backward compatibility)
-  content: z.string().optional(),         // text content (text only)
-  fontFamily: z.string().optional(),      // font family (text only)
-  fontSize: z.number().optional(),        // font size (text only)
-  fontStyle: z.string().optional(),       // font style (text only)
-  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(), // text only
+  // Text properties (for backward compatibility)
+  content: z.string().optional(),
+  fontFamily: z.string().optional(),
+  fontSize: z.number().optional(),
+  fontStyle: z.string().optional(),
+  textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
 }).refine((data) => {
-  // Validate that required properties are present for each node type
-  switch (data.nodeType) {
-    case 'rectangle':
-    case 'ellipse':
-    case 'frame':
-    case 'star':
-    case 'polygon':
-      // These node types are valid (defaults will be applied if width/height missing)
-      return true;
-    case 'text':
-      // Text node should have content (no default makes sense for content)
-      return data.content !== undefined && data.content.trim().length > 0;
-    default:
-      return false;
+  // Text nodes must have content - validation logic kept here as it's structural
+  if (data.nodeType === 'text') {
+    return data.content !== undefined && data.content.trim().length > 0;
   }
+  return true;
 }, {
   message: "Text nodes must have non-empty content"
 });
 
 
 
-export const UpdateNodeSchema = z.object({
+export const UpdateNodeSchema = BaseNodePropertiesSchema.extend({
   nodeId: z.string(), // required - ID of node to update
   
-  // === BASIC PROPERTIES ===
-  name: z.string().optional(),
-  
-  // === SIZE & POSITION ===
-  width: z.number().optional(),
-  height: z.number().optional(),
-  x: z.number().optional(),
-  y: z.number().optional(),
-  
-  // === CORNER PROPERTIES ===
-  cornerRadius: z.number().min(0).optional(),
-  topLeftRadius: z.number().min(0).optional(),
-  topRightRadius: z.number().min(0).optional(),
-  bottomLeftRadius: z.number().min(0).optional(),
-  bottomRightRadius: z.number().min(0).optional(),
-  cornerSmoothing: z.number().min(0).max(1).optional(),
-  
-  // === BASIC STYLING ===
-  fillColor: z.string().optional(),
-  opacity: z.number().min(0).max(1).optional(),
-  visible: z.boolean().optional(),
-  strokeColor: z.string().optional(),
-  strokeWidth: z.number().min(0).optional(),
-  
-  // === TRANSFORM ===
-  rotation: z.number().optional(),
-  
-  // === INTERACTION ===
-  locked: z.boolean().optional(),
-  
-  // === FRAME-SPECIFIC ===
+  // Frame-specific properties
   clipsContent: z.boolean().optional(),
   
-  // === SHAPE-SPECIFIC ===
+  // Shape-specific properties
   pointCount: z.number().min(3).optional(),
   innerRadius: z.number().min(0).max(1).optional(),
   
-  // === TEXT PROPERTIES ===
+  // Text properties
   content: z.string().optional(),
   fontFamily: z.string().optional(),
   fontSize: z.number().optional(),
   fontStyle: z.string().optional(),
   textAlignHorizontal: z.enum(["left", "center", "right", "justified"]).optional(),
   
-  // === LEGACY SUPPORT ===
-  properties: z.record(z.any()).optional(), // backward compatibility
+  // Legacy support
+  properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
 });
 
 export const MoveNodeSchema = z.object({
@@ -483,13 +632,54 @@ export const ExportNodeSchema = z.object({
 // Server Configuration
 // ================================================================================
 
+export interface OperationTimeouts {
+  [operationType: string]: number;
+}
+
+export interface CommunicationConfig {
+  defaultTimeout: number;
+  operationTimeouts: OperationTimeouts;
+  batchTimeout: number;
+  maxBatchSize: number;
+  requestQueueSize: number;
+  reconnectAttempts: number;
+  reconnectDelay: number;
+  healthCheckInterval: number;
+}
+
 export interface ServerConfig {
   port: number;
   corsOrigin: string;
   pluginId: string;
   maxMessageSize: number;
   heartbeatInterval: number;
+  communication: CommunicationConfig;
 }
+
+export const DEFAULT_COMMUNICATION_CONFIG: CommunicationConfig = {
+  defaultTimeout: 30000, // 30 seconds
+  operationTimeouts: {
+    'CREATE_NODE': 5000,
+    'UPDATE_NODE': 3000,
+    'MOVE_NODE': 2000,
+    'DELETE_NODE': 2000,
+    'DUPLICATE_NODE': 5000,
+    'GET_SELECTION': 1000,
+    'SET_SELECTION': 1000,
+    'GET_PAGE_NODES': 10000, // Can be slow for large documents
+    'EXPORT_NODE': 15000, // Export operations can take time
+    'MANAGE_STYLES': 5000,
+    'MANAGE_AUTO_LAYOUT': 3000,
+    'MANAGE_CONSTRAINTS': 2000,
+    'CREATE_TEXT': 4000
+  },
+  batchTimeout: 100, // 100ms window for batching
+  maxBatchSize: 10,
+  requestQueueSize: 50,
+  reconnectAttempts: 3,
+  reconnectDelay: 1000,
+  healthCheckInterval: 5000 // 5 seconds
+};
 
 export const DEFAULT_CONFIG: ServerConfig = {
   port: 8765,
@@ -497,6 +687,7 @@ export const DEFAULT_CONFIG: ServerConfig = {
   pluginId: 'figma-mcp-write-plugin',
   maxMessageSize: 1024 * 1024, // 1MB
   heartbeatInterval: 30000, // 30 seconds
+  communication: DEFAULT_COMMUNICATION_CONFIG
 };
 
 // ================================================================================
@@ -507,4 +698,230 @@ export interface ConnectionStatus {
   pluginConnected: boolean;
   lastHeartbeat: Date | null;
   activeClients: number;
+  connectionHealth: 'healthy' | 'degraded' | 'unhealthy';
+  reconnectAttempts: number;
+  averageResponseTime: number;
+  queuedRequests: number;
 }
+
+export interface QueuedRequest {
+  id: string;
+  request: any;
+  resolve: (value: any) => void;
+  reject: (error: Error) => void;
+  timeout: NodeJS.Timeout;
+  timestamp: number;
+  priority: 'low' | 'normal' | 'high';
+  retries: number;
+}
+
+export interface RequestBatch {
+  id: string;
+  requests: QueuedRequest[];
+  timeout: NodeJS.Timeout;
+}
+
+export enum RequestPriority {
+  LOW = 0,
+  NORMAL = 1,
+  HIGH = 2
+}
+
+// ================================================================================
+// Handler Interface & Tool System (Enhanced with Generics)
+// ================================================================================
+
+export interface ToolResult {
+  content: Array<{
+    type: 'text';
+    text: string;
+  }>;
+  isError?: boolean;
+}
+
+// Generic plugin communication types
+export interface TypedPluginMessage<TPayload = unknown> {
+  id: string;
+  type: string;
+  payload?: TPayload;
+}
+
+export interface TypedPluginResponse<TData = unknown> {
+  id: string;
+  success: boolean;
+  data?: TData;
+  error?: string;
+}
+
+// Specific operation types with proper typing
+export type CreateNodeRequest = TypedPluginMessage<z.infer<typeof NodeCreationPayloadSchema>>;
+export type UpdateNodeRequest = TypedPluginMessage<z.infer<typeof NodeUpdatePayloadSchema>>;
+export type GetSelectionRequest = TypedPluginMessage<z.infer<typeof SelectionPayloadSchema>>;
+export type ExportNodeRequest = TypedPluginMessage<z.infer<typeof ExportPayloadSchema>>;
+
+export type NodeCreationResponse = TypedPluginResponse<{ nodeId: string; properties?: Record<string, unknown> }>;
+export type SelectionResponse = TypedPluginResponse<z.infer<typeof SelectionDataSchema>>;
+export type ExportResponse = TypedPluginResponse<z.infer<typeof ExportDataSchema>>;
+export type StyleResponse = TypedPluginResponse<z.infer<typeof StyleDataSchema>[]>;
+
+export interface ToolHandler {
+  getTools(): Tool[];
+  handle(toolName: string, args: any): Promise<any>;
+}
+
+// Enhanced WebSocket communication with generics
+export interface TypedWebSocketCommunication {
+  sendMessage<TPayload, TResponse = unknown>(message: TypedPluginMessage<TPayload>): Promise<TypedPluginResponse<TResponse>>;
+  onMessage<TPayload>(handler: (message: TypedPluginMessage<TPayload>) => void): void;
+}
+
+// Communication Layer Types
+export interface HealthMetrics {
+  responseTime: number[];
+  errorCount: number;
+  successCount: number;
+  lastError: string | null;
+  lastSuccess: Date | null;
+}
+
+// ================================================================================
+// Type Guards and Validation Helpers
+// ================================================================================
+
+// Runtime type guards for better error handling
+export function isNodeCreationPayload(payload: unknown): payload is z.infer<typeof NodeCreationPayloadSchema> {
+  try {
+    NodeCreationPayloadSchema.parse(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isNodeUpdatePayload(payload: unknown): payload is z.infer<typeof NodeUpdatePayloadSchema> {
+  try {
+    NodeUpdatePayloadSchema.parse(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isSelectionPayload(payload: unknown): payload is z.infer<typeof SelectionPayloadSchema> {
+  try {
+    SelectionPayloadSchema.parse(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function isExportPayload(payload: unknown): payload is z.infer<typeof ExportPayloadSchema> {
+  try {
+    ExportPayloadSchema.parse(payload);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Type guard for plugin responses
+export function isValidPluginResponse<T>(response: unknown): response is TypedPluginResponse<T> {
+  if (typeof response !== 'object' || response === null) return false;
+  const r = response as Record<string, unknown>;
+  return typeof r.id === 'string' && typeof r.success === 'boolean';
+}
+
+// Validation helper with detailed error reporting
+export function validateAndParse<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  context?: string
+): { success: true; data: T } | { success: false; error: string } {
+  try {
+    const result = schema.parse(data);
+    return { success: true, data: result };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const issues = error.errors.map(issue => 
+        `${issue.path.join('.')}: ${issue.message}`
+      ).join(', ');
+      return {
+        success: false,
+        error: `${context ? context + ': ' : ''}Validation failed: ${issues}`
+      };
+    }
+    return {
+      success: false,
+      error: `${context ? context + ': ' : ''}Unknown validation error: ${String(error)}`
+    };
+  }
+}
+
+// Safe type assertion with runtime validation
+export function assertType<T>(
+  schema: z.ZodSchema<T>,
+  data: unknown,
+  errorMessage?: string
+): T {
+  try {
+    return schema.parse(data);
+  } catch (error) {
+    throw new Error(errorMessage || `Type assertion failed: ${String(error)}`);
+  }
+}
+
+// Utility for creating typed message handlers
+export function createTypedHandler<TPayload, TResponse>(
+  payloadSchema: z.ZodSchema<TPayload>,
+  handler: (payload: TPayload) => Promise<TResponse>
+) {
+  return async (rawPayload: unknown): Promise<TypedPluginResponse<TResponse>> => {
+    const validation = validateAndParse(payloadSchema, rawPayload, 'payload');
+    
+    if (!validation.success) {
+      return {
+        id: '', // Will be set by caller
+        success: false,
+        error: validation.error
+      };
+    }
+    
+    try {
+      const result = await handler(validation.data);
+      return {
+        id: '', // Will be set by caller
+        success: true,
+        data: result
+      };
+    } catch (error) {
+      return {
+        id: '', // Will be set by caller
+        success: false,
+        error: error instanceof Error ? error.message : String(error)
+      };
+    }
+  };
+}
+
+// Export all inferred types for external use
+export type Color = z.infer<typeof ColorSchema>;
+export type SolidPaint = z.infer<typeof SolidPaintSchema>;
+export type GradientPaint = z.infer<typeof GradientPaintSchema>;
+export type ImagePaint = z.infer<typeof ImagePaintSchema>;
+export type Paint = z.infer<typeof PaintSchema>;
+export type Stroke = z.infer<typeof StrokeSchema>;
+export type FigmaEffect = z.infer<typeof FigmaEffectSchema>;
+export type FontName = z.infer<typeof FontNameSchema>;
+export type TypeStyle = z.infer<typeof TypeStyleSchema>;
+export type NodeCreationPayload = z.infer<typeof NodeCreationPayloadSchema>;
+export type NodeUpdatePayload = z.infer<typeof NodeUpdatePayloadSchema>;
+export type SelectionPayload = z.infer<typeof SelectionPayloadSchema>;
+export type ExportPayload = z.infer<typeof ExportPayloadSchema>;
+export type NodeData = z.infer<typeof NodeDataSchema>;
+export type SelectionData = z.infer<typeof SelectionDataSchema>;
+export type ExportData = z.infer<typeof ExportDataSchema>;
+export type StyleData = z.infer<typeof StyleDataSchema>;
+
+// Re-export Tool interface from MCP SDK for convenience
+export type { Tool } from '@modelcontextprotocol/sdk/types.js';
