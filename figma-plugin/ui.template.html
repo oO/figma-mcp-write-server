@@ -283,6 +283,16 @@
                     );
                 } else if (message.type === "CONNECTED") {
                     log(`✅ Server acknowledged connection`, "success");
+                } else if (message.type === "HEARTBEAT") {
+                    // Handle heartbeat messages - no id required
+                    log(`💓 Heartbeat received`, "info");
+                    // Send heartbeat acknowledgment back to server
+                    if (ws && isConnected) {
+                        ws.send(JSON.stringify({ type: 'HEARTBEAT_ACK', timestamp: Date.now() }));
+                    }
+                } else if (message.type === "HEARTBEAT_ACK") {
+                    // Handle heartbeat acknowledgment - no id required
+                    log(`💓 Heartbeat ACK received`, "info");
                 } else {
                     log(
                         `⚠️ Message missing required fields (type/id): ${JSON.stringify(message)}`,

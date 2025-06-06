@@ -11,6 +11,7 @@ export class FigmaWebSocketServer {
   
   // Enhanced request management
   private requestQueue: QueuedRequest[] = [];
+  private pendingRequests = new Map<string, QueuedRequest>();
   private pendingBatches = new Map<string, RequestBatch>();
   private batchTimer: NodeJS.Timeout | null = null;
   
@@ -222,12 +223,14 @@ export class FigmaWebSocketServer {
   }
   
   private handleIndividualResponse(message: any): void {
-    // Find request in queue
-    const requestIndex = this.requestQueue.findIndex(req => req.id === message.id);
-    if (requestIndex === -1) return;
+    // Find request in pending requests
+    const request = this.pendingRequests.get(message.id);
+    if (!request) {
+      return;
+    }
     
-    const request = this.requestQueue[requestIndex]!;
-    this.requestQueue.splice(requestIndex, 1);
+    // Remove from pending
+    this.pendingRequests.delete(message.id);
     
     // Record metrics
     const responseTime = Date.now() - request.timestamp;
@@ -344,6 +347,9 @@ export class FigmaWebSocketServer {
     if (index !== -1) {
       this.requestQueue.splice(index, 1);
     }
+    
+    // Also remove from pending if it exists there
+    this.pendingRequests.delete(id);
   }
   
   private processRequestQueue(): void {
@@ -406,10 +412,13 @@ export class FigmaWebSocketServer {
     const request = this.requestQueue.shift();
     if (!request || !this.pluginConnection) return;
     
+    // Move request to pending state
+    this.pendingRequests.set(request.id, request);
+    
     try {
       this.pluginConnection.send(JSON.stringify(request.request));
-      console.error('📤 Sent to plugin:', request.request.type);
     } catch (error) {
+      this.pendingRequests.delete(request.id);
       clearTimeout(request.timeout);
       request.reject(new Error(`Failed to send request: ${error}`));
     }

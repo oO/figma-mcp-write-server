@@ -159,24 +159,24 @@ Verification: Rectangle resized
 ### Test 17: Move Node
 ```
 Prompt: "Move the circle to position 300,150"
-Expected MCP Call: move_node
-Parameters: nodeId="<circle-id>", x=300, y=150
+Expected MCP Call: manage_nodes
+Parameters: operation="move", nodeId="<circle-id>", x=300, y=150
 Verification: Circle moved to new position
 ```
 
 ### Test 18: Duplicate Node
 ```
 Prompt: "Duplicate the rectangle and offset it by 50 pixels to the right"
-Expected MCP Call: duplicate_node
-Parameters: nodeId="<rectangle-id>", offsetX=50, offsetY=0
+Expected MCP Call: manage_nodes
+Parameters: operation="duplicate", nodeId="<rectangle-id>", offsetX=50, offsetY=0
 Verification: Duplicate rectangle appears with offset
 ```
 
 ### Test 19: Delete Node
 ```
 Prompt: "Delete the duplicate rectangle"
-Expected MCP Call: delete_node
-Parameters: nodeId="<duplicate-id>"
+Expected MCP Call: manage_nodes
+Parameters: operation="delete", nodeId="<duplicate-id>"
 Verification: Duplicate removed from canvas
 ```
 

@@ -445,6 +445,7 @@ export const ManageConstraintsSchema = z.object({
 
 export type ManageAutoLayoutParams = z.infer<typeof ManageAutoLayoutSchema>;
 export type ManageConstraintsParams = z.infer<typeof ManageConstraintsSchema>;
+export type ManageNodesParams = z.infer<typeof ManageNodesSchema>;
 export type Padding = z.infer<typeof PaddingSchema>;
 export type Resizing = z.infer<typeof ResizingSchema>;
 
@@ -602,20 +603,15 @@ export const UpdateNodeSchema = BaseNodePropertiesSchema.extend({
   properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
 });
 
-export const MoveNodeSchema = z.object({
-  nodeId: z.string(),
-  x: z.number(),
-  y: z.number(),
-});
 
-export const DeleteNodeSchema = z.object({
-  nodeId: z.string(),
-});
 
-export const DuplicateNodeSchema = z.object({
+export const ManageNodesSchema = z.object({
+  operation: z.enum(['move', 'delete', 'duplicate']),
   nodeId: z.string(),
-  offsetX: z.number().default(10),
-  offsetY: z.number().default(10),
+  x: z.number().optional(),
+  y: z.number().optional(),
+  offsetX: z.number().default(10).optional(),
+  offsetY: z.number().default(10).optional(),
 });
 
 export const SetSelectionSchema = z.object({

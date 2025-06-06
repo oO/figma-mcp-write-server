@@ -48,9 +48,7 @@ graph LR
 | `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
 | `manage_hierarchy` | Layer & hierarchy management | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex |
 | `update_node` | Update node properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked |
-| `move_node` | Move nodes to new positions | nodeId, x, y |
-| `delete_node` | Delete nodes | nodeId |
-| `duplicate_node` | Duplicate nodes | nodeId, offsetX, offsetY |
+| `manage_nodes` | Move, delete, or duplicate nodes | operation, nodeId, x, y, offsetX, offsetY |
 | `get_selection` | Get currently selected nodes | - |
 | `set_selection` | Set node selection | nodeIds |
 | `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |

@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2025-01-27
+
+### Changed
+- **🔧 Tool Consolidation**: Consolidated individual node operation tools into unified `manage_nodes` tool
+  - Replaced `move_node`, `delete_node`, and `duplicate_node` with single `manage_nodes` tool
+  - Added operation parameter with values: 'move', 'delete', 'duplicate'
+  - Maintains backward compatibility through operation-specific parameter validation
+  - Follows established pattern of other `manage_*` tools in the codebase
+  - Kept `export_node` separate as it's conceptually different (read vs write operation)
+
+### Technical Details
+- Added `ManageNodesSchema` with conditional parameter requirements based on operation type
+- Updated `NodeHandlers` to use consolidated approach with operation switching
+- Reduced total MCP tool count while maintaining full functionality
+- Enhanced parameter validation with operation-specific requirements
+
 ## [0.16.0] - 2025-01-27
 
 ### Major Architecture Overhaul
