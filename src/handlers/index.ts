@@ -70,20 +70,17 @@ export class HandlerRegistry {
 
   private async getPluginStatus(): Promise<any> {
     return {
-      content: [{
-        type: 'text',
-        text: '🟢 Plugin connection status: Active'
-      }]
+      status: 'active',
+      connected: true,
+      message: 'Plugin connection is active'
     };
   }
   
   private async getConnectionHealth(): Promise<any> {
     if (!this.wsServer) {
       return {
-        content: [{
-          type: 'text',
-          text: '⚠️ Connection health monitoring not available'
-        }]
+        available: false,
+        message: 'Connection health monitoring not available'
       };
     }
     
@@ -91,34 +88,22 @@ export class HandlerRegistry {
     const metrics = this.wsServer.getHealthMetrics();
     const queue = this.wsServer.getQueueStatus();
     
-    const healthIcons = {
-      'healthy': '🟢',
-      'degraded': '🟡',
-      'unhealthy': '🔴'
-    } as const;
-    const healthIcon = healthIcons[status.connectionHealth as keyof typeof healthIcons] || '⚪';
-    
-    const report = [
-      `${healthIcon} Connection Health: ${status.connectionHealth.toUpperCase()}`,
-      `🔌 Plugin Connected: ${status.pluginConnected ? 'Yes' : 'No'}`,
-      `⏱️ Average Response Time: ${Math.round(status.averageResponseTime)}ms`,
-      `📋 Queue Length: ${queue.length} requests`,
-      `✅ Success Rate: ${metrics.successCount}/${metrics.successCount + metrics.errorCount} (${Math.round((metrics.successCount / (metrics.successCount + metrics.errorCount || 1)) * 100)}%)`,
-      `🔄 Reconnect Attempts: ${status.reconnectAttempts}`,
-      '',
-      'Queue Details:',
-      queue.requests.length > 0 ? queue.requests.map((req: string) => `  • ${req}`).join('\n') : '  (empty)'
-    ];
-    
-    if (metrics.lastError) {
-      report.push(`\n❌ Last Error: ${metrics.lastError}`);
-    }
-    
     return {
-      content: [{
-        type: 'text',
-        text: report.join('\n')
-      }]
+      connectionHealth: status.connectionHealth,
+      pluginConnected: status.pluginConnected,
+      averageResponseTime: Math.round(status.averageResponseTime),
+      queueLength: queue.length,
+      successRate: {
+        successful: metrics.successCount,
+        total: metrics.successCount + metrics.errorCount,
+        percentage: Math.round((metrics.successCount / (metrics.successCount + metrics.errorCount || 1)) * 100)
+      },
+      reconnectAttempts: status.reconnectAttempts,
+      queue: {
+        length: queue.requests.length,
+        requests: queue.requests
+      },
+      lastError: metrics.lastError || null
     };
   }
 }

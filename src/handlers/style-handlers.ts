@@ -45,14 +45,7 @@ export class StyleHandlers implements ToolHandler {
         payload: validatedArgs
       });
 
-      return {
-        content: [
-          {
-            type: "text",
-            text: `✅ Style operation ${validatedArgs.operation} completed successfully: ${JSON.stringify(result, null, 2)}`
-          }
-        ]
-      };
+      return result.data;
     } catch (error) {
       console.error('❌ Error in manageStyles:', error);
       throw error;

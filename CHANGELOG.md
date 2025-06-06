@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2025-01-27
+
+### Changed
+- **🔧 MCP Protocol Compliance**: Fixed all MCP tools to return raw JSON data instead of formatted display text
+  - All tools now return structured JSON data that AI agents can programmatically parse and use
+  - Removed human-readable formatting from tool responses (emojis, formatted strings, content wrappers)
+  - Tools return direct data structures from plugin responses instead of wrapping them in display format
+  - Error handling converted from formatted error messages to proper exception throwing
+  - Affects all tools: get_page_nodes, get_selection, export_node, create_node, update_node, manage_nodes, manage_styles, manage_auto_layout, manage_constraints, manage_hierarchy, get_plugin_status, get_connection_health
+
+### Technical Details
+- Removed `content: [{ type: 'text', text: '...' }]` wrapper objects from all tool responses
+- Changed methods to return `response.data` or `result.data` directly
+- Updated error handling to throw exceptions instead of returning formatted error objects
+- Maintains all functionality while ensuring MCP protocol compliance for AI agent consumption
+
+### Why This Matters
+- AI agents need structured data to programmatically work with results
+- Formatted text is for humans, not MCP tool consumers
+- Parsing formatted strings is brittle and error-prone
+- MCP protocol expects JSON responses that agents can directly use
+
 ## [0.17.0] - 2025-01-27
 
 ### Changed

@@ -1,4 +1,4 @@
-import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, MoveNodeSchema, DeleteNodeSchema, DuplicateNodeSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, ManageNodesSchema, ToolHandler, ToolResult, Tool } from '../types.js';
 import { hexToRgb } from '../utils/color-utils.js';
 
 export class NodeHandlers implements ToolHandler {
@@ -93,40 +93,19 @@ export class NodeHandlers implements ToolHandler {
         }
       },
       {
-        name: 'move_node',
-        description: 'Move a node to a new position',
+        name: 'manage_nodes',
+        description: 'Move, delete, or duplicate nodes',
         inputSchema: {
           type: 'object',
           properties: {
-            nodeId: { type: 'string', description: 'ID of the node to move' },
-            x: { type: 'number', description: 'New X position' },
-            y: { type: 'number', description: 'New Y position' }
+            operation: { type: 'string', enum: ['move', 'delete', 'duplicate'], description: 'Node operation to perform' },
+            nodeId: { type: 'string', description: 'ID of the node to operate on' },
+            x: { type: 'number', description: 'New X position (required for move operation)' },
+            y: { type: 'number', description: 'New Y position (required for move operation)' },
+            offsetX: { type: 'number', default: 10, description: 'X offset for the duplicate (for duplicate operation)' },
+            offsetY: { type: 'number', default: 10, description: 'Y offset for the duplicate (for duplicate operation)' }
           },
-          required: ['nodeId', 'x', 'y']
-        }
-      },
-      {
-        name: 'delete_node',
-        description: 'Delete a node from the design',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            nodeId: { type: 'string', description: 'ID of the node to delete' }
-          },
-          required: ['nodeId']
-        }
-      },
-      {
-        name: 'duplicate_node',
-        description: 'Duplicate an existing node',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            nodeId: { type: 'string', description: 'ID of the node to duplicate' },
-            offsetX: { type: 'number', default: 10, description: 'X offset for the duplicate' },
-            offsetY: { type: 'number', default: 10, description: 'Y offset for the duplicate' }
-          },
-          required: ['nodeId']
+          required: ['operation', 'nodeId']
         }
       }
     ];
@@ -140,12 +119,8 @@ export class NodeHandlers implements ToolHandler {
         return this.createTextNode(args);
       case 'update_node':
         return this.updateNode(args);
-      case 'move_node':
-        return this.moveNode(args);
-      case 'delete_node':
-        return this.deleteNode(args);
-      case 'duplicate_node':
-        return this.duplicateNode(args);
+      case 'manage_nodes':
+        return this.manageNodes(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -210,23 +185,7 @@ export class NodeHandlers implements ToolHandler {
         throw new Error(response.error || `Failed to create ${nodeParams.nodeType} node`);
       }
 
-      // Generate appropriate success message based on node type
-      let message = `Created ${nodeParams.nodeType} "${nodeParams.name}" at (${nodeParams.x}, ${nodeParams.y})`;
-      
-      if (nodeParams.width && nodeParams.height) {
-        message += ` with size ${nodeParams.width}x${nodeParams.height}`;
-      }
-      
-      if (nodeParams.fillColor) {
-        message += ` with color ${nodeParams.fillColor}`;
-      }
-
-      return {
-        content: [{
-          type: 'text',
-          text: message
-        }]
-      };
+      return response.data;
     } catch (error) {
       if (error instanceof Error && error.message.includes('Text nodes must have non-empty content')) {
         throw new Error(`Text nodes require non-empty content. Please provide a 'content' property.`);
@@ -373,26 +332,11 @@ export class NodeHandlers implements ToolHandler {
         message += ` and created style "${params.styleName}"`;
       }
         
-      return {
-        content: [
-          {
-            type: "text",
-            text: `✅ ${message}`
-          }
-        ]
-      };
+      return result.data;
         
     } catch (error: any) {
       console.error('❌ Error creating text node:', error);
-      return {
-        content: [
-          {
-            type: "text",
-            text: `❌ Error: ${error.message || 'Failed to create text node'}`
-          }
-        ],
-        isError: true
-      };
+      throw error;
     }
   }
 
@@ -404,62 +348,52 @@ export class NodeHandlers implements ToolHandler {
       payload: params
     });
 
-    // Extract the properties that were actually updated (exclude nodeId)
-    const { nodeId, ...updatedProperties } = params;
-    
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Updated node ${params.nodeId} with properties: ${JSON.stringify(updatedProperties)}`
-      }]
-    };
+    return response.data;
   }
 
-  async moveNode(args: any): Promise<any> {
-    const params = MoveNodeSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'MOVE_NODE',
-      payload: params
-    });
+  async manageNodes(args: any): Promise<any> {
+    const params = ManageNodesSchema.parse(args);
+    const { operation, nodeId, x, y, offsetX, offsetY } = params;
 
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Moved node ${params.nodeId} to position (${params.x}, ${params.y})`
-      }]
-    };
-  }
+    let response: any;
+    let resultText: string;
 
-  async deleteNode(args: any): Promise<any> {
-    const params = DeleteNodeSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'DELETE_NODE',
-      payload: params
-    });
+    switch (operation) {
+      case 'move':
+        if (x === undefined || y === undefined) {
+          throw new Error('x and y coordinates are required for move operation');
+        }
+        response = await this.sendToPlugin({
+          type: 'MOVE_NODE',
+          payload: { nodeId, x, y }
+        });
+        resultText = `✅ Moved node ${nodeId} to position (${x}, ${y})`;
+        break;
 
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Deleted node ${params.nodeId}`
-      }]
-    };
-  }
+      case 'delete':
+        response = await this.sendToPlugin({
+          type: 'DELETE_NODE',
+          payload: { nodeId }
+        });
+        resultText = `✅ Deleted node ${nodeId}`;
+        break;
 
-  async duplicateNode(args: any): Promise<any> {
-    const params = DuplicateNodeSchema.parse(args);
-    
-    const response = await this.sendToPlugin({
-      type: 'DUPLICATE_NODE',
-      payload: params
-    });
+      case 'duplicate':
+        response = await this.sendToPlugin({
+          type: 'DUPLICATE_NODE',
+          payload: { nodeId, offsetX, offsetY }
+        });
+        resultText = `✅ Duplicated node ${nodeId} with offset (${offsetX}, ${offsetY})`;
+        break;
 
-    return {
-      content: [{
-        type: 'text',
-        text: `✅ Duplicated node ${params.nodeId} with offset (${params.offsetX}, ${params.offsetY})`
-      }]
-    };
+      default:
+        throw new Error(`Unknown node operation: ${operation}`);
+    }
+
+    if (!response.success) {
+      throw new Error(response.error || `Failed to ${operation} node`);
+    }
+
+    return response.data;
   }
 }
