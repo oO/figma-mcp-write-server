@@ -1,5 +1,6 @@
 import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, ManageNodesSchema, ToolHandler, ToolResult, Tool } from '../types.js';
 import { hexToRgb } from '../utils/color-utils.js';
+import * as yaml from 'js-yaml';
 
 export class NodeHandlers implements ToolHandler {
   private sendToPlugin: (request: any) => Promise<any>;
@@ -185,7 +186,13 @@ export class NodeHandlers implements ToolHandler {
         throw new Error(response.error || `Failed to create ${nodeParams.nodeType} node`);
       }
 
-      return response.data;
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
+      };
     } catch (error) {
       if (error instanceof Error && error.message.includes('Text nodes must have non-empty content')) {
         throw new Error(`Text nodes require non-empty content. Please provide a 'content' property.`);
@@ -196,29 +203,30 @@ export class NodeHandlers implements ToolHandler {
 
   async createTextNode(params: any): Promise<any> {
     try {
-      console.error(`🔤 Creating text node with advanced typography`);
+      // Validate parameters using schema
+      const validatedParams = CreateTextSchema.parse(params);
          
       // Validate required parameters
-      if (!params.characters) {
+      if (!validatedParams.characters) {
         throw new Error('Text nodes must have characters content');
       }
 
-      // Set name if not provided
-      if (!params.name) {
-        params.name = 'Text';
+      // Set name if not provided  
+      if (!validatedParams.name) {
+        validatedParams.name = 'Text';
       }
          
       // Prepare line height in Figma's expected format
       let lineHeight = undefined;
-      if (params.lineHeight) {
+      if (validatedParams.lineHeight) {
         lineHeight = {
-          value: params.lineHeight,
-          unit: (params.lineHeightUnit === 'px') ? 'PIXELS' : 'PERCENT'
+          value: validatedParams.lineHeight,
+          unit: (validatedParams.lineHeightUnit === 'px') ? 'PIXELS' : 'PERCENT'
         };
       }
          
       // Convert styleRanges to Figma's expected format
-      const styleRanges = params.styleRanges?.map((range: any) => {
+      const styleRanges = validatedParams.styleRanges?.map((range: any) => {
         const figmaRange: any = {
           start: range.start,
           end: range.end,
@@ -226,7 +234,7 @@ export class NodeHandlers implements ToolHandler {
           
         if (range.fontFamily || range.fontStyle) {
           figmaRange.fontName = {
-            family: range.fontFamily || params.fontFamily || 'Inter',
+            family: range.fontFamily || validatedParams.fontFamily || 'Inter',
             style: range.fontStyle || 'Regular'
           };
         }
@@ -255,46 +263,46 @@ export class NodeHandlers implements ToolHandler {
       // Prepare Figma-compatible parameters
       const figmaParams: any = {
         nodeType: 'text',
-        content: params.characters,
-        x: params.x || 0,
-        y: params.y || 0,
-        width: params.width,
-        height: params.height,
+        characters: validatedParams.characters,
+        x: validatedParams.x || 0,
+        y: validatedParams.y || 0,
+        width: validatedParams.width,
+        height: validatedParams.height,
           
         // Font properties in Figma format
         fontName: {
-          family: params.fontFamily || 'Inter',
-          style: params.fontStyle || 'Regular'
+          family: validatedParams.fontFamily || 'Inter',
+          style: validatedParams.fontStyle || 'Regular'
         },
-        fontSize: params.fontSize || 16,
+        fontSize: validatedParams.fontSize || 16,
           
         // Alignment (convert to uppercase for Figma)
-        textAlignHorizontal: params.textAlignHorizontal?.toUpperCase(),
-        textAlignVertical: params.textAlignVertical?.toUpperCase(),
+        textAlignHorizontal: validatedParams.textAlignHorizontal?.toUpperCase(),
+        textAlignVertical: validatedParams.textAlignVertical?.toUpperCase(),
           
         // Text case and decoration
-        textCase: params.textCase?.toUpperCase(),
-        textDecoration: params.textDecoration?.toUpperCase(),
+        textCase: validatedParams.textCase?.toUpperCase(),
+        textDecoration: validatedParams.textDecoration?.toUpperCase(),
           
         // Spacing
-        letterSpacing: params.letterSpacing,
+        letterSpacing: validatedParams.letterSpacing,
         lineHeight: lineHeight,
-        paragraphIndent: params.paragraphIndent,
-        paragraphSpacing: params.paragraphSpacing,
+        paragraphIndent: validatedParams.paragraphIndent,
+        paragraphSpacing: validatedParams.paragraphSpacing,
           
         // Style ranges
         styleRanges: styleRanges,
         
         // Style management
-        createStyle: params.createStyle,
-        styleName: params.styleName
+        createStyle: validatedParams.createStyle,
+        styleName: validatedParams.styleName
       };
         
       // Set fill color if provided
-      if (params.fillColor) {
+      if (validatedParams.fillColor) {
         figmaParams.fills = [{
           type: 'SOLID',
-          color: hexToRgb(params.fillColor)
+          color: hexToRgb(validatedParams.fillColor)
         }];
       }
         
@@ -311,32 +319,48 @@ export class NodeHandlers implements ToolHandler {
       // Build a user-friendly message
       let message = `Created text`;
         
-      if (params.characters) {
-        const previewText = params.characters.substring(0, 20) + 
-                           (params.characters.length > 20 ? '...' : '');
+      if (validatedParams.characters) {
+        const previewText = validatedParams.characters.substring(0, 20) + 
+                           (validatedParams.characters.length > 20 ? '...' : '');
         message += ` with content "${previewText}"`;
       }
         
-      if (params.fontFamily) {
-        message += ` using ${params.fontFamily}`;
-        if (params.fontSize) {
-          message += ` at ${params.fontSize}px`;
+      if (validatedParams.fontFamily) {
+        message += ` using ${validatedParams.fontFamily}`;
+        if (validatedParams.fontSize) {
+          message += ` at ${validatedParams.fontSize}px`;
         }
       }
         
-      if (params.styleRanges && params.styleRanges.length > 0) {
-        message += ` with ${params.styleRanges.length} styled ranges`;
+      if (validatedParams.styleRanges && validatedParams.styleRanges.length > 0) {
+        message += ` with ${validatedParams.styleRanges.length} styled ranges`;
       }
         
-      if (params.createStyle && params.styleName) {
-        message += ` and created style "${params.styleName}"`;
+      if (validatedParams.createStyle && validatedParams.styleName) {
+        message += ` and created style "${validatedParams.styleName}"`;
       }
         
-      return result.data;
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(result.data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
+      };
         
     } catch (error: any) {
-      console.error('❌ Error creating text node:', error);
-      throw error;
+      const errorData = {
+        error: `Failed to create text node: ${error.message || 'Unknown error'}`,
+        operation: 'create_text',
+        timestamp: new Date().toISOString()
+      };
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
+        }],
+        isError: true
+      };
     }
   }
 
@@ -348,7 +372,13 @@ export class NodeHandlers implements ToolHandler {
       payload: params
     });
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async manageNodes(args: any): Promise<any> {
@@ -394,6 +424,12 @@ export class NodeHandlers implements ToolHandler {
       throw new Error(response.error || `Failed to ${operation} node`);
     }
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 }

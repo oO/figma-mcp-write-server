@@ -1,5 +1,6 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { ToolHandler, ToolResult } from '../types.js';
+import * as yaml from 'js-yaml';
 import { NodeHandlers } from './node-handlers.js';
 import { SelectionHandlers } from './selection-handlers.js';
 import { StyleHandlers } from './style-handlers.js';
@@ -69,18 +70,32 @@ export class HandlerRegistry {
   }
 
   private async getPluginStatus(): Promise<any> {
-    return {
+    const data = {
       status: 'active',
       connected: true,
       message: 'Plugin connection is active'
+    };
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
     };
   }
   
   private async getConnectionHealth(): Promise<any> {
     if (!this.wsServer) {
-      return {
+      const data = {
         available: false,
         message: 'Connection health monitoring not available'
+      };
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
       };
     }
     
@@ -88,7 +103,7 @@ export class HandlerRegistry {
     const metrics = this.wsServer.getHealthMetrics();
     const queue = this.wsServer.getQueueStatus();
     
-    return {
+    const data = {
       connectionHealth: status.connectionHealth,
       pluginConnected: status.pluginConnected,
       averageResponseTime: Math.round(status.averageResponseTime),
@@ -104,6 +119,13 @@ export class HandlerRegistry {
         requests: queue.requests
       },
       lastError: metrics.lastError || null
+    };
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
     };
   }
 }

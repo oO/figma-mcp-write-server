@@ -1,4 +1,5 @@
 import { ManageAutoLayoutSchema, ManageConstraintsSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import * as yaml from 'js-yaml';
 
 export class LayoutHandlers implements ToolHandler {
   private sendToPlugin: (request: any) => Promise<any>;
@@ -95,7 +96,13 @@ export class LayoutHandlers implements ToolHandler {
       throw new Error(response.error || 'Failed to manage auto layout');
     }
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async manageConstraints(args: any): Promise<any> {
@@ -116,7 +123,13 @@ export class LayoutHandlers implements ToolHandler {
       throw new Error(response.error || 'Failed to manage constraints');
     }
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async manageHierarchy(args: any): Promise<any> {
@@ -140,6 +153,12 @@ export class LayoutHandlers implements ToolHandler {
       throw new Error(response.error || 'Failed to manage hierarchy');
     }
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 }

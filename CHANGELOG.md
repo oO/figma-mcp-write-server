@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.19.0] - 2025-06-07
+
+### Fixed
+- **🔧 MCP Protocol Compliance**: Resolved JSON parsing errors and implemented proper YAML response format
+  - Fixed "Unexpected token" JSON parsing errors caused by console.log statements being transmitted over WebSocket
+  - Implemented consistent YAML response format across all tools for structured data while maintaining MCP compliance
+  - Removed problematic debug console.log statements that interfered with WebSocket communication
+  - All tools now return proper MCP format: `{ content: [{ type: 'text', text: yaml.dump(data) }], isError: false }`
+  - Enhanced error handling with structured YAML error responses including timestamps and operation context
+  - **Additional cleanup**: Removed emoji-laden console statements from MCP server and WebSocket server that could interfere with stdio transport
+
+### Added  
+- **📋 Hierarchy Grouping Specification**: Updated `manage_hierarchy` tool to match comprehensive MCP specification
+  - **Automatic deduplication** of node IDs with tracking (`duplicatesRemoved` count)
+  - **Enhanced validation**: minimum 2 unique nodes, same parent validation, lock checking
+  - **Mixed group membership detection**: prevents grouping nodes with different hierarchy states
+  - **Proper Figma API usage**: Uses `figma.group()` and `figma.ungroup()` methods directly
+  - **Structured error responses** with actionable suggestions (e.g., "Ungroup existing groups first")
+  - **Comprehensive success responses** with deduplication info, processed node IDs, and result details
+  - **Agent workflow support**: Enables complex grouping via multi-step operations (ungroup → combine → group)
+
+### Enhanced
+- **🎯 Error Response Consistency**: All tools now provide structured error information
+  - Unified error format with operation context, timestamps, and suggestions
+  - Better debugging information for troubleshooting grouping and hierarchy issues
+  - Improved error messages with specific guidance for common failure scenarios
+
+### Technical Details
+- **YAML Format**: All responses use YAML for human-readable structured data within MCP text format
+- **WebSocket Communication**: Cleaned debug output to prevent JSON parsing interference
+- **Grouping Operations**: Full specification compliance with deduplication, validation, and suggestion system
+- **Error Handling**: Comprehensive error response format with actionable guidance
+
 ## [0.18.0] - 2025-01-27
 
 ### Changed

@@ -1,4 +1,5 @@
 import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData, isValidPluginResponse } from '../types.js';
+import * as yaml from 'js-yaml';
 
 export class SelectionHandlers implements ToolHandler {
   private sendToPlugin: (request: any) => Promise<any>;
@@ -95,7 +96,18 @@ export class SelectionHandlers implements ToolHandler {
     const validation = validateAndParse(SetSelectionSchema, args, 'setSelection');
     
     if (!validation.success) {
-      throw new Error(validation.error);
+      const errorData = {
+        error: `Validation failed: ${validation.error}`,
+        operation: 'set_selection',
+        timestamp: new Date().toISOString()
+      };
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
+        }],
+        isError: true
+      };
     }
     
     const params = validation.data;
@@ -115,9 +127,26 @@ export class SelectionHandlers implements ToolHandler {
         throw new Error(response.error || 'Plugin operation failed');
       }
 
-      return response.data;
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
+      };
     } catch (error) {
-      throw error;
+      const errorData = {
+        error: `Failed to set selection: ${error instanceof Error ? error.message : String(error)}`,
+        operation: 'set_selection',
+        timestamp: new Date().toISOString()
+      };
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
+        }],
+        isError: true
+      };
     }
   }
 
@@ -126,7 +155,13 @@ export class SelectionHandlers implements ToolHandler {
       type: 'GET_SELECTION'
     });
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async getPageNodes(args: any = {}): Promise<any> {
@@ -135,8 +170,13 @@ export class SelectionHandlers implements ToolHandler {
       payload: args
     });
 
-    // Return raw JSON data structure instead of formatted text
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async exportNode(args: any): Promise<any> {
@@ -149,6 +189,12 @@ export class SelectionHandlers implements ToolHandler {
       throw new Error(response.error || 'Export failed');
     }
 
-    return response.data;
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 }

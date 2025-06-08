@@ -7,6 +7,7 @@ import {
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import * as yaml from 'js-yaml';
 
 import { ServerConfig, DEFAULT_CONFIG } from './types.js';
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
@@ -63,19 +64,23 @@ export class FigmaMCPServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
-      console.error(`🔧 Executing tool: ${name}`);
       
       try {
         return await this.handlerRegistry.handleToolCall(name, args || {});
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
-        console.error(`❌ Tool execution error [${name}]:`, errorMessage);
+        
+        const errorData = {
+          error: errorMessage,
+          tool: name,
+          timestamp: new Date().toISOString()
+        };
         
         return {
           content: [
             {
               type: "text",
-              text: `❌ Error: ${errorMessage}`
+              text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
             }
           ],
           isError: true
@@ -85,25 +90,17 @@ export class FigmaMCPServer {
   }
 
   async start(): Promise<void> {
-    console.error('🚀 Starting Figma MCP Write Server...');
-    
     // Start WebSocket server
     await this.wsServer.start();
     
     // Start MCP server
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    
-    console.error(`✅ MCP Server started with WebSocket on port ${this.config.port}`);
-    console.error('🎨 Figma plugin can connect to ws://localhost:' + this.config.port);
-    console.error('💡 MCP clients should connect via stdio transport');
   }
 
   async stop(): Promise<void> {
-    console.error('🛑 Stopping servers...');
     await this.wsServer.stop();
     await this.server.close();
-    console.error('✅ Servers stopped');
   }
 
   getConnectionStatus() {

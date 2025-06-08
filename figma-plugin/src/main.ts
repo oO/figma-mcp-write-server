@@ -37,6 +37,10 @@ class FigmaPlugin {
     );
 
     console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers));
+    
+    // Debug: Specifically check for MANAGE_STYLES and MANAGE_HIERARCHY
+    console.log('🔍 MANAGE_STYLES handler exists:', !!this.handlers['MANAGE_STYLES']);
+    console.log('🔍 MANAGE_HIERARCHY handler exists:', !!this.handlers['MANAGE_HIERARCHY']);
   }
 
   private setupUIMessageHandler(): void {
@@ -64,13 +68,19 @@ class FigmaPlugin {
   // Handle operations from MCP server via UI thread
   private async handlePluginOperation(operation: string, payload: any, id: string): Promise<void> {
     console.log(`🔧 Executing ${operation}:`, payload);
+    console.log('🔍 Available handlers:', Object.keys(this.handlers));
+    console.log('🔍 Looking for handler:', operation);
     
     try {
       const handler = this.handlers[operation];
       
       if (!handler) {
+        console.error(`❌ Handler not found for operation: ${operation}`);
+        console.error('❌ Available handlers:', Object.keys(this.handlers));
         throw new Error(`Unknown operation: ${operation}`);
       }
+      
+      console.log(`✅ Found handler for ${operation}, executing...`);
 
       const result = await handler(payload);
       

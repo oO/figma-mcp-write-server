@@ -46,7 +46,7 @@ graph LR
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
 | `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
 | `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
-| `manage_hierarchy` | Layer & hierarchy management | operation, nodeId, nodeIds, targetNodeId, newParentId, newIndex |
+| `manage_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
 | `update_node` | Update node properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked |
 | `manage_nodes` | Move, delete, or duplicate nodes | operation, nodeId, x, y, offsetX, offsetY |
 | `get_selection` | Get currently selected nodes | - |
@@ -54,6 +54,7 @@ graph LR
 | `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
 | `export_node` | Export nodes as images | nodeId, format, scale |
 | `get_plugin_status` | Check plugin connection | - |
+| `get_connection_health` | Get detailed connection metrics | - |
 
 ## 🎯 Usage Examples
 
@@ -69,88 +70,6 @@ Common use cases:
 📚 **[Examples & Usage Guide →](EXAMPLES.md)**
 
 ## 🛠️ Installation & Setup
-
-### Prerequisites
-- Node.js 18+
-- Figma desktop app or browser access
-- MCP-compatible client (Claude Desktop, Cursor, etc.)
-
-### 1. Clone Repository
-```bash
-git clone https://github.com/oO/figma-mcp-write-server.git
-cd figma-mcp-write-server
-```
-
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Build the Project
-```bash
-npm run build
-```
-
-### 4. Start the Server
-
-**Production:**
-```bash
-# Single command starts everything
-npm start
-```
-
-**Development with Watch Mode:**
-```bash
-# Auto-restart on code changes
-npm run dev
-```
-
-### 5. Install Figma Plugin
-1. Open Figma
-2. Go to **Plugins** → **Development** → **Import plugin from manifest**
-3. Select `figma-plugin/manifest.json`
-4. Run the plugin to establish connection
-
-### 6. Configure MCP Client
-
-For **Claude Desktop**, add to `~/.claude/claude_desktop_config.json`:
-```json
-{
-  "mcpServers": {
-    "figma-write": {
-      "command": "node",
-      "args": ["/path/to/figma-mcp-write-server/dist/index.js"]
-    }
-  }
-}
-```
-
-For **Cursor**, add to MCP configuration:
-```json
-{
-  "mcpServers": {
-    "figma-write": {
-      "command": "node",
-      "args": ["/path/to/figma-mcp-write-server/dist/index.js"]
-    }
-  }
-}
-```
-
-## 🎯 Usage Examples
-
-Common use cases:
-- **Create Layout**: "Create a header frame with title and subtitle"
-- **Auto Layout**: "Make this frame arrange its children vertically with 16px spacing" **(NEW v0.13.0)**
-- **Constraints**: "Pin this sidebar to the left and stretch to full height" **(NEW v0.13.0)**
-- **Typography**: "Make a styled heading with mixed formatting"
-- **Design System**: "Create color palette and apply styles consistently"
-- **Components**: "Build button variants with different colors and styles"
-- **Batch Operations**: "Select all text elements and update font size"
-
-📚 **[Examples & Usage Guide →](EXAMPLES.md)**
-
-## 🔧 Configuration
 
 ### Command Line Options
 - `--port <number>` - WebSocket server port (default: 8765)
@@ -231,4 +150,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 15 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 14 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

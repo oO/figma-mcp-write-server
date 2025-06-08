@@ -41,13 +41,22 @@ export class HierarchyHandler extends BaseHandler {
 
   private async groupNodes(params: HierarchyParams): Promise<any> {
     this.validateParams(params, ['nodeIds']);
-    const nodeIds = this.validateArrayParam(params.nodeIds!, 'nodeIds', 2);
     
-    const nodes = getNodesByIds(nodeIds);
-    const groupType = params.groupType || 'GROUP';
+    // Step 1: Deduplicate node IDs
+    const originalNodeIds = params.nodeIds!;
+    const uniqueNodeIds = [...new Set(originalNodeIds)];
+    const duplicatesRemoved = originalNodeIds.length - uniqueNodeIds.length;
+    
+    // Step 2: Validate minimum 2 unique nodes
+    if (uniqueNodeIds.length < 2) {
+      throw new Error('At least 2 unique nodes are required for grouping');
+    }
+    
+    // Step 3: Get nodes and validate they exist
+    const nodes = getNodesByIds(uniqueNodeIds);
     const groupName = params.name || 'Group';
     
-    // Validate all nodes have the same parent
+    // Step 4: Validate all nodes have the same parent
     const parent = nodes[0].parent;
     if (!parent) {
       throw new Error('Cannot group nodes without a parent');
@@ -55,57 +64,73 @@ export class HierarchyHandler extends BaseHandler {
     
     for (const node of nodes) {
       if (node.parent !== parent) {
-        throw new Error('All nodes must have the same parent to be grouped');
+        throw new Error('Nodes from different parent containers cannot be grouped');
+      }
+      
+      // Check if node is locked
+      if (node.locked) {
+        throw new Error(`Node ${node.id} is locked and cannot be grouped`);
       }
     }
     
-    // Calculate bounds for the group
-    const bounds = this.calculateBounds(nodes);
+    // Step 5: Check for mixed group membership
+    const nodesInGroups = nodes.filter(node => node.parent?.type === 'GROUP');
+    const nodesNotInGroups = nodes.filter(node => node.parent?.type !== 'GROUP');
     
-    // Create group based on type
-    let group: GroupNode | FrameNode;
-    if (groupType === 'FRAME') {
-      group = figma.createFrame();
-      group.resize(bounds.width, bounds.height);
-    } else {
-      // Use group() method on selected nodes instead of createGroup
+    if (nodesInGroups.length > 0 && nodesNotInGroups.length > 0) {
+      throw new Error('Mixed group membership: some nodes are in groups, others are not');
+    }
+    
+    // Step 6: Use Figma API group() method
+    let group: GroupNode;
+    try {
+      // Set selection to nodes before grouping
+      figma.currentPage.selection = nodes;
+      
       if (figma.group) {
-        group = figma.group(nodes, figma.currentPage);
+        group = figma.group(nodes, parent);
+        group.name = groupName;
       } else {
-        // Fallback: create a frame if group() is not available
-        group = figma.createFrame();
-        group.resize(bounds.width, bounds.height);
+        throw new Error('Figma group API not available');
       }
-    }
-    
-    group.name = groupName;
-    group.x = bounds.x;
-    group.y = bounds.y;
-    
-    // Add group to parent at the position of the first node
-    const firstNodeIndex = parent.children.indexOf(nodes[0]);
-    parent.insertChild(firstNodeIndex, group);
-    
-    // Move all nodes to the group and adjust their positions
-    for (const node of nodes) {
-      const relativeX = ('x' in node ? node.x : 0) - bounds.x;
-      const relativeY = ('y' in node ? node.y : 0) - bounds.y;
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
-      group.appendChild(node);
-      
-      if ('x' in node && 'y' in node) {
-        (node as any).x = relativeX;
-        (node as any).y = relativeY;
+      // Provide suggestions based on error type
+      let suggestions: string[] = [];
+      if (errorMessage.includes('different parent')) {
+        suggestions = ['Select nodes from same container'];
+      } else if (errorMessage.includes('locked')) {
+        suggestions = ['Unlock objects before grouping'];
+      } else if (errorMessage.includes('group membership')) {
+        suggestions = ['Ungroup existing groups first', 'Select nodes from same container'];
       }
+      
+      throw new Error(JSON.stringify({
+        error: `Failed to create group: ${errorMessage}`,
+        operation: 'group',
+        duplicatesRemoved,
+        processedNodeIds: uniqueNodeIds,
+        suggestions
+      }));
     }
     
     selectAndFocus([group]);
     
-    return formatHierarchyResponse('group', {
-      groupId: group.id,
-      groupName: group.name,
-      nodeCount: nodes.length
-    });
+    // Step 7: Return success with deduplication info
+    return {
+      operation: 'group',
+      duplicatesRemoved,
+      processedNodeIds: uniqueNodeIds,
+      result: {
+        id: group.id,
+        name: group.name,
+        type: group.type,
+        children: group.children.map(child => child.id),
+        parentId: parent.id
+      },
+      message: `Created group with ${uniqueNodeIds.length} objects${duplicatesRemoved > 0 ? ` (${duplicatesRemoved} duplicates removed)` : ''}`
+    };
   }
 
   private async ungroupNode(params: HierarchyParams): Promise<any> {
@@ -113,8 +138,14 @@ export class HierarchyHandler extends BaseHandler {
     
     const group = findNodeById(params.nodeId!);
     
-    if (group.type !== 'GROUP' && group.type !== 'FRAME') {
-      throw new Error(`Node ${params.nodeId} is not a group or frame`);
+    // Step 1: Validate target is a GROUP type node
+    if (group.type !== 'GROUP') {
+      throw new Error(`Target node is not a group (found type: ${group.type})`);
+    }
+    
+    // Step 2: Check if group is locked
+    if (group.locked) {
+      throw new Error('Group is locked and cannot be ungrouped');
     }
     
     if (!('children' in group)) {
@@ -126,38 +157,41 @@ export class HierarchyHandler extends BaseHandler {
       throw new Error('Group has no parent');
     }
     
+    // Step 3: Collect children info before ungrouping
     const children = Array.from(group.children);
-    const groupIndex = getNodeIndex(group);
-    const groupX = 'x' in group ? group.x : 0;
-    const groupY = 'y' in group ? group.y : 0;
+    const childrenIds = children.map(child => child.id);
     
-    // Move children back to group's parent and adjust positions
-    const movedNodes: SceneNode[] = [];
-    for (let i = 0; i < children.length; i++) {
-      const child = children[i];
-      const absoluteX = ('x' in child ? child.x : 0) + groupX;
-      const absoluteY = ('y' in child ? child.y : 0) + groupY;
+    // Step 4: Use Figma API ungroup() method
+    let ungroupedNodes: SceneNode[];
+    try {
+      // Set selection to the group
+      figma.currentPage.selection = [group];
       
-      parent.insertChild(groupIndex + i, child);
-      
-      if ('x' in child && 'y' in child) {
-        (child as any).x = absoluteX;
-        (child as any).y = absoluteY;
+      if (figma.ungroup) {
+        ungroupedNodes = figma.ungroup(group);
+      } else {
+        throw new Error('Figma ungroup API not available');
       }
-      
-      movedNodes.push(child);
+    } catch (error) {
+      throw new Error(`Failed to ungroup: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
     
-    // Remove the empty group
-    group.remove();
+    selectAndFocus(ungroupedNodes);
     
-    // Select the ungrouped children
-    selectAndFocus(movedNodes);
-    
-    return formatHierarchyResponse('ungroup', {
-      nodeId: params.nodeId,
-      childCount: children.length
-    });
+    // Step 5: Return list of ungrouped children
+    return {
+      operation: 'ungroup',
+      result: {
+        ungroupedChildren: ungroupedNodes.map(node => ({
+          id: node.id,
+          name: node.name,
+          type: node.type
+        })),
+        parentId: parent.id,
+        childrenCount: ungroupedNodes.length
+      },
+      message: `Ungrouped ${ungroupedNodes.length} objects from group`
+    };
   }
 
   private async moveToParent(params: HierarchyParams): Promise<any> {

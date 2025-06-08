@@ -2,6 +2,8 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
+> **Current State**: Features 14 MCP tools with YAML response format and comprehensive hierarchy management.
+
 ## 🚀 Getting Started
 
 1. Follow the [README](README.md) setup instructions
@@ -22,73 +24,23 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 - **"Add a white frame container 300x200 pixels"**
   - AI creates frame with specified dimensions and white background
 
-### Enhanced Shape Creation (New Features)
+### Enhanced Shape Creation
 **User Instructions → AI Actions:**
 
 - **"Create a rounded rectangle with 12px corners"**
-  ```json
-  {
-    "nodeType": "rectangle",
-    "width": 200,
-    "height": 100,
-    "fillColor": "#FFFFFF",
-    "cornerRadius": 12
-  }
-  ```
+  - AI uses `create_node` tool with rectangle type and corner radius property
 
 - **"Make a card with different corner radii - rounded top, square bottom"**
-  ```json
-  {
-    "nodeType": "rectangle",
-    "width": 300,
-    "height": 200,
-    "fillColor": "#F8F9FA",
-    "topLeftRadius": 16,
-    "topRightRadius": 16,
-    "bottomLeftRadius": 0,
-    "bottomRightRadius": 0,
-    "cornerSmoothing": 0.6
-  }
-  ```
+  - AI creates rectangle with individual corner radius settings for each corner
 
 - **"Create a 5-pointed star with golden color"**
-  ```json
-  {
-    "nodeType": "star",
-    "width": 50,
-    "height": 50,
-    "pointCount": 5,
-    "innerRadius": 0.4,
-    "fillColor": "#FFD700",
-    "strokeColor": "#DAA520",
-    "strokeWidth": 2
-  }
-  ```
+  - AI uses `create_node` with star type, point count, and golden fill color
 
 - **"Add a hexagon (6-sided polygon) for an icon"**
-  ```json
-  {
-    "nodeType": "polygon",
-    "width": 60,
-    "height": 60,
-    "pointCount": 6,
-    "fillColor": "#4F46E5",
-    "rotation": 30
-  }
-  ```
+  - AI creates polygon with 6 sides and applies styling
 
 - **"Create a semi-transparent overlay frame"**
-  ```json
-  {
-    "nodeType": "frame",
-    "width": 400,
-    "height": 300,
-    "fillColor": "#000000",
-    "opacity": 0.5,
-    "clipsContent": true,
-    "locked": false
-  }
-  ```
+  - AI makes frame with black fill, 50% opacity, and content clipping enabled
 
 ### Text Creation
 **User Instructions → AI Actions:**
@@ -278,15 +230,12 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Move this button into the navigation bar"**
-  - AI uses `move_to_parent` operation to place element in auto layout container
+  - AI uses `manage_hierarchy` with `move` operation to place element in container
   - Element automatically positions according to auto layout settings
 
 - **"Add this text to the card component"**
-  - AI moves text into auto layout frame where it arranges with other content
+  - AI uses hierarchy management to move text into auto layout frame
   - No manual positioning needed - auto layout handles placement
-
-- **"Place this icon at the beginning of the button"**
-  - AI uses `move_to_parent` with index 0 to position element first in auto layout sequence
 
 ### Layout Debugging
 **User Instructions → AI Actions:**
@@ -309,64 +258,40 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Group these navigation elements together"**
-  - AI uses `manage_hierarchy` with `group` operation to create organized containers
+  - AI uses `manage_hierarchy` with `group` operation and array of node IDs
 
 - **"Create a frame around these components"**
-  - AI uses `frame` operation to wrap elements in a frame container with proper sizing
+  - AI uses `manage_hierarchy` with `group` operation to wrap elements in a container
 
 - **"Ungroup this navigation bar so I can edit individual elements"**
-  - AI uses `ungroup` operation to dissolve groups while preserving element positions
+  - AI uses `manage_hierarchy` with `ungroup` operation to dissolve groups
 
-### Layer Ordering
+### Layer & Node Management
 **User Instructions → AI Actions:**
 
-- **"Bring the logo to the front"**
-  - AI uses `bring_to_front` operation to move element to top layer
+- **"Move this button to position 100, 50"**
+  - AI uses `manage_nodes` with `move` operation and coordinates
 
-- **"Send this background shape behind everything"**
-  - AI uses `send_to_back` operation to move element to bottom layer
+- **"Delete this unused element"**
+  - AI uses `manage_nodes` with `delete` operation
 
-- **"Move this button forward one layer"**
-  - AI uses `bring_forward` operation for precise single-step positioning
+- **"Duplicate this card with 20px offset"**
+  - AI uses `manage_nodes` with `duplicate` operation and offset values
 
-- **"Move this element back one layer"**
-  - AI uses `send_backward` operation for precise single-step positioning
+- **"Reorder this element in its container"**
+  - AI uses `manage_hierarchy` with `reorder` operation and new index
 
-- **"Place this element above the header"**
-  - AI uses `move_above` operation for relative positioning between specific elements
-
-- **"Place this button below the navigation"**
-  - AI uses `move_below` operation for relative positioning between specific elements
-
-### Hierarchy Reorganization
+### Page & Selection Management
 **User Instructions → AI Actions:**
 
-- **"Move this button into the sidebar frame"**
-  - AI uses `move_to_parent` operation to restructure element relationships
+- **"Show me all nodes on this page"**
+  - AI uses `get_page_nodes` to list all elements with hierarchy information
 
-- **"Show me all the children of this component"**
-  - AI uses `get_children` operation to inspect hierarchy structure
+- **"Find all text elements in this design"**
+  - AI uses `get_page_nodes` with nodeTypes filter for "TEXT" elements
 
-- **"Reorder this element to be first in its container"**
-  - AI uses `reorder` operation with index 0 for precise positioning
-
-### Hierarchy Inspection
-**User Instructions → AI Actions:**
-
-- **"What is the parent of this element?"**
-  - AI uses `get_parent` operation to find the direct parent container
-
-- **"Show me all siblings of this button"**
-  - AI uses `get_siblings` operation to list elements at the same hierarchy level
-
-- **"What is the current layer position of this element?"**
-  - AI uses `get_layer_index` operation to get the exact position in parent's children
-
-- **"Show me the hierarchy path for this element"**
-  - AI uses `get_ancestors` operation to trace from element to root page
-
-- **"List all nested elements inside this component"**
-  - AI uses `get_descendants` operation to recursively find all child elements
+- **"Select these specific components"**
+  - AI uses `set_selection` with array of node IDs to choose elements
 
 ### Layout Workflows
 **User Instructions:**
@@ -421,65 +346,26 @@ The AI can perform these operations:
 2. Uses `set_selection` to select all found text elements
 3. Uses `update_node` to modify font size property for all selected items
 
-### Enhanced Node Updates (New Features)
+### Enhanced Node Updates
 **User Instructions → AI Actions:**
 
 - **"Make this rectangle have rounded corners with 16px radius"**
-  ```json
-  {
-    "nodeId": "123:456",
-    "cornerRadius": 16
-  }
-  ```
+  - AI uses `update_node` tool to modify corner radius property
 
 - **"Update this card to have different corner radii - rounded top, square bottom"**
-  ```json
-  {
-    "nodeId": "789:012",
-    "topLeftRadius": 12,
-    "topRightRadius": 12,
-    "bottomLeftRadius": 0,
-    "bottomRightRadius": 0,
-    "cornerSmoothing": 0.6
-  }
-  ```
+  - AI updates individual corner radius values for asymmetric corners
 
 - **"Rotate this element 45 degrees and make it semi-transparent"**
-  ```json
-  {
-    "nodeId": "345:678",
-    "rotation": 45,
-    "opacity": 0.7
-  }
-  ```
+  - AI uses `update_node` to apply rotation and opacity changes
 
 - **"Change this star to have 8 points instead of 5"**
-  ```json
-  {
-    "nodeId": "901:234",
-    "pointCount": 8,
-    "innerRadius": 0.5
-  }
-  ```
+  - AI modifies star properties including point count and inner radius
 
 - **"Lock this element and hide it temporarily"**
-  ```json
-  {
-    "nodeId": "567:890",
-    "locked": true,
-    "visible": false
-  }
-  ```
+  - AI updates node visibility and lock state properties
 
 - **"Update this frame to clip its content and change background"**
-  ```json
-  {
-    "nodeId": "111:222",
-    "clipsContent": true,
-    "fillColor": "#F3F4F6",
-    "cornerRadius": 8
-  }
-  ```
+  - AI modifies frame properties for content clipping and background color
 
 ### Bulk Updates
 **User Instructions:**

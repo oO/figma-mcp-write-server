@@ -53,27 +53,17 @@ export class FigmaWebSocketServer {
     const isPortAvailable = await checkPortAvailable(port);
     
     if (!isPortAvailable) {
-      console.error(`⚠️ Port ${port} is in use`);
-      
       // Look for zombie processes
       zombieProcesses = await findZombieProcesses(port);
       
       if (zombieProcesses.length > 0) {
-        console.error(`🧟 Found ${zombieProcesses.length} process(es) using port ${port}: ${zombieProcesses.join(', ')}`);
-        console.error('🔪 Attempting to kill zombie processes...');
-        
         await killZombieProcesses(zombieProcesses);
         
         // Check if port is now available
-        if (await checkPortAvailable(port)) {
-          console.error(`✅ Successfully freed port ${port}`);
-        } else {
-          console.error(`❌ Port ${port} still in use after cleanup`);
-          
+        if (!(await checkPortAvailable(port))) {
           // Find alternative port
           try {
             port = await findAvailablePort(port + 1);
-            console.error(`🔄 Using alternative port ${port}`);
             this.config.port = port; // Update config
           } catch (error) {
             throw new Error(`Cannot start WebSocket server: ${error}`);
@@ -83,7 +73,6 @@ export class FigmaWebSocketServer {
         // Port in use but no zombie processes found - find alternative
         try {
           port = await findAvailablePort(port + 1);
-          console.error(`🔄 Port ${this.config.port} in use, using alternative port ${port}`);
           this.config.port = port; // Update config
         } catch (error) {
           throw new Error(`Cannot start WebSocket server: ${error}`);
@@ -96,29 +85,24 @@ export class FigmaWebSocketServer {
     
     this.wsServer.on('error', (error: any) => {
       if (error.code === 'EADDRINUSE') {
-        console.error(`❌ Port ${port} is still in use. Try a different port or kill existing processes.`);
         throw new Error(`WebSocket server failed to start: Port ${port} is in use`);
       } else {
-        console.error('💥 WebSocket server error:', error);
         throw error;
       }
     });
     
     this.wsServer.on('connection', (ws) => {
-      console.error('🔗 New WebSocket connection');
-      
       ws.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
           this.handleMessage(ws, message);
         } catch (error) {
-          console.error('❌ Failed to parse WebSocket message:', error);
+          // Message parsing error - ignore
         }
       });
       
       ws.on('close', () => {
         if (ws === this.pluginConnection) {
-          console.error('❌ Figma plugin disconnected');
           this.pluginConnection = null;
           this.connectionStatus.pluginConnected = false;
           this.connectionStatus.connectionHealth = 'unhealthy';
@@ -135,15 +119,12 @@ export class FigmaWebSocketServer {
       this.connectionStatus.activeClients = this.wsServer?.clients.size || 0;
       
       ws.on('error', (error) => {
-        console.error('💥 WebSocket error:', error);
+        // WebSocket error - ignore
       });
     });
 
-    console.error(`🚀 WebSocket server started on port ${port}`);
-    
     // Start health monitoring
     this.startHealthMonitoring();
-    console.error('🟡 Health monitoring started');
   }
   
   private startHealthMonitoring(): void {
@@ -191,7 +172,6 @@ export class FigmaWebSocketServer {
 
   private handleMessage(ws: WebSocket, message: any): void {
     if (message.type === 'PLUGIN_HELLO') {
-      console.error('✅ Figma plugin connected');
       this.pluginConnection = ws;
       this.connectionStatus.pluginConnected = true;
       this.connectionStatus.connectionHealth = 'healthy';
@@ -398,7 +378,6 @@ export class FigmaWebSocketServer {
     
     try {
       this.pluginConnection?.send(JSON.stringify(batchMessage));
-      console.error(`📦 Sent batch to plugin: ${batchRequests.length} requests`);
     } catch (error) {
       this.pendingBatches.delete(batchId);
       clearTimeout(batch.timeout);
@@ -433,8 +412,6 @@ export class FigmaWebSocketServer {
   }
 
   async stop(): Promise<void> {
-    console.error('🛁 Stopping WebSocket server...');
-    
     // Clear timers
     if (this.healthCheckTimer) {
       clearInterval(this.healthCheckTimer);
@@ -473,8 +450,6 @@ export class FigmaWebSocketServer {
       });
     }
     this.pendingBatches.clear();
-    
-    console.error('✅ WebSocket server stopped');
   }
   
   private startHeartbeat(ws: WebSocket): void {
@@ -489,17 +464,14 @@ export class FigmaWebSocketServer {
   
   private attemptReconnection(): void {
     if (this.connectionStatus.reconnectAttempts >= this.config.communication.reconnectAttempts) {
-      console.error('❌ Max reconnection attempts reached');
       return;
     }
     
     this.connectionStatus.reconnectAttempts++;
-    console.error(`🔄 Attempting reconnection ${this.connectionStatus.reconnectAttempts}/${this.config.communication.reconnectAttempts}`);
     
     this.reconnectTimer = setTimeout(() => {
       // In a real reconnection scenario, we would attempt to re-establish the connection
-      // For now, we just log and wait for the plugin to reconnect
-      console.error('⏳ Waiting for plugin reconnection...');
+      // For now, we just wait for the plugin to reconnect
     }, this.config.communication.reconnectDelay * this.connectionStatus.reconnectAttempts);
   }
 

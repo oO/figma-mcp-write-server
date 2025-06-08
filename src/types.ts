@@ -281,6 +281,7 @@ export const CreateTextSchema = BasePositionSchema
   .extend({
     // Core content
     characters: z.string(),
+    name: z.string().optional(),
     
     // Text-specific defaults
     fontFamily: z.string().default("Inter"),

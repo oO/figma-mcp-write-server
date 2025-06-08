@@ -1,4 +1,5 @@
 import { ManageStylesSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import * as yaml from 'js-yaml';
 
 export class StyleHandlers implements ToolHandler {
   private sendToPlugin: (request: any) => Promise<any>;
@@ -45,7 +46,13 @@ export class StyleHandlers implements ToolHandler {
         payload: validatedArgs
       });
 
-      return result.data;
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(result.data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
+      };
     } catch (error) {
       console.error('❌ Error in manageStyles:', error);
       throw error;
