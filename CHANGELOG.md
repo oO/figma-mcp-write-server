@@ -5,6 +5,38 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.20.0] - 2025-06-09
+
+### Added
+- **Component System**: New component management tools for Figma design systems
+  - `manage_components` tool for creating and managing components
+    - **Create**: Convert nodes to components with `figma.createComponentFromNode()` (preserves auto layout)
+    - **Create Set**: Combine components into variant sets with property definitions
+    - **Add Variant**: Add variant properties to existing component sets
+    - **Get**: Retrieve component information and variant properties
+  - `manage_instances` tool for working with component instances
+    - **Create**: Create instances from components with position and override support
+    - **Swap**: Replace instance's component with another component
+    - **Detach**: Convert instances back to regular nodes
+    - **Reset Overrides**: Reset all instance overrides to component defaults
+    - **Set Override**: Apply specific property overrides to instances
+    - **Get**: Retrieve instance information and component relationships
+  - Comprehensive null safety for component-specific properties
+  - Direct data return pattern matching working handlers
+
+### Fixed
+- **Handler Pattern Consistency**: Fixed component handlers to match working tool patterns
+  - Removed `this.executeOperation()` wrapper methods that caused "not a function" errors
+  - Changed to direct `{ success: true, data: {...} }` return format
+  - Throw errors directly instead of using wrapper error methods
+  - Follows same pattern as all other working handlers in the codebase
+
+### Technical Details
+- **Auto Layout Preservation**: Uses `figma.createComponentFromNode()` instead of `figma.createComponent()`
+- **Null Safety**: Added comprehensive null checks for `componentPropertyDefinitions` and `children`
+- **Error Handling**: Simplified error handling to match working handler patterns
+- **Response Format**: YAML-formatted responses for structured data
+
 ## [0.19.0] - 2025-06-07
 
 ### Fixed

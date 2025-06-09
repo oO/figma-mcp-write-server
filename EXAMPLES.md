@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State**: Features 14 MCP tools with YAML response format and comprehensive hierarchy management.
+> **Current State**: Features 16 MCP tools with YAML response format, comprehensive hierarchy management, and component system.
 
 ## 🚀 Getting Started
 
@@ -83,6 +83,35 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 - **"Show me all the color styles in this file"**
   - AI lists all paint styles with their names and properties
 
+## 🧩 Component System
+
+### Creating Components
+**User Instructions → AI Actions:**
+
+- **"Turn this button design into a reusable component"**
+  - AI uses `manage_components` tool to convert existing node to component
+
+- **"Create a button component set with Primary, Secondary, and Tertiary variants"**
+  - AI creates individual button components then combines into component set with variant properties
+
+- **"Make instances of this card component across the page"**
+  - AI uses `manage_instances` to create multiple instances with different positions
+
+### Component Management
+**User Instructions → AI Actions:**
+
+- **"Create a variant property 'Type' with values 'Primary, Secondary, Tertiary'"**
+  - AI adds variant properties to existing component set
+
+- **"Swap all Primary buttons to use the new Secondary component"**
+  - AI finds Primary button instances and swaps them to Secondary component
+
+- **"Override the text on this button instance to say 'Learn More'"**
+  - AI applies text overrides to specific instance while maintaining component link
+
+- **"Reset all overrides on this card instance back to defaults"**
+  - AI resets instance to match main component properties
+
 ## 🏗️ Workflows
 
 ### Design System Creation
@@ -92,8 +121,8 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **What the AI does:**
 1. **Color Palette**: Creates rectangles with primary, secondary, and neutral colors
 2. **Typography Scale**: Sets up heading and body text styles (H1-H4, Body, Caption)
-3. **Component Library**: Builds button variants (Primary, Secondary, Tertiary)
-4. **Spacing System**: Establishes consistent margin and padding values
+3. **Component Library**: Builds button variants and converts them to component set
+4. **Instance Creation**: Places component instances throughout design
 5. **Style Organization**: Saves everything as reusable styles for team consistency
 
 ### Card Component
@@ -404,6 +433,17 @@ The AI can perform these operations:
 5. **Responsive Layout**: "Create container frame" → "Enable auto layout on components" → "Set constraints for responsive behavior" → "Test different screen sizes"
 6. **Component Building**: "Create frame" → "Add auto layout" → "Add content elements" → "Configure spacing and alignment" → "Set resizing behavior"
 7. **Layout Debugging**: "Check auto layout properties" → "Verify constraint settings" → "Test responsive behavior" → "Adjust as needed"
+
+### Component System Workflow
+**User Instructions:**
+"Build a design system with reusable components."
+
+**What the AI does:**
+1. **Base Components**: Creates individual button, card, and input components
+2. **Component Sets**: Combines related components into variant sets (button types, card sizes)
+3. **Instance Library**: Places component instances throughout the design
+4. **Override Management**: Customizes instances with specific text, colors, or properties
+5. **Component Updates**: Updates main components to propagate changes to all instances
 
 Remember: You give natural language instructions to your AI agent, and the AI uses the MCP tools to execute the operations in Figma. You don't need to write any code!
 

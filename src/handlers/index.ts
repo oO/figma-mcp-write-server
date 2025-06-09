@@ -5,6 +5,7 @@ import { NodeHandlers } from './node-handlers.js';
 import { SelectionHandlers } from './selection-handlers.js';
 import { StyleHandlers } from './style-handlers.js';
 import { LayoutHandlers } from './layout-handlers.js';
+import { ComponentHandlers } from './component-handlers.js';
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -18,6 +19,7 @@ export class HandlerRegistry {
     this.registerHandler(new SelectionHandlers(sendToPluginFn));
     this.registerHandler(new StyleHandlers(sendToPluginFn));
     this.registerHandler(new LayoutHandlers(sendToPluginFn));
+    this.registerHandler(new ComponentHandlers(sendToPluginFn));
     
     // Add plugin status tool
     this.addPluginStatusTool();
