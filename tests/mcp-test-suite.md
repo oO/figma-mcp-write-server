@@ -214,25 +214,135 @@ Parameters: nodeId="<rectangle-id>", format="PNG", scale=2
 Verification: Export process initiated (check success response)
 ```
 
+## 🎨 Variables & Design Tokens Tests (v0.21.0 Features)
+
+### Test 24: Create Variable Collection
+```
+Prompt: "Create a variable collection called 'Colors' with Light and Dark modes"
+Expected MCP Call: manage_collections
+Parameters: operation="create", collectionName="Colors", modes=["Light", "Dark"]
+Verification: Check Figma variables panel for new collection with modes
+```
+
+### Test 25: Add Mode to Collection
+```
+Prompt: "Add a 'High Contrast' mode to the Colors collection"
+Expected MCP Call: manage_collections
+Parameters: operation="add_mode", collectionId="<collection-id>", newModeName="High Contrast"
+Verification: Collection shows new mode in variables panel
+```
+
+### Test 26: Create Color Variable
+```
+Prompt: "Create a color variable 'Primary Blue' with light mode #0066CC and dark mode #4A9EFF"
+Expected MCP Call: manage_variables
+Parameters: operation="create", collectionId="<collection-id>", variableName="Primary Blue", variableType="COLOR", modeValues={"Light": "#0066CC", "Dark": "#4A9EFF"}
+Verification: Variable appears in collection with correct values per mode
+```
+
+### Test 27: Create Number Variable
+```
+Prompt: "Create a spacing variable 'Base Spacing' with value 16 for all modes"
+Expected MCP Call: manage_variables
+Parameters: operation="create", collectionId="<collection-id>", variableName="Base Spacing", variableType="FLOAT", modeValues={"Light": 16, "Dark": 16}
+Verification: Number variable created with consistent values
+```
+
+### Test 28: Bind Variable to Node
+```
+Prompt: "Bind the Primary Blue variable to the rectangle's fill color"
+Expected MCP Call: manage_variables
+Parameters: operation="bind", variableId="<variable-id>", nodeId="<rectangle-id>", property="fills"
+Verification: Rectangle fill is bound to variable (check in Figma properties panel)
+```
+
+### Test 29: List Variables in Collection
+```
+Prompt: "Show me all variables in the Colors collection"
+Expected MCP Call: manage_variables
+Parameters: operation="list", collectionId="<collection-id>"
+Verification: AI reports list of variables with their types and values
+```
+
+### Test 30: Update Variable Value
+```
+Prompt: "Change the Primary Blue variable's light mode value to #007ACC"
+Expected MCP Call: manage_variables
+Parameters: operation="update", variableId="<variable-id>", modeValues={"Light": "#007ACC"}
+Verification: Variable value updated, bound elements reflect change
+```
+
+### Test 31: Create String Variable
+```
+Prompt: "Create a text variable 'Button Label' with value 'Click Me' for light mode and 'Tap Here' for dark mode"
+Expected MCP Call: manage_variables
+Parameters: operation="create", collectionId="<collection-id>", variableName="Button Label", variableType="STRING", modeValues={"Light": "Click Me", "Dark": "Tap Here"}
+Verification: String variable created with mode-specific values
+```
+
+### Test 32: Unbind Variable
+```
+Prompt: "Remove the variable binding from the rectangle's fill"
+Expected MCP Call: manage_variables
+Parameters: operation="unbind", nodeId="<rectangle-id>", property="fills"
+Verification: Rectangle fill no longer bound to variable
+```
+
+### Test 33: Delete Variable
+```
+Prompt: "Delete the Button Label variable"
+Expected MCP Call: manage_variables
+Parameters: operation="delete", variableId="<variable-id>"
+Verification: Variable removed from collection
+```
+
+### Test 34: Rename Collection Mode
+```
+Prompt: "Rename the 'High Contrast' mode to 'Accessibility'"
+Expected MCP Call: manage_collections
+Parameters: operation="rename_mode", collectionId="<collection-id>", modeId="<mode-id>", newModeName="Accessibility"
+Verification: Mode name updated in variables panel
+```
+
+### Test 35: Delete Collection
+```
+Prompt: "Delete the Colors variable collection"
+Expected MCP Call: manage_collections
+Parameters: operation="delete", collectionId="<collection-id>"
+Verification: Collection and all its variables removed
+```
+
 ## 🛠️ Error Handling Tests
 
-### Test 24: Invalid Node ID
+### Test 36: Invalid Node ID
 ```
 Prompt: "Delete a node with ID 'invalid-id'"
 Expected: Error response about invalid node ID
 ```
 
-### Test 25: Plugin Disconnection
+### Test 37: Plugin Disconnection
 ```
 Action: Close Figma plugin manually
 Prompt: "Create a new rectangle"
 Expected: Error about plugin not connected
 ```
 
-### Test 26: Invalid Parameters
+### Test 38: Invalid Parameters
 ```
 Prompt: "Create a rectangle with negative dimensions"
 Expected: Validation error or reasonable defaults applied
+```
+
+### Test 39: Invalid Variable Type
+```
+Prompt: "Create a variable with an invalid type"
+Expected: Error about unsupported variable type
+```
+
+### Test 40: Variable Binding to Invalid Property
+```
+Prompt: "Bind a color variable to a text property"
+Expected: Error about incompatible property binding
 ```
 
 ## 🏁 Test Results Checklist
@@ -252,6 +362,10 @@ Expected: Validation error or reasonable defaults applied
 - [ ] Hierarchy management works
 - [ ] Selection management works
 - [ ] Export functionality works
+- [ ] Variable collection management works
+- [ ] Variable creation and editing works
+- [ ] Variable binding to nodes works
+- [ ] Mode management works properly
 
 ### Error Handling ✓
 - [ ] Invalid parameters handled gracefully
@@ -274,8 +388,8 @@ Version: 0.13.1
 Tester: [NAME]
 
 ## Test Results Summary
-- Tests Passed: X/26
-- Tests Failed: Y/26
+- Tests Passed: X/40
+- Tests Failed: Y/40
 - Critical Issues: Z
 
 ## Failed Tests

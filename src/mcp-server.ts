@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import * as yaml from 'js-yaml';
 
-import { ServerConfig, DEFAULT_CONFIG } from './types.js';
+import { ServerConfig, DEFAULT_CONFIG } from './types/index.js';
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
 import { HandlerRegistry } from './handlers/index.js';
 

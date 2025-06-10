@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2025-06-10
+
+### Added
+- **Variables & Design Tokens**: Complete variable system for design consistency
+  - `manage_collections` tool for variable collection management
+    - **Create**: Variable collections with multiple modes (light/dark themes)
+    - **Update**: Modify collection properties and descriptions
+    - **Delete**: Remove collections and cleanup references
+    - **Get/List**: Retrieve collection information and variable lists
+    - **Mode Management**: Add, remove, and rename modes for theme variations
+  - `manage_variables` tool for variable operations and binding
+    - **Create**: Variables with support for COLOR, FLOAT, STRING, BOOLEAN types
+    - **Update**: Modify variable properties and mode-specific values
+    - **Delete**: Remove variables with proper cleanup
+    - **Get/List**: Retrieve variable information and collection contents
+    - **Bind**: Connect variables to node properties (fills, width, height, cornerRadius)
+    - **Unbind**: Remove variable bindings from properties
+    - **Get Bindings**: Find all nodes/styles using specific variables or all variables on a node
+  - Variable binding system for dynamic design systems
+  - Multi-mode support for themes, localization, and brand variations
+  - `boundVariables` property exposed in detailed node information for variable visibility
+  - Enhanced style-variable binding with async style lookup (`getStyleByIdAsync`)
+
 ## [0.20.0] - 2025-06-09
 
 ### Added
@@ -24,18 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comprehensive null safety for component-specific properties
   - Direct data return pattern matching working handlers
 
-### Fixed
-- **Handler Pattern Consistency**: Fixed component handlers to match working tool patterns
-  - Removed `this.executeOperation()` wrapper methods that caused "not a function" errors
-  - Changed to direct `{ success: true, data: {...} }` return format
-  - Throw errors directly instead of using wrapper error methods
-  - Follows same pattern as all other working handlers in the codebase
-
-### Technical Details
-- **Auto Layout Preservation**: Uses `figma.createComponentFromNode()` instead of `figma.createComponent()`
-- **Null Safety**: Added comprehensive null checks for `componentPropertyDefinitions` and `children`
-- **Error Handling**: Simplified error handling to match working handler patterns
-- **Response Format**: YAML-formatted responses for structured data
 
 ## [0.19.0] - 2025-06-07
 

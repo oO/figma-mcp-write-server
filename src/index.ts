@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { FigmaMCPServer } from './mcp-server.js';
-import { ServerConfig } from './types.js';
+import { ServerConfig } from './types/index.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createServer } from 'http';

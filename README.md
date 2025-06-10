@@ -14,6 +14,7 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Auto Layout & Constraints** for responsive design
 - ✅ **Layer & Hierarchy** management (grouping, reordering)
 - ✅ **Component System** for design systems and reusable components
+- ✅ **Variables & Design Tokens** for design system consistency
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
@@ -47,6 +48,8 @@ graph LR
 | `manage_components` | Component management (create, create_set, add_variant, get) | operation, nodeId, componentIds, componentId, name, description, variantProperties |
 | `manage_instances` | Instance management (create, swap, detach, reset_overrides, set_override, get) | operation, componentId, instanceId, x, y, overrides, swapTarget |
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
+| `manage_collections` | Variable collection management (create, update, delete, get, list) | operation, collectionId, collectionName, modes, modeId, newModeName, description |
+| `manage_variables` | Variable management and binding (create, bind, unbind, get_bindings) | operation, variableId, collectionId, variableName, variableType, nodeId, property, modeValues |
 | `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
 | `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
 | `manage_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
@@ -67,6 +70,7 @@ Common use cases:
 - **Constraints**: "Pin this sidebar to the left and stretch to full height"
 - **Typography**: "Make a styled heading with mixed formatting"
 - **Design System**: "Create color palette and apply styles consistently"
+- **Variables**: "Create design tokens for colors and spacing, bind to components"
 - **Components**: "Build button variants with different colors and styles"
 - **Batch Operations**: "Select all text elements and update font size"
 
@@ -153,4 +157,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 16 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 18 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

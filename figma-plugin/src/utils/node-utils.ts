@@ -90,6 +90,11 @@ function createNodeData(node: BaseNode, detail: string, depth: number, parentId:
   // Detailed mode - include all available properties
   const detailedData = { ...standardData };
 
+  // CRITICAL FIX: Add boundVariables property for variable binding visibility
+  if ('boundVariables' in node) {
+    detailedData.boundVariables = (node as any).boundVariables;
+  }
+
   // Add optional properties if they exist
   if ('opacity' in node) detailedData.opacity = (node as any).opacity;
   if ('rotation' in node) detailedData.rotation = (node as any).rotation;

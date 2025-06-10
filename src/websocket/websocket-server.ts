@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws';
 import WebSocket from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { ServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types.js';
+import { ServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types/index.js';
 import { checkPortAvailable, findZombieProcesses, killZombieProcesses, findAvailablePort } from '../utils/port-utils.js';
 
 export class FigmaWebSocketServer {

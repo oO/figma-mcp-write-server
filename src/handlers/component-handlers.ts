@@ -6,7 +6,7 @@ import {
   Tool,
   ManageComponentsParams,
   ManageInstancesParams
-} from '../types.js';
+} from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class ComponentHandlers implements ToolHandler {

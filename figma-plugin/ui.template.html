@@ -218,7 +218,8 @@
                     };
 
                     ws.onerror = (error) => {
-                        log(`💥 WebSocket error: ${error}`, "error");
+                        console.error('WebSocket error:', error);
+                        log(`💥 WebSocket connection failed`, "error");
                         updateConnectionStatus(false, "Connection error");
                     };
                 } catch (error) {

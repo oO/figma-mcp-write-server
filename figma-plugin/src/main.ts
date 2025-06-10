@@ -8,6 +8,7 @@ import { StyleHandler } from './handlers/style-handler.js';
 import { HierarchyHandler } from './handlers/hierarchy-handler.js';
 import { LayoutHandler } from './handlers/layout-handler.js';
 import { ComponentHandler } from './handlers/component-handler.js';
+import { VariableHandler } from './handlers/variable-handler.js';
 import { HandlerRegistry } from './types.js';
 
 class FigmaPlugin {
@@ -27,6 +28,7 @@ class FigmaPlugin {
     const hierarchyHandler = new HierarchyHandler();
     const layoutHandler = new LayoutHandler();
     const componentHandler = new ComponentHandler();
+    const variableHandler = new VariableHandler();
 
     // Register all operations
     Object.assign(this.handlers, 
@@ -36,14 +38,17 @@ class FigmaPlugin {
       styleHandler.getOperations(),
       hierarchyHandler.getOperations(),
       layoutHandler.getOperations(),
-      componentHandler.getOperations()
+      componentHandler.getOperations(),
+      variableHandler.getOperations()
     );
 
     console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers));
     
-    // Debug: Specifically check for component operations
+    // Debug: Specifically check for component and variable operations
     console.log('🔍 MANAGE_COMPONENTS handler exists:', !!this.handlers['MANAGE_COMPONENTS']);
     console.log('🔍 MANAGE_INSTANCES handler exists:', !!this.handlers['MANAGE_INSTANCES']);
+    console.log('🔍 MANAGE_COLLECTIONS handler exists:', !!this.handlers['MANAGE_COLLECTIONS']);
+    console.log('🔍 MANAGE_VARIABLES handler exists:', !!this.handlers['MANAGE_VARIABLES']);
   }
 
   private setupUIMessageHandler(): void {

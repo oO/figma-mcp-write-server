@@ -1,4 +1,4 @@
-import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData, isValidPluginResponse } from '../types.js';
+import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData, isValidPluginResponse } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class SelectionHandlers implements ToolHandler {

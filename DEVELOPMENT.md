@@ -322,7 +322,7 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 14 consolidated tools organized by domain. See README.md for complete tool documentation.
+The server provides 18 consolidated tools organized by domain. See README.md for complete tool documentation.
 
 ### Handler Classes
 
@@ -357,6 +357,14 @@ Auto layout, constraints, and hierarchy:
 - **Hierarchy Management**: Group, ungroup, and reorder nodes with `manage_hierarchy`
 - **MCP Specification Compliance**: Enhanced grouping with deduplication and validation
 - **Responsive Design**: Create layouts that adapt to content and screen sizes
+
+#### Variable Handlers (`src/handlers/variable-handlers.ts`)
+Variables and design tokens for consistency:
+- **Collection Management**: Create and organize variable collections with `manage_collections`
+- **Variable Operations**: Create, update, delete variables with `manage_variables`
+- **Variable Binding**: Bind variables to node properties for dynamic design systems
+- **Design Tokens**: Support for colors, spacing, typography, and semantic variables
+- **Multi-mode Support**: Handle light/dark themes and localization variants
 
 ## 🛠️ Adding a New Tool: Step-by-Step Example
 

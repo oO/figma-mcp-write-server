@@ -1,4 +1,4 @@
-import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, ManageNodesSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import { CreateTextSchema, CreateNodeSchema, UpdateNodeSchema, ManageNodesSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
 import { hexToRgb } from '../utils/color-utils.js';
 import * as yaml from 'js-yaml';
 

@@ -1,4 +1,4 @@
-import { ManageStylesSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import { ManageStylesSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class StyleHandlers implements ToolHandler {

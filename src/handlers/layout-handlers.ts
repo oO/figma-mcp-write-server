@@ -1,4 +1,4 @@
-import { ManageAutoLayoutSchema, ManageConstraintsSchema, ToolHandler, ToolResult, Tool } from '../types.js';
+import { ManageAutoLayoutSchema, ManageConstraintsSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class LayoutHandlers implements ToolHandler {

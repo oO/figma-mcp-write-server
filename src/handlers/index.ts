@@ -1,11 +1,12 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolHandler, ToolResult } from '../types.js';
+import { ToolHandler, ToolResult } from '../types/index.js';
 import * as yaml from 'js-yaml';
 import { NodeHandlers } from './node-handlers.js';
 import { SelectionHandlers } from './selection-handlers.js';
 import { StyleHandlers } from './style-handlers.js';
 import { LayoutHandlers } from './layout-handlers.js';
 import { ComponentHandlers } from './component-handlers.js';
+import { VariableHandlers } from './variable-handlers.js';
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -20,6 +21,7 @@ export class HandlerRegistry {
     this.registerHandler(new StyleHandlers(sendToPluginFn));
     this.registerHandler(new LayoutHandlers(sendToPluginFn));
     this.registerHandler(new ComponentHandlers(sendToPluginFn));
+    this.registerHandler(new VariableHandlers(sendToPluginFn));
     
     // Add plugin status tool
     this.addPluginStatusTool();

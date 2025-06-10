@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State**: Features 16 MCP tools with YAML response format, comprehensive hierarchy management, and component system.
+> **Current State**: Features 18 MCP tools with YAML response format, comprehensive hierarchy management, component system, and variables & design tokens.
 
 ## 🚀 Getting Started
 
@@ -407,8 +407,60 @@ The AI can perform these operations:
 4. Ensures consistent styling across all variants
 </edits>
 
+## 🎨 Variables & Design Tokens
 
+### Creating Variable Collections
+**User Instructions → AI Actions:**
 
+- **"Create a color collection with light and dark modes"**
+  - AI uses `manage_collections` to create collection with multiple modes
+
+- **"Set up a spacing system with variables"**
+  - AI creates collection for spacing tokens with consistent values
+
+### Variable Creation & Management
+**User Instructions → AI Actions:**
+
+- **"Create a primary color variable with #0066CC for light mode and #4A9EFF for dark mode"**
+  - AI uses `manage_variables` to create COLOR variable with mode-specific values
+
+- **"Add a base spacing variable set to 16 pixels"**
+  - AI creates FLOAT variable for consistent spacing throughout the design
+
+- **"Make a button text variable that says 'Submit' in English and 'Enviar' in Spanish"**
+  - AI creates STRING variable with localized content for different modes
+
+### Variable Binding
+**User Instructions → AI Actions:**
+
+- **"Bind the primary color variable to this rectangle's fill"**
+  - AI uses variable binding to connect design tokens to element properties
+
+- **"Apply the spacing variable to the padding of this frame"**
+  - AI binds spacing variables to auto layout padding settings
+
+### Design Token Workflows
+**User Instructions:**
+"Build a themeable design system using variables."
+
+**What the AI does:**
+1. **Token Structure**: Creates organized collections for colors, spacing, typography, and breakpoints
+2. **Mode Setup**: Establishes Light/Dark themes, brand variations, or accessibility modes
+3. **Semantic Naming**: Uses descriptive names like 'primary-button-bg' instead of 'blue-500'
+4. **Binding Strategy**: Connects variables to component properties for automatic theming
+5. **Documentation**: Lists all variables with their purposes and usage guidelines
+
+### Variable Management
+**User Instructions → AI Actions:**
+
+- **"Update all blue colors to use the new brand blue"**
+  - AI modifies variable values to propagate changes across the design system
+
+- **"Add a high contrast mode for accessibility"**
+  - AI creates new mode with enhanced contrast ratios
+
+- **"Show me all spacing variables in the design system"**
+  - AI lists variables with their current values and usage
 
 ## 💡 Tips for Users
 
@@ -423,16 +475,20 @@ The AI can perform these operations:
 - **Auto Layout First**: Use auto layout for components that need to adapt to content changes
 - **Constraints for Responsive**: Use constraints for elements that need to respond to container size changes
 - **Mixed Approach**: Combine auto layout frames within constraint-based layouts for maximum flexibility
+- **Variables for Consistency**: Use variables for colors, spacing, and text to maintain design system consistency
+- **Semantic Naming**: Name variables descriptively (e.g., 'primary-button-bg' not 'blue-500')
+- **Mode Strategy**: Plan your variable modes early (Light/Dark, Brand variations, Accessibility)
 
 ## 🚦 Common Workflows
 
-1. **Design System Setup**: "Create color palette" → "Set up typography styles" → "Build component library"
+1. **Design System Setup**: "Create color palette" → "Set up typography styles" → "Build component library" → "Define variable collections"
 2. **Component Creation**: "Make a container" → "Add content" → "Apply styling" → "Refine details"
 3. **Batch Updates**: "Select all buttons" → "Update properties" → "Verify results"
 4. **Style Management**: "Create styles" → "Apply to elements" → "Organize by category"
 5. **Responsive Layout**: "Create container frame" → "Enable auto layout on components" → "Set constraints for responsive behavior" → "Test different screen sizes"
 6. **Component Building**: "Create frame" → "Add auto layout" → "Add content elements" → "Configure spacing and alignment" → "Set resizing behavior"
 7. **Layout Debugging**: "Check auto layout properties" → "Verify constraint settings" → "Test responsive behavior" → "Adjust as needed"
+8. **Variable System**: "Create collections" → "Define semantic variables" → "Set up modes" → "Bind to components" → "Test theme switching"
 
 ### Component System Workflow
 **User Instructions:**
