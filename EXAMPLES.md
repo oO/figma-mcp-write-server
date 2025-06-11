@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State**: Features 18 MCP tools with YAML response format, comprehensive hierarchy management, component system, and variables & design tokens.
+> **Current State (v0.22.0)**: Features 18 MCP tools with YAML response format, comprehensive test coverage (119 tests), standardized error handling, component system, and variables & design tokens.
 
 ## 🚀 Getting Started
 
@@ -47,12 +47,15 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 
 - **"Add the title 'Welcome' in large bold text"**
   - AI uses `create_text` tool with appropriate font size and weight
+  - Tool automatically loads required fonts and applies typography settings
 
 - **"Create a paragraph with custom line spacing"**
   - AI applies line height and other typography controls
+  - Supports both pixel and percentage line height units
 
 - **"Make a heading with mixed colors - 'Hello' in red, 'World' in blue"**
   - AI uses styleRanges to apply different colors to text segments
+  - Mixed text styling allows different fonts, sizes, and colors within same text node
 
 ## 🎨 Style Management
 
@@ -380,32 +383,38 @@ The AI can perform these operations:
 
 - **"Make this rectangle have rounded corners with 16px radius"**
   - AI uses `update_node` tool to modify corner radius property
+  - Supports both uniform and individual corner radius settings
 
 - **"Update this card to have different corner radii - rounded top, square bottom"**
   - AI updates individual corner radius values for asymmetric corners
+  - Properties: `topLeftRadius`, `topRightRadius`, `bottomLeftRadius`, `bottomRightRadius`
 
 - **"Rotate this element 45 degrees and make it semi-transparent"**
   - AI uses `update_node` to apply rotation and opacity changes
+  - Rotation in degrees, opacity from 0-1 with automatic validation
 
 - **"Change this star to have 8 points instead of 5"**
   - AI modifies star properties including point count and inner radius
+  - Supports star and polygon node types with configurable points
 
 - **"Lock this element and hide it temporarily"**
   - AI updates node visibility and lock state properties
+  - `visible` and `locked` properties for interaction control
 
 - **"Update this frame to clip its content and change background"**
   - AI modifies frame properties for content clipping and background color
+  - `clipsContent` property controls overflow behavior
 
 ### Bulk Updates
 **User Instructions:**
 "Update all buttons to have rounded corners and consistent spacing"
 
 **What the AI does:**
-1. Identifies all button-like elements (rectangles with text)
-2. Applies corner radius updates to all button frames
+1. Uses `get_page_nodes` to identify all button-like elements (rectangles with text)
+2. Applies `update_node` with corner radius updates to all button frames  
 3. Standardizes internal padding and text positioning
 4. Ensures consistent styling across all variants
-</edits>
+5. Provides YAML response with summary of all changes made
 
 ## 🎨 Variables & Design Tokens
 
@@ -464,31 +473,56 @@ The AI can perform these operations:
 
 ## 💡 Tips for Users
 
+### General Usage
 - **Start Simple**: Begin with basic shapes before requesting complex designs
 - **Be Specific**: Give clear instructions like "Create a 200x100 blue rectangle" rather than "make a shape"
 - **Check Connection**: Make sure the Figma plugin is running and connected before giving instructions
 - **Name Things**: Ask for descriptive names like "Primary Button" instead of "Rectangle"
-- **Build Systems**: Create color and text styles first, then use them consistently
-- **Use Natural Language**: Say "make the text bigger" instead of trying to specify technical parameters
 - **Test Incrementally**: Try simple operations first to verify everything is working
-- **Layout Strategy**: Start with containers and auto layout, then add constraints for responsive behavior
-- **Auto Layout First**: Use auto layout for components that need to adapt to content changes
-- **Constraints for Responsive**: Use constraints for elements that need to respond to container size changes
-- **Mixed Approach**: Combine auto layout frames within constraint-based layouts for maximum flexibility
+
+### Error Handling & Debugging
+- **Error Messages**: All tools provide detailed error messages with actionable suggestions
+- **Validation**: Parameters are automatically validated with clear feedback on invalid inputs
+- **Plugin Status**: Use `get_plugin_status` and `get_connection_health` to check system status
+- **YAML Responses**: All responses are in structured YAML format for easy reading
+
+### Design System Best Practices
+- **Build Systems**: Create color and text styles first, then use them consistently
 - **Variables for Consistency**: Use variables for colors, spacing, and text to maintain design system consistency
 - **Semantic Naming**: Name variables descriptively (e.g., 'primary-button-bg' not 'blue-500')
 - **Mode Strategy**: Plan your variable modes early (Light/Dark, Brand variations, Accessibility)
 
+### Layout Strategy
+- **Auto Layout First**: Use auto layout for components that need to adapt to content changes
+- **Constraints for Responsive**: Use constraints for elements that need to respond to container size changes
+- **Mixed Approach**: Combine auto layout frames within constraint-based layouts for maximum flexibility
+- **Hierarchy Management**: Use grouping and layer ordering tools for organized designs
+
+### Natural Language Interaction
+- **Use Natural Language**: Say "make the text bigger" instead of trying to specify technical parameters
+- **Be Conversational**: The AI understands context and can handle follow-up requests
+- **Ask for Help**: Request explanations like "show me all the styles in this file"
+
 ## 🚦 Common Workflows
 
+### Design System Workflows
 1. **Design System Setup**: "Create color palette" → "Set up typography styles" → "Build component library" → "Define variable collections"
-2. **Component Creation**: "Make a container" → "Add content" → "Apply styling" → "Refine details"
-3. **Batch Updates**: "Select all buttons" → "Update properties" → "Verify results"
-4. **Style Management**: "Create styles" → "Apply to elements" → "Organize by category"
-5. **Responsive Layout**: "Create container frame" → "Enable auto layout on components" → "Set constraints for responsive behavior" → "Test different screen sizes"
+2. **Style Management**: "Create styles" → "Apply to elements" → "Organize by category" → "Test consistency"
+3. **Variable System**: "Create collections" → "Define semantic variables" → "Set up modes" → "Bind to components" → "Test theme switching"
+
+### Component Development
+4. **Component Creation**: "Make a container" → "Add content" → "Apply styling" → "Convert to component" → "Create variants"
+5. **Instance Management**: "Create instances" → "Apply overrides" → "Test responsiveness" → "Update main component"
 6. **Component Building**: "Create frame" → "Add auto layout" → "Add content elements" → "Configure spacing and alignment" → "Set resizing behavior"
-7. **Layout Debugging**: "Check auto layout properties" → "Verify constraint settings" → "Test responsive behavior" → "Adjust as needed"
-8. **Variable System**: "Create collections" → "Define semantic variables" → "Set up modes" → "Bind to components" → "Test theme switching"
+
+### Layout & Hierarchy
+7. **Responsive Layout**: "Create container frame" → "Enable auto layout on components" → "Set constraints for responsive behavior" → "Test different screen sizes"
+8. **Layout Debugging**: "Check auto layout properties" → "Verify constraint settings" → "Test responsive behavior" → "Adjust as needed"
+9. **Hierarchy Organization**: "Group related elements" → "Set layer order" → "Create logical structure" → "Apply naming conventions"
+
+### Content & Updates
+10. **Batch Updates**: "Select all buttons" → "Update properties" → "Verify results" → "Test consistency"
+11. **Content Management**: "Create text styles" → "Apply typography" → "Update content" → "Maintain hierarchy"
 
 ### Component System Workflow
 **User Instructions:**
@@ -501,5 +535,27 @@ The AI can perform these operations:
 4. **Override Management**: Customizes instances with specific text, colors, or properties
 5. **Component Updates**: Updates main components to propagate changes to all instances
 
-Remember: You give natural language instructions to your AI agent, and the AI uses the MCP tools to execute the operations in Figma. You don't need to write any code!
+## 🔧 Technical Details
+
+### Error Handling (v0.22.0)
+- **Standardized Exceptions**: All handlers throw exceptions for consistent error handling
+- **Detailed Messages**: Error responses include operation context, timestamps, and suggestions
+- **Validation**: Comprehensive parameter validation with Zod schemas
+- **Plugin Status**: Real-time connection and health monitoring
+
+### Tool Structure
+- **18 Consolidated Tools**: Organized by domain for easy discovery
+- **YAML Responses**: All tools return structured YAML data within MCP text format
+- **Payload Wrapper Pattern**: Consistent `{type: 'OPERATION', payload: params}` structure
+- **Comprehensive Coverage**: Full Figma API access through MCP protocol
+
+### Test Coverage
+- **119 Total Tests**: Comprehensive unit and integration test suite
+- **Handler Testing**: All tool handlers with success/failure scenarios
+- **Integration Testing**: End-to-end workflows and tool routing
+- **Error Testing**: Exception handling and validation patterns
+
+---
+
+**Remember**: You give natural language instructions to your AI agent, and the AI uses the MCP tools to execute the operations in Figma. You don't need to write any code!
 

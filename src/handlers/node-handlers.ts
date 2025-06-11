@@ -202,166 +202,150 @@ export class NodeHandlers implements ToolHandler {
   }
 
   async createTextNode(params: any): Promise<any> {
-    try {
-      // Validate parameters using schema
-      const validatedParams = CreateTextSchema.parse(params);
-         
-      // Validate required parameters
-      if (!validatedParams.characters) {
-        throw new Error('Text nodes must have characters content');
-      }
+    // Validate parameters using schema
+    const validatedParams = CreateTextSchema.parse(params);
+       
+    // Validate required parameters
+    if (!validatedParams.characters) {
+      throw new Error('Text nodes must have characters content');
+    }
 
-      // Set name if not provided  
-      if (!validatedParams.name) {
-        validatedParams.name = 'Text';
-      }
-         
-      // Prepare line height in Figma's expected format
-      let lineHeight = undefined;
-      if (validatedParams.lineHeight) {
-        lineHeight = {
-          value: validatedParams.lineHeight,
-          unit: (validatedParams.lineHeightUnit === 'px') ? 'PIXELS' : 'PERCENT'
-        };
-      }
-         
-      // Convert styleRanges to Figma's expected format
-      const styleRanges = validatedParams.styleRanges?.map((range: any) => {
-        const figmaRange: any = {
-          start: range.start,
-          end: range.end,
-        };
-          
-        if (range.fontFamily || range.fontStyle) {
-          figmaRange.fontName = {
-            family: range.fontFamily || validatedParams.fontFamily || 'Inter',
-            style: range.fontStyle || 'Regular'
-          };
-        }
-          
-        if (range.fontSize) figmaRange.fontSize = range.fontSize;
-        if (range.textCase) figmaRange.textCase = range.textCase.toUpperCase();
-        if (range.textDecoration) figmaRange.textDecoration = range.textDecoration.toUpperCase();
-        if (range.letterSpacing) figmaRange.letterSpacing = range.letterSpacing;
-        if (range.lineHeight) {
-          figmaRange.lineHeight = {
-            value: range.lineHeight,
-            unit: 'PERCENT' // Default to percent for ranges
-          };
-        }
-          
-        if (range.fillColor) {
-          figmaRange.fills = [{
-            type: 'SOLID',
-            color: hexToRgb(range.fillColor)
-          }];
-        }
-          
-        return figmaRange;
-      });
-        
-      // Prepare Figma-compatible parameters
-      const figmaParams: any = {
-        nodeType: 'text',
-        characters: validatedParams.characters,
-        x: validatedParams.x || 0,
-        y: validatedParams.y || 0,
-        width: validatedParams.width,
-        height: validatedParams.height,
-          
-        // Font properties in Figma format
-        fontName: {
-          family: validatedParams.fontFamily || 'Inter',
-          style: validatedParams.fontStyle || 'Regular'
-        },
-        fontSize: validatedParams.fontSize || 16,
-          
-        // Alignment (convert to uppercase for Figma)
-        textAlignHorizontal: validatedParams.textAlignHorizontal?.toUpperCase(),
-        textAlignVertical: validatedParams.textAlignVertical?.toUpperCase(),
-          
-        // Text case and decoration
-        textCase: validatedParams.textCase?.toUpperCase(),
-        textDecoration: validatedParams.textDecoration?.toUpperCase(),
-          
-        // Spacing
-        letterSpacing: validatedParams.letterSpacing,
-        lineHeight: lineHeight,
-        paragraphIndent: validatedParams.paragraphIndent,
-        paragraphSpacing: validatedParams.paragraphSpacing,
-          
-        // Style ranges
-        styleRanges: styleRanges,
-        
-        // Style management
-        createStyle: validatedParams.createStyle,
-        styleName: validatedParams.styleName
+    // Set name if not provided  
+    if (!validatedParams.name) {
+      validatedParams.name = 'Text';
+    }
+       
+    // Prepare line height in Figma's expected format
+    let lineHeight = undefined;
+    if (validatedParams.lineHeight) {
+      lineHeight = {
+        value: validatedParams.lineHeight,
+        unit: (validatedParams.lineHeightUnit === 'px') ? 'PIXELS' : 'PERCENT'
+      };
+    }
+       
+    // Convert styleRanges to Figma's expected format
+    const styleRanges = validatedParams.styleRanges?.map((range: any) => {
+      const figmaRange: any = {
+        start: range.start,
+        end: range.end,
       };
         
-      // Set fill color if provided
-      if (validatedParams.fillColor) {
-        figmaParams.fills = [{
+      if (range.fontFamily || range.fontStyle) {
+        figmaRange.fontName = {
+          family: range.fontFamily || validatedParams.fontFamily || 'Inter',
+          style: range.fontStyle || 'Regular'
+        };
+      }
+        
+      if (range.fontSize) figmaRange.fontSize = range.fontSize;
+      if (range.textCase) figmaRange.textCase = range.textCase.toUpperCase();
+      if (range.textDecoration) figmaRange.textDecoration = range.textDecoration.toUpperCase();
+      if (range.letterSpacing) figmaRange.letterSpacing = range.letterSpacing;
+      if (range.lineHeight) {
+        figmaRange.lineHeight = {
+          value: range.lineHeight,
+          unit: 'PERCENT' // Default to percent for ranges
+        };
+      }
+        
+      if (range.fillColor) {
+        figmaRange.fills = [{
           type: 'SOLID',
-          color: hexToRgb(validatedParams.fillColor)
+          color: hexToRgb(range.fillColor)
         }];
       }
         
-      // Send creation request to plugin
-      const result = await this.sendToPlugin({
-        type: 'CREATE_TEXT',
-        payload: figmaParams
-      });
+      return figmaRange;
+    });
+      
+    // Prepare Figma-compatible parameters
+    const figmaParams: any = {
+      nodeType: 'text',
+      characters: validatedParams.characters,
+      x: validatedParams.x || 0,
+      y: validatedParams.y || 0,
+      width: validatedParams.width,
+      height: validatedParams.height,
         
-      if (!result.success) {
-        throw new Error(result.error || 'Failed to create text node');
-      }
+      // Font properties in Figma format
+      fontName: {
+        family: validatedParams.fontFamily || 'Inter',
+        style: validatedParams.fontStyle || 'Regular'
+      },
+      fontSize: validatedParams.fontSize || 16,
         
-      // Build a user-friendly message
-      let message = `Created text`;
+      // Alignment (convert to uppercase for Figma)
+      textAlignHorizontal: validatedParams.textAlignHorizontal?.toUpperCase(),
+      textAlignVertical: validatedParams.textAlignVertical?.toUpperCase(),
         
-      if (validatedParams.characters) {
-        const previewText = validatedParams.characters.substring(0, 20) + 
-                           (validatedParams.characters.length > 20 ? '...' : '');
-        message += ` with content "${previewText}"`;
-      }
+      // Text case and decoration
+      textCase: validatedParams.textCase?.toUpperCase(),
+      textDecoration: validatedParams.textDecoration?.toUpperCase(),
         
-      if (validatedParams.fontFamily) {
-        message += ` using ${validatedParams.fontFamily}`;
-        if (validatedParams.fontSize) {
-          message += ` at ${validatedParams.fontSize}px`;
-        }
-      }
+      // Spacing
+      letterSpacing: validatedParams.letterSpacing,
+      lineHeight: lineHeight,
+      paragraphIndent: validatedParams.paragraphIndent,
+      paragraphSpacing: validatedParams.paragraphSpacing,
         
-      if (validatedParams.styleRanges && validatedParams.styleRanges.length > 0) {
-        message += ` with ${validatedParams.styleRanges.length} styled ranges`;
-      }
-        
-      if (validatedParams.createStyle && validatedParams.styleName) {
-        message += ` and created style "${validatedParams.styleName}"`;
-      }
-        
-      return {
-        content: [{
-          type: 'text',
-          text: yaml.dump(result.data, { indent: 2, lineWidth: 100 })
-        }],
-        isError: false
-      };
-        
-    } catch (error: any) {
-      const errorData = {
-        error: `Failed to create text node: ${error.message || 'Unknown error'}`,
-        operation: 'create_text',
-        timestamp: new Date().toISOString()
-      };
-      return {
-        content: [{
-          type: 'text',
-          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
-        }],
-        isError: true
-      };
+      // Style ranges
+      styleRanges: styleRanges,
+      
+      // Style management
+      createStyle: validatedParams.createStyle,
+      styleName: validatedParams.styleName
+    };
+      
+    // Set fill color if provided
+    if (validatedParams.fillColor) {
+      figmaParams.fills = [{
+        type: 'SOLID',
+        color: hexToRgb(validatedParams.fillColor)
+      }];
     }
+      
+    // Send creation request to plugin
+    const result = await this.sendToPlugin({
+      type: 'CREATE_TEXT',
+      payload: figmaParams
+    });
+      
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to create text node');
+    }
+      
+    // Build a user-friendly message
+    let message = `Created text`;
+      
+    if (validatedParams.characters) {
+      const previewText = validatedParams.characters.substring(0, 20) + 
+                         (validatedParams.characters.length > 20 ? '...' : '');
+      message += ` with content "${previewText}"`;
+    }
+      
+    if (validatedParams.fontFamily) {
+      message += ` using ${validatedParams.fontFamily}`;
+      if (validatedParams.fontSize) {
+        message += ` at ${validatedParams.fontSize}px`;
+      }
+    }
+      
+    if (validatedParams.styleRanges && validatedParams.styleRanges.length > 0) {
+      message += ` with ${validatedParams.styleRanges.length} styled ranges`;
+    }
+      
+    if (validatedParams.createStyle && validatedParams.styleName) {
+      message += ` and created style "${validatedParams.styleName}"`;
+    }
+      
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(result.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async updateNode(args: any): Promise<any> {

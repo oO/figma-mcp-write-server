@@ -1,4 +1,4 @@
-import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData, isValidPluginResponse } from '../types/index.js';
+import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class SelectionHandlers implements ToolHandler {
@@ -96,63 +96,33 @@ export class SelectionHandlers implements ToolHandler {
     const validation = validateAndParse(SetSelectionSchema, args, 'setSelection');
     
     if (!validation.success) {
-      const errorData = {
-        error: `Validation failed: ${validation.error}`,
-        operation: 'set_selection',
-        timestamp: new Date().toISOString()
-      };
-      return {
-        content: [{
-          type: 'text',
-          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
-        }],
-        isError: true
-      };
+      throw new Error(`Validation failed: ${validation.error}`);
     }
     
     const params = validation.data;
     
-    try {
-      const response = await this.sendToPlugin({
-        type: 'SET_SELECTION',
-        payload: params
-      });
-      
-      // Validate response structure
-      if (!isValidPluginResponse(response)) {
-        throw new Error('Invalid response format from plugin');
-      }
-      
-      if (!response.success) {
-        throw new Error(response.error || 'Plugin operation failed');
-      }
-
-      return {
-        content: [{
-          type: 'text',
-          text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
-        }],
-        isError: false
-      };
-    } catch (error) {
-      const errorData = {
-        error: `Failed to set selection: ${error instanceof Error ? error.message : String(error)}`,
-        operation: 'set_selection',
-        timestamp: new Date().toISOString()
-      };
-      return {
-        content: [{
-          type: 'text',
-          text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
-        }],
-        isError: true
-      };
+    const response = await this.sendToPlugin({
+      type: 'SET_SELECTION',
+      payload: params
+    });
+    
+    if (!response.success) {
+      throw new Error(response.error || 'Plugin operation failed');
     }
+
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
   }
 
   async getSelection(): Promise<any> {
     const response = await this.sendToPlugin({
-      type: 'GET_SELECTION'
+      type: 'GET_SELECTION',
+      payload: {}
     });
 
     return {

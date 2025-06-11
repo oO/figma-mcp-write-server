@@ -22,7 +22,10 @@ npm run dev
 
 ### Quick Test
 ```bash
-npm test  # Verify setup works
+npm test              # Run all tests (unit + integration)
+npm run test:unit     # Run unit tests only  
+npm run test:integration  # Run integration tests only
+npm run test:coverage # Generate coverage report
 ```
 
 ## 🎯 Core Design Principles
@@ -170,7 +173,15 @@ graph TB
             SELECTION_H[Selection Handlers]
             STYLE_H[Style Handlers]
             LAYOUT_H[Layout Handlers]
+            VARIABLE_H[Variable Handlers]
+            COMPONENT_H[Component Handlers]
         end
+    end
+
+    subgraph "Testing Layer"
+        UNIT_TESTS[Unit Tests<br/>Handler & Component Coverage]
+        INTEGRATION_TESTS[Integration Tests<br/>End-to-End Workflows]
+        TEST_MOCKS[Mock WebSocket<br/>Mock Plugin]
     end
 
     subgraph "Figma Layer"
@@ -186,14 +197,31 @@ graph TB
     REGISTRY --> SELECTION_H
     REGISTRY --> STYLE_H
     REGISTRY --> LAYOUT_H
+    REGISTRY --> VARIABLE_H
+    REGISTRY --> COMPONENT_H
 
     NODE_H --> WS_SERVER
     SELECTION_H --> WS_SERVER
     STYLE_H --> WS_SERVER
     LAYOUT_H --> WS_SERVER
+    VARIABLE_H --> WS_SERVER
+    COMPONENT_H --> WS_SERVER
 
     WS_SERVER -->|JSON Messages| PLUGIN
     PLUGIN -->|Plugin API| FIGMA_API
+
+    UNIT_TESTS -.->|Test| NODE_H
+    UNIT_TESTS -.->|Test| SELECTION_H
+    UNIT_TESTS -.->|Test| STYLE_H
+    UNIT_TESTS -.->|Test| LAYOUT_H
+    UNIT_TESTS -.->|Test| VARIABLE_H
+    UNIT_TESTS -.->|Test| COMPONENT_H
+    UNIT_TESTS -.->|Test| WS_SERVER
+    
+    INTEGRATION_TESTS -.->|Test| REGISTRY
+    INTEGRATION_TESTS -.->|Test| MCP_SERVER
+    TEST_MOCKS -.->|Mock| WS_SERVER
+    TEST_MOCKS -.->|Mock| PLUGIN
 ```
 
 ## 📁 Project Structure
@@ -203,11 +231,24 @@ figma-mcp-write-server/
 ├── src/                           # MCP Server source code
 │   ├── mcp-server.ts             # Main MCP server implementation
 │   ├── index.ts                  # CLI entry point and configuration
-│   ├── types.ts                  # Type definitions and Zod schemas
+│   ├── types/                    # Type definitions and Zod schemas
+│   │   ├── index.ts             # Main type exports
+│   │   ├── schemas.ts           # Validation schemas
+│   │   ├── figma-base.ts        # Figma API types
+│   │   └── [operation types]    # Domain-specific type definitions
 │   ├── handlers/                 # Domain-specific tool handlers
-│   │   └── index.ts             # Handler registry with auto-discovery
-│   ├── utils/                    # Utility functions (color, font, response formatting)
+│   │   ├── index.ts             # Handler registry with auto-discovery
+│   │   ├── node-handlers.ts     # Node creation and management
+│   │   ├── selection-handlers.ts # Selection and page operations
+│   │   ├── style-handlers.ts    # Style system integration
+│   │   ├── layout-handlers.ts   # Auto layout and constraints
+│   │   ├── variable-handlers.ts # Variables and design tokens
+│   │   └── component-handlers.ts # Component system
+│   ├── utils/                    # Utility functions
+│   │   ├── color-utils.ts       # Color format conversions
+│   │   └── port-utils.ts        # Network utilities
 │   └── websocket/                # WebSocket communication layer
+│       └── websocket-server.ts  # WebSocket server implementation
 ├── figma-plugin/                 # Figma plugin source and build
 │   ├── src/                     # Plugin TypeScript source
 │   │   ├── main.ts              # Plugin entry point
@@ -219,9 +260,22 @@ figma-mcp-write-server/
 │   ├── ui.html                  # Plugin UI (generated from template)
 │   ├── build.js                 # Plugin build script
 │   └── tsconfig.json            # Plugin TypeScript config (ES2015 target)
-├── tests/                        # Testing infrastructure
+├── tests/                        # Comprehensive testing infrastructure
+│   ├── unit/                    # Unit tests (handler & component coverage)
+│   │   ├── handlers/            # Handler-specific tests
+│   │   ├── types/               # Type validation tests
+│   │   └── websocket/           # WebSocket communication tests
+│   ├── integration/             # Integration tests (end-to-end workflows)
+│   │   ├── mcp-server-integration.test.ts # End-to-end workflows
+│   │   └── basic-integration.test.ts      # Basic functionality
+│   ├── setup.ts                # Jest test configuration
+│   ├── mcp-test-suite.md       # Manual testing procedures
+│   └── connectivity-test.js    # WebSocket connection validation
 ├── tools/                        # Build and utility scripts
 ├── dist/                         # Compiled server output (generated at build)
+├── coverage/                     # Test coverage reports (generated)
+├── jest.config.js               # Unit test configuration
+├── jest.integration.config.js   # Integration test configuration
 └── [documentation files]
 ```
 
@@ -278,7 +332,13 @@ npm run build:plugin      # Build Figma plugin only
 npm run build:plugin:watch # Watch mode for plugin development
 npm run dev               # Development mode with auto-restart
 npm start                 # Start production server
-npm test                  # Run connectivity tests
+npm test                  # Run all tests (unit + integration)
+npm run test:unit         # Run unit tests only
+npm run test:integration  # Run integration tests only
+npm run test:coverage     # Generate test coverage report
+npm run test:watch        # Watch mode for testing
+npm run test:connectivity # WebSocket connection test
+npm run test:manual       # Display manual test guide
 npm run type-check        # TypeScript validation only
 ```
 
@@ -322,7 +382,17 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 18 consolidated tools organized by domain. See README.md for complete tool documentation.
+The server provides 18 consolidated tools organized by domain:
+
+- **Node Operations**: `create_node`, `create_text`, `update_node`, `manage_nodes`
+- **Selection & Page Management**: `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
+- **Style System**: `manage_styles`
+- **Layout Management**: `manage_auto_layout`, `manage_constraints`, `manage_hierarchy`
+- **Variables & Design Tokens**: `manage_variables`, `manage_collections`
+- **Component System**: `manage_components`, `manage_instances`
+- **Plugin Status**: `get_plugin_status`, `get_connection_health`
+
+See README.md for complete tool documentation and parameter details.
 
 ### Handler Classes
 
@@ -389,7 +459,7 @@ export const ManageNodesSchema = z.discriminatedUnion("operation", [
 
 ### Step 2: Add Handler Method (handlers/node-handlers.ts)
 ```typescript
-private async rotateNode(params: RotateNodeParams): Promise<OperationResult> {
+private async rotateNode(params: RotateNodeParams): Promise<ToolResult> {
   const response = await this.sendToPlugin({
     type: 'ROTATE_NODE',
     payload: {
@@ -398,65 +468,141 @@ private async rotateNode(params: RotateNodeParams): Promise<OperationResult> {
     }
   });
 
-  return this.createSuccessResponse({
-    operation: 'rotate',
-    nodeId: params.nodeId,
-    rotation: params.rotation,
-    message: `Node rotated ${params.rotation} degrees`
-  });
+  if (!response.success) {
+    throw new Error(response.error || 'Rotation failed');
+  }
+
+  return {
+    content: [{
+      type: 'text',
+      text: yaml.dump({
+        operation: 'rotate',
+        nodeId: params.nodeId,
+        rotation: params.rotation,
+        message: `Node rotated ${params.rotation} degrees`
+      }, { indent: 2, lineWidth: 100 })
+    }],
+    isError: false
+  };
 }
 
 // Update manageNodes method to handle new operation
-async manageNodes(params: any): Promise<OperationResult> {
-  const validated = ManageNodesSchema.parse(params);
+async manageNodes(params: any): Promise<ToolResult> {
+  const validation = validateAndParse(ManageNodesSchema, params, 'manageNodes');
+  
+  if (!validation.success) {
+    throw new Error(`Validation failed: ${validation.error}`);
+  }
+  
+  const validated = validation.data;
 
   switch (validated.operation) {
     case 'move': return this.moveNode(validated);
     case 'duplicate': return this.duplicateNode(validated);
     case 'delete': return this.deleteNode(validated);
     case 'rotate': return this.rotateNode(validated); // Add this
+    default:
+      throw new Error(`Unknown operation: ${validated.operation}`);
   }
 }
 ```
 
-### Step 3: Add Plugin Handler (figma-plugin/src/handlers/node-operations.ts)
+### Step 3: Add Plugin Handler (figma-plugin/src/handlers/node-handler.ts)
 ```typescript
 export async function rotateNode(payload: any): Promise<any> {
-  const node = figma.getNodeById(payload.nodeId);
-  if (!node) {
-    throw new Error(`Node ${payload.nodeId} not found`);
+  try {
+    const node = figma.getNodeById(payload.nodeId);
+    if (!node) {
+      return {
+        success: false,
+        error: `Node ${payload.nodeId} not found`
+      };
+    }
+
+    // Convert degrees to radians for Figma API
+    node.rotation = payload.rotation * (Math.PI / 180);
+
+    return {
+      success: true,
+      data: {
+        nodeId: payload.nodeId,
+        rotation: payload.rotation,
+        message: `Node rotated ${payload.rotation} degrees`
+      }
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Rotation failed: ${error.message}`
+    };
   }
-
-  node.rotation = payload.rotation * (Math.PI / 180); // Convert to radians
-
-  return {
-    success: true,
-    nodeId: payload.nodeId,
-    rotation: payload.rotation
-  };
 }
 ```
 
 ### Step 4: Register Handler (figma-plugin/src/main.ts)
 ```typescript
-// Add to message handler switch
+// Add to message handler switch in websocket message router
 case 'ROTATE_NODE':
-  result = await nodeOperations.rotateNode(message.payload);
+  result = await nodeHandler.rotateNode(message.payload);
   break;
 ```
 
-### Step 5: Test
+### Add Tests
+```typescript
+// Unit test in tests/unit/handlers/node-handlers.test.ts
+describe('rotateNode', () => {
+  test('should rotate node successfully', async () => {
+    const mockResponse = {
+      success: true,
+      data: { nodeId: 'node-123', rotation: 45 }
+    };
+    mockSendToPlugin.mockResolvedValue(mockResponse);
+
+    const result = await nodeHandlers.handle('manage_nodes', {
+      operation: 'rotate',
+      nodeId: 'node-123',
+      rotation: 45
+    });
+
+    expect(result.isError).toBe(false);
+    expect(mockSendToPlugin).toHaveBeenCalledWith({
+      type: 'ROTATE_NODE',
+      payload: { nodeId: 'node-123', rotation: 45 }
+    });
+  });
+
+  test('should handle rotation errors', async () => {
+    mockSendToPlugin.mockResolvedValue({
+      success: false,
+      error: 'Node not found'
+    });
+
+    await expect(nodeHandlers.handle('manage_nodes', {
+      operation: 'rotate',
+      nodeId: 'invalid-id',
+      rotation: 45
+    })).rejects.toThrow('Node not found');
+  });
+});
+```
+
+### Build and Test
 ```bash
-npm run build
-npm test
-# Test with: manage_nodes(operation: "rotate", nodeId: "123:456", rotation: 45)
+npm run build                # Build everything
+npm test                     # Run all tests
+npm run test:unit           # Run unit tests only
+# Test manually: manage_nodes(operation: "rotate", nodeId: "123:456", rotation: 45)
 ```
 
 ## 🧪 Testing Your Changes
 
 ### Quick Validation
 ```bash
-npm test                    # Basic connectivity
+npm test                    # All tests (119 total)
+npm run test:unit          # Unit tests (103 tests)
+npm run test:integration   # Integration tests (16 tests)
+npm run test:coverage      # Generate coverage report
+npm run test:connectivity  # WebSocket connection test
 npm run test:manual        # Manual test guide
 ```
 
@@ -861,31 +1007,55 @@ sequenceDiagram
 
 ### WebSocket Message Format
 ```typescript
-// Request to plugin
+// Request to plugin (standardized payload wrapper)
 {
-  id: "uuid",
-  type: "CREATE_NODE",
-  operation: "createNode",
-  payload: {
+  id: "uuid-v4",                    // Unique request ID
+  type: "CREATE_NODE",              // Operation type
+  payload: {                        // Validated parameters
     nodeType: "rectangle",
-    x: 0, y: 0,
-    width: 100, height: 100,
-    fillColor: "#FF0000"
+    width: 100,
+    height: 100,
+    fillColor: "#FF0000",
+    x: 0,
+    y: 0
   }
+}
+
+// Selection operation example
+{
+  id: "uuid-v4",
+  type: "GET_SELECTION",
+  payload: {}                       // Empty payload for get operations
 }
 
 // Response from plugin
 {
-  id: "uuid",
-  success: true,
-  data: {
+  id: "uuid-v4",                    // Matching request ID
+  success: true,                    // Operation status
+  data: {                           // Operation result
     nodeId: "figma-node-id",
+    nodeType: "rectangle",
     message: "Rectangle created successfully"
   }
+}
+
+// Error response
+{
+  id: "uuid-v4",
+  success: false,
+  error: "Node not found: invalid-id"
 }
 ```
 
 ## 🧪 Development Workflow
+
+### Test Coverage
+
+The codebase maintains comprehensive test coverage:
+- **119 total tests** across unit and integration suites
+- **Unit tests**: 103 tests covering all handlers and core components
+- **Integration tests**: 16 tests verifying MCP server and handler registry
+- **Test categories**: Handler logic, WebSocket communication, error handling, tool routing
 
 ### Adding New MCP Tools
 
@@ -927,31 +1097,73 @@ export async function createComponent(payload: any): Promise<any> {
 
 1. **Unit Tests** for handlers:
 ```typescript
-describe('NodeHandler', () => {
-  it('should create rectangle', async () => {
-    const handler = new NodeHandler(mockSendToPlugin);
-    const result = await handler.createNode({
+describe('NodeHandlers', () => {
+  let nodeHandlers: NodeHandlers;
+  let mockSendToPlugin: jest.Mock;
+
+  beforeEach(() => {
+    mockSendToPlugin = jest.fn();
+    nodeHandlers = new NodeHandlers(mockSendToPlugin);
+  });
+
+  test('should create rectangle node', async () => {
+    const mockResponse = {
+      success: true,
+      data: { nodeId: 'node-123', nodeType: 'rectangle' }
+    };
+    mockSendToPlugin.mockResolvedValue(mockResponse);
+
+    const result = await nodeHandlers.handle('create_node', {
       nodeType: 'rectangle',
       width: 100,
       height: 100
     });
-    expect(result.success).toBe(true);
+
+    expect(result.isError).toBe(false);
+    expect(mockSendToPlugin).toHaveBeenCalledWith({
+      type: 'CREATE_NODE',
+      payload: expect.objectContaining({
+        nodeType: 'rectangle',
+        width: 100,
+        height: 100
+      })
+    });
   });
 });
 ```
 
-2. **Integration Tests** with actual plugin:
-```bash
-# Start development server
-npm run dev
+2. **Integration Tests** with handler registry:
+```typescript
+describe('MCP Server Integration', () => {
+  test('should route tool calls to correct handlers', async () => {
+    const mockResponse = { success: true, data: { nodeId: 'node-123' } };
+    mockSendToPlugin.mockResolvedValue(mockResponse);
 
-# In separate terminal, run connectivity test
-npm test
+    const result = await handlerRegistry.handleToolCall('create_node', {
+      nodeType: 'rectangle'
+    });
 
-# Manual testing through MCP client
+    expect(result.isError).toBe(false);
+  });
+});
 ```
 
-3. **Manual Testing** using test suite:
+3. **Running Tests**:
+```bash
+# Run all tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Coverage report
+npm run test:coverage
+
+# Integration tests only
+npm run test:integration
+```
+
+4. **Manual Testing** using test suite:
 Follow procedures in `tests/mcp-test-suite.md` for validation.
 
 ## 🐛 Debugging
@@ -1091,10 +1303,29 @@ pgrep -f figma-mcp-write-server
 
 ## 🧪 Testing Strategy
 
-### Automated Tests
+### Comprehensive Test Suite (119 Tests)
+
+**Unit Tests (103 tests)**:
+- Handler functionality for all tool types
+- Parameter validation with Zod schemas
+- Error handling and exception patterns
+- WebSocket communication logic
+- Tool registration and routing
+
+**Integration Tests (16 tests)**:
+- MCP server and handler registry integration
+- Multi-tool workflows and sequential operations
+- Plugin status and health monitoring
+- End-to-end tool execution flows
+
+### Test Commands
 ```bash
-npm test                    # Run all tests
-npm run test:connectivity   # WebSocket connection test
+npm test                    # Run all tests (119 total)
+npm run test:unit          # Unit tests only (103 tests)
+npm run test:integration   # Integration tests only (16 tests)
+npm run test:coverage      # Generate coverage report
+npm run test:watch         # Watch mode for development
+npm run test:connectivity  # WebSocket connection test
 npm run test:manual        # Display manual test guide
 ```
 
@@ -1106,11 +1337,13 @@ npm run test:manual        # Display manual test guide
 5. **Performance**: Test with large files and many operations
 
 ### Test Coverage Areas
-- **Parameter Validation**: All Zod schemas
-- **Tool Execution**: Each MCP tool
-- **Error Handling**: Invalid inputs and failures
-- **Connection Management**: WebSocket reliability
-- **Plugin Integration**: Figma API compatibility
+- **Parameter Validation**: All Zod schemas with comprehensive edge cases
+- **Tool Execution**: Each of 18 MCP tools with success and failure scenarios
+- **Error Handling**: Standardized exception throwing and error responses
+- **WebSocket Communication**: Connection lifecycle, message routing, health monitoring
+- **Handler Integration**: Tool registration, routing, and response formatting
+- **Plugin Status**: Connection health, metrics tracking, and status reporting
+- **Multi-Tool Workflows**: Sequential operations and state management
 
 ## 📚 Resources
 

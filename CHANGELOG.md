@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.22.0] - 2025-06-11
+
+### Added
+- **Comprehensive Test Suite**: Complete test coverage for all handlers and core components
+  - Unit tests for all handler types (node, style, layout, selection, variable, component)
+  - Integration tests for MCP server and handler registry
+  - WebSocket communication tests with connection lifecycle management
+  - Test setup with proper mocking and error handling
+
+### Fixed
+- **Standardized Error Handling**: All handlers now consistently throw exceptions instead of mixed error response patterns
+- **Plugin Response Validation**: Removed inconsistent ID field validation that was causing test failures
+- **Handler Interface Consistency**: All handlers now use standardized payload wrapper pattern for WebSocket communication
+- **Integration Test Module Resolution**: Fixed Jest configuration for proper ESM module handling
+
+### Improved
+- **Code Quality**: Consistent error handling and API patterns across all handlers
+- **Developer Experience**: Standardized interfaces make the codebase easier to maintain and extend
+- **Test Reliability**: Robust test suite with 103 unit tests and 16 integration tests
+
 ## [0.21.0] - 2025-06-10
 
 ### Added

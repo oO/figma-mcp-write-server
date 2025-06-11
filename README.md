@@ -2,7 +2,7 @@
 
 A Model Context Protocol (MCP) server that provides **write access** to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically.
 
-_Designed and Architected with ❤️ by a real human. Coded by an AI Assistant._
+Designed with ❤️ by a human. Coded with ✨ by an AI agent.
 
 ## 🚀 Overview
 
