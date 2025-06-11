@@ -48,7 +48,7 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - YAML responses for all tool outputs
 
 ### Testing
-- Comprehensive test suite with unit and integration tests
+- Test suite with unit and integration tests
 - Always add tests when adding new features
 - Run `npm test` before committing
 
@@ -61,6 +61,12 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 
 **IMPORTANT**: During the pre-release phase, documentation should be factual and concise about the current state of the tool, not changes or future plans.
 
+#### Writing Style
+- **Avoid superlatives**: Do not use words like "comprehensive", "complete", "robust", "extensive", "advanced", "cutting-edge", "powerful", "seamless", etc.
+- **No test counting**: Do not mention specific test numbers in documentation as they change frequently and add no value to users
+- **Be direct**: Use simple, clear language without marketing fluff
+- **Focus on functionality**: Describe what tools do, not how amazing they are
+
 #### Documentation Files
 - **README.md**: Main project documentation - should reflect current capabilities and setup instructions
 - **DEVELOPMENT.md**: Technical documentation for contributors - architecture, development workflow, testing
@@ -72,12 +78,13 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - Avoid hardcoded numbers that require frequent maintenance updates
 - Focus on "what it does now" not "what it will do"
 - Only CHANGELOG.md should document changes and progression
+- Use clear, direct language without superlatives
 
 ## Project Architecture
 
 This is a Figma MCP Write Server with:
-- 18 MCP tools organized by domain
+- 20 MCP tools organized by domain
 - Handler-based architecture with auto-discovery
 - WebSocket communication with Figma plugin
-- Comprehensive test coverage
+- Test coverage with unit and integration tests
 - YAML response format for structured data

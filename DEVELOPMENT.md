@@ -382,12 +382,13 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 18 consolidated tools organized by domain:
+The server provides 20 consolidated tools organized by domain:
 
 - **Node Operations**: `create_node`, `create_text`, `update_node`, `manage_nodes`
 - **Selection & Page Management**: `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
 - **Style System**: `manage_styles`
 - **Layout Management**: `manage_auto_layout`, `manage_constraints`, `manage_hierarchy`
+- **Boolean & Vector Operations**: `manage_boolean_operations`, `manage_vector_operations`
 - **Variables & Design Tokens**: `manage_variables`, `manage_collections`
 - **Component System**: `manage_components`, `manage_instances`
 - **Plugin Status**: `get_plugin_status`, `get_connection_health`
@@ -435,6 +436,22 @@ Variables and design tokens for consistency:
 - **Variable Binding**: Bind variables to node properties for dynamic design systems
 - **Design Tokens**: Support for colors, spacing, typography, and semantic variables
 - **Multi-mode Support**: Handle light/dark themes and localization variants
+
+#### Boolean Handlers (`src/handlers/boolean-handlers.ts`)
+Advanced shape creation and manipulation:
+- **Boolean Operations**: Combine shapes with `manage_boolean_operations`
+  - **Union**: Merge multiple shapes into unified forms
+  - **Subtract**: Cut shapes using other shapes as cutouts
+  - **Intersect**: Keep only overlapping areas between shapes
+  - **Exclude**: Remove overlapping areas for complex effects
+  - **Preserve Original**: Option to maintain source shapes after operations
+- **Vector Operations**: Create and manipulate vectors with `manage_vector_operations`
+  - **Create Vector**: Generate custom shapes using SVG path data
+  - **Flatten**: Convert complex hierarchies into single vector shapes
+  - **Outline Stroke**: Transform stroke properties into filled paths
+  - **Get Vector Paths**: Extract path data for analysis and modification
+- **Shape Compatibility**: Works with rectangles, ellipses, vectors, stars, polygons, and boolean operations
+- **SVG Path Support**: Full SVG syntax with winding rules (EVENODD, NONZERO)
 
 ## 🛠️ Adding a New Tool: Step-by-Step Example
 
@@ -598,9 +615,9 @@ npm run test:unit           # Run unit tests only
 
 ### Quick Validation
 ```bash
-npm test                    # All tests (119 total)
-npm run test:unit          # Unit tests (103 tests)
-npm run test:integration   # Integration tests (16 tests)
+npm test                    # All tests (143 total)
+npm run test:unit          # Unit tests (123 tests)
+npm run test:integration   # Integration tests (20 tests)
 npm run test:coverage      # Generate coverage report
 npm run test:connectivity  # WebSocket connection test
 npm run test:manual        # Manual test guide
@@ -1052,9 +1069,9 @@ sequenceDiagram
 ### Test Coverage
 
 The codebase maintains comprehensive test coverage:
-- **119 total tests** across unit and integration suites
-- **Unit tests**: 103 tests covering all handlers and core components
-- **Integration tests**: 16 tests verifying MCP server and handler registry
+- **143 total tests** across unit and integration suites
+- **Unit tests**: 123 tests covering all handlers and core components
+- **Integration tests**: 20 tests verifying MCP server and handler registry
 - **Test categories**: Handler logic, WebSocket communication, error handling, tool routing
 
 ### Adding New MCP Tools

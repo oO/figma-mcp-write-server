@@ -59,6 +59,8 @@ describe('MCP Server Integration', () => {
       expect(toolNames).toContain('manage_variables');
       expect(toolNames).toContain('manage_collections');
       expect(toolNames).toContain('manage_components');
+      expect(toolNames).toContain('manage_boolean_operations');
+      expect(toolNames).toContain('manage_vector_operations');
       
       // Check plugin status tools
       expect(toolNames).toContain('get_plugin_status');
@@ -156,6 +158,66 @@ describe('MCP Server Integration', () => {
 
       expect(result.isError).toBe(false);
       expect(mockSendToPlugin).toHaveBeenCalled();
+    });
+
+    test('should route boolean operations to BooleanHandlers', async () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          nodeId: 'union-result-123',
+          processedNodes: ['node-1', 'node-2'],
+          operation: 'union'
+        }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await handlerRegistry.handleToolCall('manage_boolean_operations', {
+        operation: 'union',
+        nodeIds: ['node-1', 'node-2'],
+        name: 'Combined Shape'
+      });
+
+      expect(result.isError).toBe(false);
+      expect(result.content[0].text).toContain('booleanType: union');
+      expect(result.content[0].text).toContain('resultNodeId: union-result-123');
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'BOOLEAN_OPERATION',
+        payload: {
+          operation: 'union',
+          nodeIds: ['node-1', 'node-2'],
+          name: 'Combined Shape',
+          preserveOriginal: false
+        }
+      });
+    });
+
+    test('should route vector operations to BooleanHandlers', async () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          nodeId: 'vector-123',
+          operation: 'create_vector',
+          name: 'Custom Vector'
+        }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await handlerRegistry.handleToolCall('manage_vector_operations', {
+        operation: 'create_vector',
+        name: 'Custom Vector',
+        vectorPaths: [{ windingRule: 'EVENODD', data: 'M 0 0 L 100 0 L 100 100 Z' }]
+      });
+
+      expect(result.isError).toBe(false);
+      expect(result.content[0].text).toContain('vectorType: create_vector');
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'VECTOR_OPERATION',
+        payload: {
+          operation: 'create_vector',
+          name: 'Custom Vector',
+          vectorPaths: [{ windingRule: 'EVENODD', data: 'M 0 0 L 100 0 L 100 100 Z' }]
+        }
+      });
     });
   });
 
@@ -280,6 +342,131 @@ describe('MCP Server Integration', () => {
       await expect(handlerRegistry.handleToolCall('set_selection', {
         nodeIds: ['invalid-node-id']
       })).rejects.toThrow('Node not found');
+    });
+
+    test('should support boolean operations workflow', async () => {
+      // Step 1: Create first rectangle
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { nodeId: 'rect-1', nodeType: 'rectangle' }
+      });
+
+      const rect1Result = await handlerRegistry.handleToolCall('create_node', {
+        nodeType: 'rectangle',
+        width: 100,
+        height: 100,
+        x: 0,
+        y: 0,
+        fillColor: '#FF0000'
+      });
+
+      expect(rect1Result.isError).toBe(false);
+
+      // Step 2: Create second rectangle
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { nodeId: 'rect-2', nodeType: 'rectangle' }
+      });
+
+      const rect2Result = await handlerRegistry.handleToolCall('create_node', {
+        nodeType: 'rectangle',
+        width: 100,
+        height: 100,
+        x: 50,
+        y: 50,
+        fillColor: '#00FF00'
+      });
+
+      expect(rect2Result.isError).toBe(false);
+
+      // Step 3: Perform union operation
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: {
+          nodeId: 'union-result-789',
+          processedNodes: ['rect-1', 'rect-2'],
+          operation: 'union'
+        }
+      });
+
+      const unionResult = await handlerRegistry.handleToolCall('manage_boolean_operations', {
+        operation: 'union',
+        nodeIds: ['rect-1', 'rect-2'],
+        name: 'Combined Rectangles',
+        preserveOriginal: false
+      });
+
+      expect(unionResult.isError).toBe(false);
+      expect(unionResult.content[0].text).toContain('booleanType: union');
+      expect(unionResult.content[0].text).toContain('resultNodeId: union-result-789');
+
+      // Step 4: Apply style to result
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { operation: 'apply', styleId: 'style-123', appliedTo: ['union-result-789'] }
+      });
+
+      const styleResult = await handlerRegistry.handleToolCall('manage_styles', {
+        operation: 'apply',
+        styleType: 'paint',
+        styleId: 'style-123',
+        nodeIds: ['union-result-789']
+      });
+
+      expect(styleResult.isError).toBe(false);
+
+      // Verify all calls were made in sequence
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(4);
+    });
+
+    test('should support vector manipulation workflow', async () => {
+      // Step 1: Create vector
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { nodeId: 'vector-1', operation: 'create_vector' }
+      });
+
+      const createResult = await handlerRegistry.handleToolCall('manage_vector_operations', {
+        operation: 'create_vector',
+        name: 'Custom Path',
+        vectorPaths: [{ windingRule: 'EVENODD', data: 'M 0 0 L 100 0 L 50 100 Z' }]
+      });
+
+      expect(createResult.isError).toBe(false);
+
+      // Step 2: Get vector paths
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: {
+          nodeId: 'vector-1',
+          vectorPaths: [{ windingRule: 'EVENODD', data: 'M 0 0 L 100 0 L 50 100 Z' }],
+          operation: 'get_vector_paths'
+        }
+      });
+
+      const pathsResult = await handlerRegistry.handleToolCall('manage_vector_operations', {
+        operation: 'get_vector_paths',
+        nodeId: 'vector-1'
+      });
+
+      expect(pathsResult.isError).toBe(false);
+      expect(pathsResult.content[0].text).toContain('vectorPaths');
+
+      // Step 3: Flatten the vector
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { nodeId: 'flattened-vector', operation: 'flatten' }
+      });
+
+      const flattenResult = await handlerRegistry.handleToolCall('manage_vector_operations', {
+        operation: 'flatten',
+        nodeId: 'vector-1'
+      });
+
+      expect(flattenResult.isError).toBe(false);
+      expect(flattenResult.content[0].text).toContain('vectorType: flatten');
+
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
     });
   });
 

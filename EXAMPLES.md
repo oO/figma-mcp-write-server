@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.22.0)**: Features 18 MCP tools with YAML response format, comprehensive test coverage (119 tests), standardized error handling, component system, and variables & design tokens.
+> **Current State (v0.23.0)**: Features 20 MCP tools with YAML response format, comprehensive test coverage (143 tests), boolean & vector operations, component system, and variables & design tokens.
 
 ## 🚀 Getting Started
 
@@ -85,6 +85,76 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 
 - **"Show me all the color styles in this file"**
   - AI lists all paint styles with their names and properties
+
+## 🔧 Boolean & Vector Operations
+
+### Boolean Operations
+**User Instructions → AI Actions:**
+
+- **"Combine these two rectangles into a single shape"**
+  - AI uses `manage_boolean_operations` with `union` operation to merge overlapping shapes
+
+- **"Cut a circle hole in the middle of this rectangle"**
+  - AI uses `manage_boolean_operations` with `subtract` operation to remove the circle area from the rectangle
+
+- **"Create a shape from only the overlapping part of these elements"**
+  - AI uses `manage_boolean_operations` with `intersect` operation to keep only shared areas
+
+- **"Remove the overlapping areas to create a complex cutout effect"**
+  - AI uses `manage_boolean_operations` with `exclude` operation for advanced shape combinations
+
+- **"Combine these logo elements but keep the original shapes for editing"**
+  - AI performs boolean operations with `preserveOriginal: true` to maintain source shapes
+
+### Vector Operations
+**User Instructions → AI Actions:**
+
+- **"Create a custom arrow icon with precise curves"**
+  - AI uses `manage_vector_operations` with `create_vector` and SVG path data for custom shapes
+
+- **"Turn this complex grouped design into a single vector shape"**
+  - AI uses `manage_vector_operations` with `flatten` to convert hierarchies into unified vectors
+
+- **"Convert the stroke outline of this shape into a filled path"**
+  - AI uses `manage_vector_operations` with `outline_stroke` to transform strokes into solid shapes
+
+- **"Extract the path data from this icon so I can modify it"**
+  - AI uses `manage_vector_operations` with `get_vector_paths` to retrieve SVG-compatible path information
+
+### Advanced Shape Creation Workflows
+**User Instructions:**
+"Create a complex logo by combining basic shapes and custom vectors."
+
+**What the AI does:**
+1. **Base Shapes**: Creates rectangles and circles for the logo foundation
+2. **Custom Vectors**: Creates vector paths for unique design elements using SVG data
+3. **Boolean Combination**: Uses union operations to merge related elements
+4. **Detail Subtraction**: Uses subtract operations to cut out precise details and holes
+5. **Final Refinement**: Flattens complex results and outlines strokes for clean vector output
+
+**User Instructions:**
+"Build an icon library with consistent stroke weights and fill styles."
+
+**What the AI does:**
+1. **Vector Creation**: Creates base icon shapes using custom vector paths
+2. **Stroke Consistency**: Applies uniform stroke weights across all icons
+3. **Outline Conversion**: Uses outline_stroke to convert strokes to fills for scalability
+4. **Path Optimization**: Flattens complex icons into single vector nodes
+5. **Style Application**: Applies consistent fill styles and organizes as reusable components
+
+### Boolean Operation Examples
+
+**Creating Logo Elements:**
+- **Union**: "Merge the company initials into a single logomark"
+- **Subtract**: "Cut the company name out of a solid background shape" 
+- **Intersect**: "Create a badge effect where text only appears in the circle area"
+- **Exclude**: "Make a ring-shaped frame by removing inner circle from outer circle"
+
+**Icon Design Workflows:**
+- **Vector Creation**: "Design a custom arrow with curved tail using path data"
+- **Flatten Operations**: "Convert this layered icon into a single editable shape"
+- **Stroke to Fill**: "Convert these outlined icons to solid shapes for better scaling"
+- **Path Extraction**: "Get the vector data from this icon to create variations"
 
 ## 🧩 Component System
 
@@ -537,23 +607,34 @@ The AI can perform these operations:
 
 ## 🔧 Technical Details
 
-### Error Handling (v0.22.0)
+### Error Handling (v0.23.0)
 - **Standardized Exceptions**: All handlers throw exceptions for consistent error handling
 - **Detailed Messages**: Error responses include operation context, timestamps, and suggestions
 - **Validation**: Comprehensive parameter validation with Zod schemas
 - **Plugin Status**: Real-time connection and health monitoring
+- **Boolean Validation**: Smart filtering of compatible node types for shape operations
 
 ### Tool Structure
-- **18 Consolidated Tools**: Organized by domain for easy discovery
+- **20 Consolidated Tools**: Organized by domain for easy discovery
 - **YAML Responses**: All tools return structured YAML data within MCP text format
 - **Payload Wrapper Pattern**: Consistent `{type: 'OPERATION', payload: params}` structure
 - **Comprehensive Coverage**: Full Figma API access through MCP protocol
+- **Advanced Geometry**: Boolean operations and vector path manipulation
+
+### Boolean & Vector Capabilities
+- **Shape Compatibility**: Works with rectangles, ellipses, vectors, stars, polygons, and boolean operations
+- **SVG Path Support**: Full SVG path syntax with winding rules (EVENODD, NONZERO)
+- **Preserve Options**: Choice to keep or remove original shapes after boolean operations
+- **Vector Creation**: Custom path creation with position control and path data
+- **Path Extraction**: Retrieve and modify vector paths from existing shapes
 
 ### Test Coverage
-- **119 Total Tests**: Comprehensive unit and integration test suite
+- **143 Total Tests**: Comprehensive unit and integration test suite (up from 119)
 - **Handler Testing**: All tool handlers with success/failure scenarios
 - **Integration Testing**: End-to-end workflows and tool routing
 - **Error Testing**: Exception handling and validation patterns
+- **Boolean Testing**: Complete coverage of all boolean operations and edge cases
+- **Vector Testing**: Full vector operation coverage with path validation
 
 ---
 

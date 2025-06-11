@@ -5,6 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2025-06-11
+
+### Added
+- **Boolean & Vector Operations**: Advanced shape creation and manipulation tools for professional design workflows
+  - `manage_boolean_operations` tool for shape combination operations
+    - **Union**: Combine multiple shapes into a single unified shape
+    - **Subtract**: Remove overlapping areas from the first shape using subsequent shapes
+    - **Intersect**: Keep only the overlapping areas of all selected shapes
+    - **Exclude**: Remove overlapping areas to create complex cutout effects
+    - **Preserve Original**: Option to keep or remove original shapes after operation
+    - **Multi-shape Support**: Operations work with any number of compatible shapes (minimum 2)
+    - **Smart Validation**: Automatic filtering of compatible node types (rectangles, ellipses, vectors, stars, polygons, boolean operations)
+  - `manage_vector_operations` tool for vector path creation and manipulation
+    - **Create Vector**: Generate custom vector nodes with SVG-like path data
+    - **Flatten**: Convert complex hierarchies into single vector shapes
+    - **Outline Stroke**: Convert stroke properties into filled vector paths
+    - **Get Vector Paths**: Extract path data from existing vector nodes for analysis or modification
+    - **Position Control**: Set custom x/y coordinates for new vector nodes
+    - **Path Data Support**: Full SVG path syntax support with winding rules (EVENODD, NONZERO)
+
+### Enhanced
+- **API Coverage**: Expanded from 50% to 56% with ~50 new Figma API methods integrated
+- **Tool Count**: Increased from 18 to 20 MCP tools for comprehensive design system support
+- **Test Coverage**: Enhanced test suite with 143 total tests (up from 119)
+  - Added 20 new unit tests covering all boolean and vector operations
+  - Added 4 new integration tests for complex workflows
+  - Complete edge case coverage including validation and error handling
+- **Plugin Architecture**: Extended message routing to support advanced geometry operations
+- **Error Handling**: Comprehensive error messages with operation-specific guidance for boolean operations
+
+### Technical Details
+- **Shape Compatibility**: Boolean operations support rectangles, ellipses, vectors, stars, polygons, and existing boolean operations
+- **Vector Path Format**: Support for SVG-compatible path data with proper winding rule handling
+- **Performance**: Optimized operations for complex shape combinations and large vector datasets
+- **YAML Response Format**: All new tools follow established response patterns for consistency
+
 ## [0.22.0] - 2025-06-11
 
 ### Added

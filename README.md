@@ -15,6 +15,8 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Layer & Hierarchy** management (grouping, reordering)
 - ✅ **Component System** for design systems and reusable components
 - ✅ **Variables & Design Tokens** for design system consistency
+- ✅ **Boolean Operations** for advanced shape creation (union, subtract, intersect, exclude)
+- ✅ **Vector Operations** for custom path creation and manipulation
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
@@ -50,6 +52,8 @@ graph LR
 | `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
 | `manage_collections` | Variable collection management (create, update, delete, get, list) | operation, collectionId, collectionName, modes, modeId, newModeName, description |
 | `manage_variables` | Variable management and binding (create, bind, unbind, get_bindings) | operation, variableId, collectionId, variableName, variableType, nodeId, property, modeValues |
+| `manage_boolean_operations` | Boolean operations on shapes (union, subtract, intersect, exclude) | operation, nodeIds, name, preserveOriginal |
+| `manage_vector_operations` | Vector creation and manipulation (create, flatten, outline_stroke, get_paths) | operation, nodeId, vectorPaths, name, strokeWidth, x, y |
 | `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
 | `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
 | `manage_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
@@ -72,6 +76,8 @@ Common use cases:
 - **Design System**: "Create color palette and apply styles consistently"
 - **Variables**: "Create design tokens for colors and spacing, bind to components"
 - **Components**: "Build button variants with different colors and styles"
+- **Boolean Operations**: "Combine shapes with union, create cutouts with subtract"
+- **Vector Creation**: "Create custom icons with SVG paths and flatten complex shapes"
 - **Batch Operations**: "Select all text elements and update font size"
 
 📚 **[Examples & Usage Guide →](EXAMPLES.md)**

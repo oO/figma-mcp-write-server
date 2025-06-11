@@ -7,6 +7,7 @@ import { StyleHandlers } from './style-handlers.js';
 import { LayoutHandlers } from './layout-handlers.js';
 import { ComponentHandlers } from './component-handlers.js';
 import { VariableHandlers } from './variable-handlers.js';
+import { BooleanHandlers } from './boolean-handlers.js';
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -22,6 +23,7 @@ export class HandlerRegistry {
     this.registerHandler(new LayoutHandlers(sendToPluginFn));
     this.registerHandler(new ComponentHandlers(sendToPluginFn));
     this.registerHandler(new VariableHandlers(sendToPluginFn));
+    this.registerHandler(new BooleanHandlers(sendToPluginFn));
     
     // Add plugin status tool
     this.addPluginStatusTool();

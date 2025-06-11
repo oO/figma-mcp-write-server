@@ -9,6 +9,7 @@ import { HierarchyHandler } from './handlers/hierarchy-handler.js';
 import { LayoutHandler } from './handlers/layout-handler.js';
 import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
+import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { HandlerRegistry } from './types.js';
 
 class FigmaPlugin {
@@ -39,16 +40,23 @@ class FigmaPlugin {
       hierarchyHandler.getOperations(),
       layoutHandler.getOperations(),
       componentHandler.getOperations(),
-      variableHandler.getOperations()
+      variableHandler.getOperations(),
+      // Boolean and vector operations
+      {
+        'BOOLEAN_OPERATION': performBooleanOperation,
+        'VECTOR_OPERATION': performVectorOperation
+      }
     );
 
     console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers));
     
-    // Debug: Specifically check for component and variable operations
+    // Debug: Specifically check for component, variable, and boolean operations
     console.log('🔍 MANAGE_COMPONENTS handler exists:', !!this.handlers['MANAGE_COMPONENTS']);
     console.log('🔍 MANAGE_INSTANCES handler exists:', !!this.handlers['MANAGE_INSTANCES']);
     console.log('🔍 MANAGE_COLLECTIONS handler exists:', !!this.handlers['MANAGE_COLLECTIONS']);
     console.log('🔍 MANAGE_VARIABLES handler exists:', !!this.handlers['MANAGE_VARIABLES']);
+    console.log('🔍 BOOLEAN_OPERATION handler exists:', !!this.handlers['BOOLEAN_OPERATION']);
+    console.log('🔍 VECTOR_OPERATION handler exists:', !!this.handlers['VECTOR_OPERATION']);
   }
 
   private setupUIMessageHandler(): void {

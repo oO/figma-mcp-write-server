@@ -96,3 +96,32 @@ export const FigmaNodeSchema = z.object({
 
 // Export types
 export type FigmaNode = z.infer<typeof FigmaNodeSchema>;
+
+// ================================================================================
+// Boolean Operations Schemas
+// ================================================================================
+
+export const ManageBooleanOperationsSchema = z.object({
+  operation: z.enum(['union', 'subtract', 'intersect', 'exclude']),
+  nodeIds: z.array(z.string()).min(2, "Boolean operations require at least 2 nodes"),
+  name: z.string().optional(),
+  preserveOriginal: z.boolean().default(false)
+});
+
+// ================================================================================
+// Vector Operations Schemas
+// ================================================================================
+
+export const ManageVectorOperationsSchema = z.object({
+  operation: z.enum(['create_vector', 'flatten', 'outline_stroke', 'get_vector_paths']),
+  nodeId: z.string().optional(),
+  vectorPaths: z.array(z.any()).optional(),
+  name: z.string().optional(),
+  strokeWidth: z.number().min(0).optional(),
+  x: z.number().optional(),
+  y: z.number().optional()
+});
+
+// Export types for boolean and vector operations
+export type ManageBooleanOperationsParams = z.infer<typeof ManageBooleanOperationsSchema>;
+export type ManageVectorOperationsParams = z.infer<typeof ManageVectorOperationsSchema>;
