@@ -10,6 +10,11 @@ import { LayoutHandler } from './handlers/layout-handler.js';
 import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
+import { 
+  performAnnotationOperation, 
+  performMeasurementOperation, 
+  performDevResourceOperation 
+} from './handlers/dev-mode-handler.js';
 import { HandlerRegistry } from './types.js';
 
 class FigmaPlugin {
@@ -45,6 +50,12 @@ class FigmaPlugin {
       {
         'BOOLEAN_OPERATION': performBooleanOperation,
         'VECTOR_OPERATION': performVectorOperation
+      },
+      // Dev mode operations
+      {
+        'ANNOTATION_OPERATION': performAnnotationOperation,
+        'MEASUREMENT_OPERATION': performMeasurementOperation,
+        'DEV_RESOURCE_OPERATION': performDevResourceOperation
       }
     );
 
@@ -57,6 +68,9 @@ class FigmaPlugin {
     console.log('🔍 MANAGE_VARIABLES handler exists:', !!this.handlers['MANAGE_VARIABLES']);
     console.log('🔍 BOOLEAN_OPERATION handler exists:', !!this.handlers['BOOLEAN_OPERATION']);
     console.log('🔍 VECTOR_OPERATION handler exists:', !!this.handlers['VECTOR_OPERATION']);
+    console.log('🔍 ANNOTATION_OPERATION handler exists:', !!this.handlers['ANNOTATION_OPERATION']);
+    console.log('🔍 MEASUREMENT_OPERATION handler exists:', !!this.handlers['MEASUREMENT_OPERATION']);
+    console.log('🔍 DEV_RESOURCE_OPERATION handler exists:', !!this.handlers['DEV_RESOURCE_OPERATION']);
   }
 
   private setupUIMessageHandler(): void {

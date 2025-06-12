@@ -382,13 +382,14 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 20 consolidated tools organized by domain:
+The server provides 23 consolidated tools organized by domain:
 
 - **Node Operations**: `create_node`, `create_text`, `update_node`, `manage_nodes`
 - **Selection & Page Management**: `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
 - **Style System**: `manage_styles`
 - **Layout Management**: `manage_auto_layout`, `manage_constraints`, `manage_hierarchy`
 - **Boolean & Vector Operations**: `manage_boolean_operations`, `manage_vector_operations`
+- **Dev Mode Integration**: `manage_annotations`, `manage_measurements`, `manage_dev_resources`
 - **Variables & Design Tokens**: `manage_variables`, `manage_collections`
 - **Component System**: `manage_components`, `manage_instances`
 - **Plugin Status**: `get_plugin_status`, `get_connection_health`
@@ -452,6 +453,26 @@ Advanced shape creation and manipulation:
   - **Get Vector Paths**: Extract path data for analysis and modification
 - **Shape Compatibility**: Works with rectangles, ellipses, vectors, stars, polygons, and boolean operations
 - **SVG Path Support**: Full SVG syntax with winding rules (EVENODD, NONZERO)
+
+#### Dev Mode Handlers (`src/handlers/dev-mode-handlers.ts`)
+Design-to-development workflow tools for team handoff:
+- **Design Annotations**: Create and manage design documentation with `manage_annotations`
+  - **Add Annotation**: Create design notes and specifications on nodes
+  - **Edit Annotation**: Update existing annotations with new content
+  - **Remove Annotation**: Delete annotations no longer needed
+  - **List Annotations**: Retrieve annotations for nodes or entire document
+  - **Rich Content**: Support for plain text and markdown-formatted content
+  - **Dev Mode Compatibility**: Native Dev Mode API with plugin data fallback
+- **Measurements**: Spacing and sizing specifications with `manage_measurements`
+  - **Add Measurement**: Create precise measurements between nodes
+  - **Direction Control**: Horizontal, vertical, and distance measurements
+  - **Custom Labels**: Override calculated values with custom text
+  - **Cross-page Support**: Manage measurements across document pages
+- **Development Resources**: Code generation and status tracking with `manage_dev_resources`
+  - **CSS Generation**: Extract CSS using native getCSSAsync API
+  - **Dev Status**: Track progress (ready_for_dev, in_progress, dev_complete)
+  - **Resource Links**: Manage links to external development resources
+  - **Persistence**: Development data persists across Figma sessions
 
 ## 🛠️ Adding a New Tool: Step-by-Step Example
 
@@ -1355,7 +1376,7 @@ npm run test:manual        # Display manual test guide
 
 ### Test Coverage Areas
 - **Parameter Validation**: All Zod schemas with comprehensive edge cases
-- **Tool Execution**: Each of 18 MCP tools with success and failure scenarios
+- **Tool Execution**: Each of 23 MCP tools with success and failure scenarios
 - **Error Handling**: Standardized exception throwing and error responses
 - **WebSocket Communication**: Connection lifecycle, message routing, health monitoring
 - **Handler Integration**: Tool registration, routing, and response formatting

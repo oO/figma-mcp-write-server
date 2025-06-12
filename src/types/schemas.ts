@@ -125,3 +125,47 @@ export const ManageVectorOperationsSchema = z.object({
 // Export types for boolean and vector operations
 export type ManageBooleanOperationsParams = z.infer<typeof ManageBooleanOperationsSchema>;
 export type ManageVectorOperationsParams = z.infer<typeof ManageVectorOperationsSchema>;
+
+// ================================================================================
+// Dev Mode Operations Schemas
+// ================================================================================
+
+export const ManageAnnotationsSchema = z.object({
+  operation: z.enum(['add_annotation', 'edit_annotation', 'remove_annotation', 'list_annotations']),
+  nodeId: z.string().optional(),
+  annotationId: z.string().optional(),
+  label: z.string().optional(),
+  labelMarkdown: z.string().optional(),
+  properties: z.record(z.string(), z.any()).optional(),
+  categoryId: z.string().optional()
+});
+
+export const ManageMeasurementsSchema = z.object({
+  operation: z.enum(['add_measurement', 'edit_measurement', 'remove_measurement', 'list_measurements']),
+  measurementId: z.string().optional(),
+  fromNodeId: z.string().optional(),
+  toNodeId: z.string().optional(),
+  direction: z.enum(['horizontal', 'vertical', 'distance']).optional(),
+  label: z.string().optional(),
+  customValue: z.string().optional(),
+  pageId: z.string().optional()
+});
+
+export const ManageDevResourcesSchema = z.object({
+  operation: z.enum(['generate_css', 'set_dev_status', 'add_dev_link', 'remove_dev_link', 'get_dev_resources']),
+  nodeId: z.string().optional(),
+  status: z.enum(['ready_for_dev', 'in_progress', 'dev_complete']).optional(),
+  linkUrl: z.string().optional(),
+  linkTitle: z.string().optional(),
+  linkId: z.string().optional(),
+  cssOptions: z.object({
+    includeChildren: z.boolean().default(false),
+    includeComments: z.boolean().default(true),
+    useFlexbox: z.boolean().default(true)
+  }).optional()
+});
+
+// Export types for dev mode operations
+export type ManageAnnotationsParams = z.infer<typeof ManageAnnotationsSchema>;
+export type ManageMeasurementsParams = z.infer<typeof ManageMeasurementsSchema>;
+export type ManageDevResourcesParams = z.infer<typeof ManageDevResourcesSchema>;

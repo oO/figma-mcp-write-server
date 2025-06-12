@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2025-06-12
+
+### Added
+- **Dev Mode Integration**: Design-to-development workflow tools for team handoff and code generation
+  - `manage_annotations` tool for design annotation and documentation (add, edit, remove, list)
+  - `manage_measurements` tool for spacing and sizing specifications with direction control
+  - `manage_dev_resources` tool for CSS generation, dev status tracking, and resource links
+
+
+
 ## [0.23.0] - 2025-06-11
 
 ### Added
@@ -25,21 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     - **Position Control**: Set custom x/y coordinates for new vector nodes
     - **Path Data Support**: Full SVG path syntax support with winding rules (EVENODD, NONZERO)
 
-### Enhanced
-- **API Coverage**: Expanded from 50% to 56% with ~50 new Figma API methods integrated
-- **Tool Count**: Increased from 18 to 20 MCP tools for comprehensive design system support
-- **Test Coverage**: Enhanced test suite with 143 total tests (up from 119)
-  - Added 20 new unit tests covering all boolean and vector operations
-  - Added 4 new integration tests for complex workflows
-  - Complete edge case coverage including validation and error handling
-- **Plugin Architecture**: Extended message routing to support advanced geometry operations
-- **Error Handling**: Comprehensive error messages with operation-specific guidance for boolean operations
 
-### Technical Details
-- **Shape Compatibility**: Boolean operations support rectangles, ellipses, vectors, stars, polygons, and existing boolean operations
-- **Vector Path Format**: Support for SVG-compatible path data with proper winding rule handling
-- **Performance**: Optimized operations for complex shape combinations and large vector datasets
-- **YAML Response Format**: All new tools follow established response patterns for consistency
 
 ## [0.22.0] - 2025-06-11
 
@@ -115,7 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced error handling with structured YAML error responses including timestamps and operation context
   - **Additional cleanup**: Removed emoji-laden console statements from MCP server and WebSocket server that could interfere with stdio transport
 
-### Added  
+### Added
 - **📋 Hierarchy Grouping Specification**: Updated `manage_hierarchy` tool to match comprehensive MCP specification
   - **Automatic deduplication** of node IDs with tracking (`duplicatesRemoved` count)
   - **Enhanced validation**: minimum 2 unique nodes, same parent validation, lock checking
@@ -191,7 +187,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added generic communication interfaces: `TypedPluginMessage<TPayload>`, `TypedPluginResponse<TData>`
   - Enhanced runtime type guards and validation helpers for better error handling
 
-### Communication Layer Optimization  
+### Communication Layer Optimization
 - **🚀 Advanced WebSocket Management**: Implemented enterprise-grade communication patterns
   - Request queuing system with priority-based processing (high/normal/low priority)
   - Intelligent request batching with configurable timeout and batch size limits
@@ -207,7 +203,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Enhanced logging and debugging capabilities for tool execution
 
 ### Technical Improvements
-- **📡 WebSocket Server Enhancements**: 
+- **📡 WebSocket Server Enhancements**:
   - Added request prioritization for critical operations (selection, status checks)
   - Implemented batch request processing for improved performance
   - Enhanced error recovery with stale request cleanup and queue overflow protection

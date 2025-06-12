@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.23.0)**: Features 20 MCP tools with YAML response format, comprehensive test coverage (143 tests), boolean & vector operations, component system, and variables & design tokens.
+> **Current State (v0.24.0)**: Features 23 MCP tools with YAML response format, test coverage (174 tests), dev mode integration, boolean & vector operations, component system, and variables & design tokens.
 
 ## 🚀 Getting Started
 
@@ -540,6 +540,58 @@ The AI can perform these operations:
 
 - **"Show me all spacing variables in the design system"**
   - AI lists variables with their current values and usage
+
+## 👨‍💻 Dev Mode Integration
+
+### Design Annotations
+**User Instructions → AI Actions:**
+
+- **"Add an annotation explaining this component's behavior"**
+  - AI uses `manage_annotations` to create design notes for developers
+
+- **"Mark this button as ready for development"**
+  - AI adds annotation with development specifications and requirements
+
+- **"List all annotations on this page"**
+  - AI retrieves all design annotations and developer notes
+
+### Measurements & Specifications
+**User Instructions → AI Actions:**
+
+- **"Add measurements showing the spacing between these elements"**
+  - AI uses `manage_measurements` to create spacing indicators
+
+- **"Show the distance from this button to the edge"**
+  - AI creates measurement from node to container edge
+
+- **"Remove all measurements from this page"**
+  - AI cleans up measurement annotations
+
+### CSS Generation & Dev Resources
+**User Instructions → AI Actions:**
+
+- **"Generate CSS for this button component"**
+  - AI uses `manage_dev_resources` to extract CSS using Figma's native API
+
+- **"Set this design as ready for development"**
+  - AI marks development status and adds appropriate metadata
+
+- **"Add a link to the GitHub issue for this feature"**
+  - AI adds development resource links for project tracking
+
+- **"Get all development resources for this page"**
+  - AI retrieves CSS, dev status, and resource links for the entire page
+
+### Design-to-Dev Workflow
+**User Instructions:**
+"Prepare this button component for developer handoff."
+
+**What the AI does:**
+1. **Annotation**: Adds specifications about behavior and interaction states
+2. **Measurements**: Creates spacing and sizing specifications
+3. **CSS Generation**: Extracts production-ready CSS code
+4. **Status Tracking**: Marks component as ready for development
+5. **Resource Links**: Adds links to relevant documentation or tickets
 
 ## 💡 Tips for Users
 

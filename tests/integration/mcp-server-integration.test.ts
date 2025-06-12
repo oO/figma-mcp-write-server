@@ -61,6 +61,9 @@ describe('MCP Server Integration', () => {
       expect(toolNames).toContain('manage_components');
       expect(toolNames).toContain('manage_boolean_operations');
       expect(toolNames).toContain('manage_vector_operations');
+      expect(toolNames).toContain('manage_annotations');
+      expect(toolNames).toContain('manage_measurements');
+      expect(toolNames).toContain('manage_dev_resources');
       
       // Check plugin status tools
       expect(toolNames).toContain('get_plugin_status');
@@ -216,6 +219,96 @@ describe('MCP Server Integration', () => {
           operation: 'create_vector',
           name: 'Custom Vector',
           vectorPaths: [{ windingRule: 'EVENODD', data: 'M 0 0 L 100 0 L 100 100 Z' }]
+        }
+      });
+    });
+
+    test('should route annotation operations to DevModeHandlers', async () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          annotationId: 'annotation-123',
+          nodeId: 'node-456',
+          label: 'Design Note',
+          operation: 'add_annotation'
+        }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await handlerRegistry.handleToolCall('manage_annotations', {
+        operation: 'add_annotation',
+        nodeId: 'node-456',
+        label: 'Design Note'
+      });
+
+      expect(result.isError).toBe(false);
+      expect(result.content[0].text).toContain('annotationType: add_annotation');
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'ANNOTATION_OPERATION',
+        payload: {
+          operation: 'add_annotation',
+          nodeId: 'node-456',
+          label: 'Design Note'
+        }
+      });
+    });
+
+    test('should route measurement operations to DevModeHandlers', async () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          measurementId: 'measurement-123',
+          fromNodeId: 'node-1',
+          toNodeId: 'node-2',
+          direction: 'horizontal',
+          operation: 'add_measurement'
+        }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await handlerRegistry.handleToolCall('manage_measurements', {
+        operation: 'add_measurement',
+        fromNodeId: 'node-1',
+        toNodeId: 'node-2',
+        direction: 'horizontal'
+      });
+
+      expect(result.isError).toBe(false);
+      expect(result.content[0].text).toContain('measurementType: add_measurement');
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MEASUREMENT_OPERATION',
+        payload: {
+          operation: 'add_measurement',
+          fromNodeId: 'node-1',
+          toNodeId: 'node-2',
+          direction: 'horizontal'
+        }
+      });
+    });
+
+    test('should route dev resource operations to DevModeHandlers', async () => {
+      const mockResponse = {
+        success: true,
+        data: {
+          nodeId: 'node-123',
+          css: '.rectangle { width: 100px; height: 100px; }',
+          operation: 'generate_css'
+        }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await handlerRegistry.handleToolCall('manage_dev_resources', {
+        operation: 'generate_css',
+        nodeId: 'node-123'
+      });
+
+      expect(result.isError).toBe(false);
+      expect(result.content[0].text).toContain('resourceType: generate_css');
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'DEV_RESOURCE_OPERATION',
+        payload: {
+          operation: 'generate_css',
+          nodeId: 'node-123'
         }
       });
     });
@@ -467,6 +560,81 @@ describe('MCP Server Integration', () => {
       expect(flattenResult.content[0].text).toContain('vectorType: flatten');
 
       expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+    });
+
+    test('should support dev mode annotation workflow', async () => {
+      // Step 1: Create a node
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: { nodeId: 'node-123', nodeType: 'rectangle' }
+      });
+
+      const createResult = await handlerRegistry.handleToolCall('create_node', {
+        nodeType: 'rectangle',
+        width: 100,
+        height: 100
+      });
+
+      expect(createResult.isError).toBe(false);
+
+      // Step 2: Add annotation to the node
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: {
+          annotationId: 'annotation-456',
+          nodeId: 'node-123',
+          label: 'Ready for development',
+          operation: 'add_annotation'
+        }
+      });
+
+      const annotationResult = await handlerRegistry.handleToolCall('manage_annotations', {
+        operation: 'add_annotation',
+        nodeId: 'node-123',
+        label: 'Ready for development'
+      });
+
+      expect(annotationResult.isError).toBe(false);
+
+      // Step 3: Set dev status
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: {
+          nodeId: 'node-123',
+          status: 'ready_for_dev',
+          operation: 'set_dev_status'
+        }
+      });
+
+      const statusResult = await handlerRegistry.handleToolCall('manage_dev_resources', {
+        operation: 'set_dev_status',
+        nodeId: 'node-123',
+        status: 'ready_for_dev'
+      });
+
+      expect(statusResult.isError).toBe(false);
+
+      // Step 4: Generate CSS
+      mockSendToPlugin.mockResolvedValueOnce({
+        success: true,
+        data: {
+          nodeId: 'node-123',
+          css: '.rectangle { width: 100px; height: 100px; background: #FF0000; }',
+          operation: 'generate_css'
+        }
+      });
+
+      const cssResult = await handlerRegistry.handleToolCall('manage_dev_resources', {
+        operation: 'generate_css',
+        nodeId: 'node-123',
+        cssOptions: { includeComments: true }
+      });
+
+      expect(cssResult.isError).toBe(false);
+      expect(cssResult.content[0].text).toContain('css:');
+
+      // Verify all calls were made in sequence
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(4);
     });
   });
 
