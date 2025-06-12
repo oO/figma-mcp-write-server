@@ -5,3 +5,4 @@ dist/
 figma-plugin/ui.html
 figma-plugin/code.js
 figma-plugin/dist/
+coverage/
