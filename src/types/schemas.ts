@@ -169,3 +169,60 @@ export const ManageDevResourcesSchema = z.object({
 export type ManageAnnotationsParams = z.infer<typeof ManageAnnotationsSchema>;
 export type ManageMeasurementsParams = z.infer<typeof ManageMeasurementsSchema>;
 export type ManageDevResourcesParams = z.infer<typeof ManageDevResourcesSchema>;
+
+// ================================================================================
+// Export Operations Schemas
+// ================================================================================
+
+export const ManageExportsSchema = z.object({
+  operation: z.enum(['export_single', 'export_bulk', 'export_library', 'list_presets', 'apply_preset']),
+  
+  // Single node export
+  nodeId: z.string().optional(),
+  
+  // Bulk export
+  nodeIds: z.array(z.string()).optional(),
+  
+  // Export format and settings
+  format: z.enum(['PNG', 'SVG', 'JPG', 'PDF']).default('PNG'),
+  settings: z.object({
+    scale: z.number().default(1),
+    quality: z.number().min(1).max(100).optional(),
+    dpi: z.number().optional(),
+    constraint: z.object({
+      type: z.enum(['SCALE', 'WIDTH', 'HEIGHT']),
+      value: z.number()
+    }).optional(),
+    padding: z.number().optional(),
+    includeId: z.boolean().default(false),
+    suffix: z.string().optional()
+  }).optional(),
+  
+  // Preset management
+  exportPreset: z.enum(['ios_app_icon', 'android_assets', 'web_assets', 'marketing_assets', 'print_ready']).optional(),
+  presetId: z.string().optional(),
+  
+  // Organization strategy
+  organizationStrategy: z.enum(['flat', 'by_type', 'by_component', 'by_size', 'by_density', 'by_scale']).default('flat'),
+  
+  // Output control (simplified)
+  output: z.enum(['file', 'data']).default('file'),
+  
+  // File output parameters (when output='file')
+  outputDirectory: z.string().optional(),
+  
+  // Data output parameters (when output='data')
+  dataFormat: z.enum(['base64', 'hex']).default('base64'),
+  maxDataSize: z.number().optional(),
+  
+  // Library export
+  assetType: z.enum(['components', 'styles', 'variables']).optional(),
+  filters: z.object({
+    name: z.string().optional(),
+    published: z.boolean().optional(),
+    libraryId: z.string().optional()
+  }).optional()
+});
+
+// Export types for export operations
+export type ManageExportsParams = z.infer<typeof ManageExportsSchema>;

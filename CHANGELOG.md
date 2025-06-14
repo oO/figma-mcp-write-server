@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.0] - 2025-06-14
+
+### Added
+- **Comprehensive Export System**: Full-featured export capabilities for design-to-development workflows
+  - `manage_exports` tool with 5 operations: export_single, export_bulk, export_library, list_presets, apply_preset
+  - **Multi-format Support**: PNG, SVG, JPG, PDF export formats with quality settings
+  - **Export Presets**: Pre-configured export settings for iOS app icons, Android assets, web assets, marketing materials, and print-ready output
+  - **Flexible Output Options**: Choose between file system export or base64 data return
+  - **Organization Strategies**: Organize exports by type, component, size, density, or scale
+  - **Advanced Settings**: Scale factors, DPI control, padding, quality settings, and custom suffixes
+  - **Library Export**: Export components, styles, and variables from design libraries
+  - **File System Integration**: Custom output directories with intelligent default paths
+  - **Data Export**: Base64 and hex encoding for programmatic use
+
+### Enhanced
+- **Documentation**: Updated README and EXAMPLES with comprehensive export usage scenarios
+- **Type Safety**: Extended schema validation for all export parameters and operations
+- **Plugin Integration**: Added export handler in Figma plugin with preset management
+
+### Technical Details
+- Added ExportHandlers class with complete preset system (iOS, Android, web, marketing, print)
+- Implemented file system operations with error handling and path validation
+- Added data format conversion between base64, hex, and binary formats
+- Extended test suite with 23 unit tests and integration test coverage
+- Updated tool registry to include export functionality
+
 ## [0.24.0] - 2025-06-12
 
 ### Added

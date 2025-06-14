@@ -1,7 +1,7 @@
 import { BaseHandler } from './base-handler.js';
-import { SelectionParams, ExportParams, OperationResult, OperationHandler, NodeInfo, PageNodesResult } from '../types.js';
+import { SelectionParams, OperationResult, OperationHandler, NodeInfo, PageNodesResult } from '../types.js';
 import { findNodeById, formatNodeResponse, selectAndFocus, getAllNodes, getNodesByIds } from '../utils/node-utils.js';
-import { formatSelection, createPageNodesResponse, formatExportResponse } from '../utils/response-utils.js';
+import { formatSelection, createPageNodesResponse } from '../utils/response-utils.js';
 
 export class SelectionHandler extends BaseHandler {
   protected getHandlerName(): string {
@@ -13,7 +13,6 @@ export class SelectionHandler extends BaseHandler {
       GET_SELECTION: () => this.getSelection(),
       SET_SELECTION: (params) => this.setSelection(params),
       GET_PAGE_NODES: (params) => this.getPageNodes(params),
-      EXPORT_NODE: (params) => this.exportNode(params)
     };
   }
 
@@ -74,34 +73,6 @@ export class SelectionHandler extends BaseHandler {
     });
   }
 
-  private async exportNode(params: ExportParams): Promise<OperationResult> {
-    return this.executeOperation('exportNode', params, async () => {
-      this.validateParams(params, ['nodeId']);
-      
-      const node = findNodeById(params.nodeId);
-      const format = this.validateStringParam(
-        params.format || 'PNG',
-        'format',
-        ['PNG', 'JPG', 'SVG', 'PDF']
-      );
-      const scale = this.validateNumberParam(params.scale || 1, 'scale', 0.1, 4);
-      
-      try {
-        const exportSettings = {
-          format: format as any,
-          constraint: { type: 'SCALE', value: scale }
-        };
-        
-        // Note: Actual export would require additional Figma API setup
-        // This is a simplified implementation for the MCP interface
-        const exportData = await node.exportAsync(exportSettings);
-        
-        return formatExportResponse(params.nodeId, format, scale);
-      } catch (error) {
-        throw new Error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-    });
-  }
 
   private async clearSelection(): Promise<OperationResult> {
     return this.executeOperation('clearSelection', {}, async () => {

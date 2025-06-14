@@ -24,7 +24,7 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Modify** existing nodes (properties, position, styling)
 - ✅ **Delete** and duplicate design elements
 - ✅ **Manage** selections and page content
-- ✅ **Export** designs programmatically
+- ✅ **Export** designs programmatically with flexible file/data output options
 
 ## 🏗️ Architecture
 
@@ -69,7 +69,7 @@ graph LR
 | `get_selection` | Get currently selected nodes | - |
 | `set_selection` | Set node selection | nodeIds |
 | `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
-| `export_node` | Export nodes as images | nodeId, format, scale |
+| `manage_exports` | Export nodes as files or data with simplified output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
 | `get_plugin_status` | Check plugin connection | - |
 | `get_connection_health` | Get detailed connection metrics | - |
 
@@ -87,6 +87,7 @@ Common use cases:
 - **Vector Creation**: "Create custom icons with SVG paths and flatten complex shapes"
 - **Dev Handoff**: "Add annotations and measurements, generate CSS for developers"
 - **Batch Operations**: "Select all text elements and update font size"
+- **Export Operations**: "Export selected components as PNG files to Downloads folder" or "Return design data as base64 for processing"
 
 📚 **[Examples & Usage Guide →](EXAMPLES.md)**
 

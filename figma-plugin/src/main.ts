@@ -9,6 +9,7 @@ import { HierarchyHandler } from './handlers/hierarchy-handler.js';
 import { LayoutHandler } from './handlers/layout-handler.js';
 import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
+import { ExportHandler } from './handlers/export-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
   performAnnotationOperation, 
@@ -35,6 +36,7 @@ class FigmaPlugin {
     const layoutHandler = new LayoutHandler();
     const componentHandler = new ComponentHandler();
     const variableHandler = new VariableHandler();
+    const exportHandler = new ExportHandler();
 
     // Register all operations
     Object.assign(this.handlers, 
@@ -46,6 +48,7 @@ class FigmaPlugin {
       layoutHandler.getOperations(),
       componentHandler.getOperations(),
       variableHandler.getOperations(),
+      exportHandler.getOperations(),
       // Boolean and vector operations
       {
         'BOOLEAN_OPERATION': performBooleanOperation,

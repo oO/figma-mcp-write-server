@@ -60,19 +60,6 @@ export class SelectionHandlers implements ToolHandler {
           }
         }
       },
-      {
-        name: 'export_node',
-        description: 'Export a node as an image',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            nodeId: { type: 'string', description: 'ID of the node to export' },
-            format: { type: 'string', enum: ['PNG', 'JPG', 'SVG', 'PDF'], default: 'PNG', description: 'Export format' },
-            scale: { type: 'number', default: 1, description: 'Export scale factor' }
-          },
-          required: ['nodeId']
-        }
-      }
     ];
   }
 
@@ -84,8 +71,6 @@ export class SelectionHandlers implements ToolHandler {
         return this.setSelection(args);
       case 'get_page_nodes':
         return this.getPageNodes(args);
-      case 'export_node':
-        return this.exportNode(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -149,22 +134,4 @@ export class SelectionHandlers implements ToolHandler {
     };
   }
 
-  async exportNode(args: any): Promise<any> {
-    const response = await this.sendToPlugin({
-      type: 'EXPORT_NODE',
-      payload: args
-    });
-
-    if (!response.success) {
-      throw new Error(response.error || 'Export failed');
-    }
-
-    return {
-      content: [{
-        type: 'text',
-        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
-      }],
-      isError: false
-    };
-  }
 }

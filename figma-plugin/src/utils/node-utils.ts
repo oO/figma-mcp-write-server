@@ -1,14 +1,26 @@
 import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
 
-export function findNodeById(nodeId: string): SceneNode {
+export function findNodeById(nodeId: string): SceneNode | null {
   try {
     const node = figma.getNodeById(nodeId);
     if (!node) {
-      throw new Error(`Node with ID ${nodeId} not found`);
+      return null;
     }
+    
+    // Check if this is a scene node (can be rendered/exported)
+    const exportableTypes = [
+      'FRAME', 'GROUP', 'COMPONENT', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
+      'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION'
+    ];
+    
+    if (!exportableTypes.includes(node.type)) {
+      return null;
+    }
+    
     return node as SceneNode;
   } catch (error) {
-    throw error;
+    // figma.getNodeById can throw if nodeId is invalid format
+    return null;
   }
 }
 
@@ -158,7 +170,7 @@ export function clampIndex(index: number, maxLength: number): number {
 export function ensureNodeExists(nodeId: string): SceneNode {
   const node = findNodeById(nodeId);
   if (!node) {
-    throw new Error(`Node with ID ${nodeId} not found`);
+    throw new Error(`Node with ID ${nodeId} not found or is not exportable`);
   }
   return node;
 }

@@ -593,6 +593,149 @@ The AI can perform these operations:
 4. **Status Tracking**: Marks component as ready for development
 5. **Resource Links**: Adds links to relevant documentation or tickets
 
+## 📤 Export Operations
+
+### Basic Export Operations
+**User Instructions → AI Actions:**
+
+- **"Export this component as a PNG file"**
+  - AI uses `manage_exports` with `export_single` operation and PNG format
+  - Saves to `~/Downloads/Figma Exports` by default
+
+- **"Export these icons as SVG files to my desktop"**
+  - AI uses `export_bulk` operation with custom output directory
+  - Maintains vector format for scalable graphics
+
+- **"Get the base64 data for this image instead of saving a file"**
+  - AI uses `output: 'data'` parameter to return encoded image data
+  - Returns base64 string for direct use in applications
+
+### Export Format Options
+**User Instructions → AI Actions:**
+
+- **"Export as high-quality JPG for web use"**
+  - AI sets format to JPG with quality settings for optimized file size
+
+- **"Export as PDF for print materials"**
+  - AI uses PDF format for vector-based print-ready output
+
+- **"Export as SVG to preserve vector graphics"**
+  - AI maintains scalable vector format for web and design use
+
+### Advanced Export Settings
+**User Instructions → AI Actions:**
+
+- **"Export at 2x scale for retina displays"**
+  - AI applies scale factor for high-density screens
+
+- **"Export with custom filename including the component ID"**
+  - AI adds includeId setting for unique identification
+
+- **"Export with 10px padding around the design"**
+  - AI applies padding setting for breathing room around exported content
+
+### Export Presets
+**User Instructions → AI Actions:**
+
+- **"Export this icon for iOS app store submission"**
+  - AI uses `ios_app_icon` preset to generate all required icon sizes (20px to 1024px)
+
+- **"Export these assets for Android app development"**
+  - AI uses `android_assets` preset with density variants (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi)
+
+- **"Export components for responsive web design"**
+  - AI uses `web_assets` preset with 1x, 2x, 3x scales in PNG and SVG formats
+
+- **"Export marketing materials for social media"**
+  - AI uses `marketing_assets` preset with high-quality settings and common social media dimensions
+
+- **"Export print-ready graphics"**
+  - AI uses `print_ready` preset with 300 DPI and PDF/PNG formats
+
+### Export Organization Strategies
+**User Instructions → AI Actions:**
+
+- **"Export and organize files by component type"**
+  - AI uses `by_type` organization to group buttons, icons, etc. in separate folders
+
+- **"Export with flat file structure"**
+  - AI uses `flat` organization (default) for simple file listing
+
+- **"Organize exports by size for app icon sets"**
+  - AI uses `by_size` organization for grouped sizing (used automatically with iOS preset)
+
+### Bulk Export Operations
+**User Instructions → AI Actions:**
+
+- **"Export all selected components as PNG files"**
+  - AI uses `export_bulk` with array of node IDs for batch processing
+
+- **"Export entire component library for handoff"**
+  - AI uses `export_library` operation with component asset type
+
+- **"Export all color styles as reference images"**
+  - AI uses `export_library` with styles asset type for design system documentation
+
+### Data Export vs File Export
+**User Instructions → AI Actions:**
+
+- **"Save these exports as files I can access later"**
+  - AI uses `output: 'file'` (default) to save to disk with proper file organization
+
+- **"Return the image data so I can process it programmatically"**
+  - AI uses `output: 'data'` to return base64 or hex encoded binary data
+
+- **"Export as hex data for direct binary processing"**
+  - AI uses `dataFormat: 'hex'` for hexadecimal binary representation
+
+### Export Workflows
+
+**User Instructions:**
+"Export a complete icon set for mobile app development."
+
+**What the AI does:**
+1. **Preset Selection**: Uses `android_assets` or `ios_app_icon` preset based on target platform
+2. **Bulk Processing**: Exports all selected icons in required sizes/densities
+3. **Organization**: Creates organized folder structure (by_density or by_size)
+4. **Quality Control**: Applies appropriate settings for mobile display optimization
+5. **Progress Tracking**: Reports completion status for each icon in the set
+
+**User Instructions:**
+"Export design system components for developer handoff with proper file organization."
+
+**What the AI does:**
+1. **Library Export**: Uses `export_library` to gather all components, styles, and variables
+2. **Format Selection**: Chooses appropriate formats (PNG for raster, SVG for vectors)
+3. **Organization**: Uses `by_component` strategy for logical file grouping
+4. **High Quality**: Applies 2x scale and optimal settings for development use
+5. **Documentation**: Provides export summary with file locations and organization details
+
+**User Instructions:**
+"Get image data for these graphics to embed directly in my application."
+
+**What the AI does:**
+1. **Data Mode**: Uses `output: 'data'` to return encoded image data instead of files
+2. **Format Optimization**: Selects base64 encoding for easy integration
+3. **Size Management**: Applies `maxDataSize` limits if specified for memory constraints
+4. **Batch Processing**: Returns array of image data objects for multiple selections
+5. **Metadata Inclusion**: Provides file names, dimensions, and format information
+
+### Export Troubleshooting
+**Common scenarios and solutions:**
+
+- **"The exported files aren't saving to my specified folder"**
+  - AI checks directory permissions and uses fallback locations if needed
+  - Provides specific error messages with suggested alternative paths
+
+- **"I need higher resolution exports"**
+  - AI applies scale factors (2x, 3x) or DPI settings for enhanced resolution
+
+- **"My export files are too large"**
+  - AI suggests quality adjustments for JPG or scale reductions for size optimization
+
+- **"I want to organize my exports differently"**
+  - AI explains organization strategy options and applies preferred structure
+
 ## 💡 Tips for Users
 
 ### General Usage

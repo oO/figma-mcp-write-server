@@ -9,6 +9,7 @@ import { ComponentHandlers } from './component-handlers.js';
 import { VariableHandlers } from './variable-handlers.js';
 import { BooleanHandlers } from './boolean-handlers.js';
 import { DevModeHandlers } from './dev-mode-handlers.js';
+import { ExportHandlers } from './export-handlers.js';
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -26,6 +27,7 @@ export class HandlerRegistry {
     this.registerHandler(new VariableHandlers(sendToPluginFn));
     this.registerHandler(new BooleanHandlers(sendToPluginFn));
     this.registerHandler(new DevModeHandlers(sendToPluginFn));
+    this.registerHandler(new ExportHandlers(sendToPluginFn));
     
     // Add plugin status tool
     this.addPluginStatusTool();
