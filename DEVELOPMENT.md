@@ -308,6 +308,13 @@ figma-mcp-write-server/
 - Figma account and desktop app
 - Understanding of MCP protocol
 
+### Platform Requirements
+- **Windows (win32)** or **macOS (darwin)** operating system
+- **Linux and other Unix systems are not supported** for export operations
+- Export functionality uses platform-specific default paths:
+  - Windows: `~/Documents/Figma Exports`
+  - macOS: `~/Downloads/Figma Exports`
+
 ### Initial Setup
 ```bash
 # Clone the repository

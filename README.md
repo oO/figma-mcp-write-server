@@ -69,7 +69,7 @@ graph LR
 | `get_selection` | Get currently selected nodes | - |
 | `set_selection` | Set node selection | nodeIds |
 | `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
-| `manage_exports` | Export nodes as files or data with simplified output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
+| `manage_exports` | Export nodes as files or data with cross-platform output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
 | `get_plugin_status` | Check plugin connection | - |
 | `get_connection_health` | Get detailed connection metrics | - |
 
@@ -87,7 +87,7 @@ Common use cases:
 - **Vector Creation**: "Create custom icons with SVG paths and flatten complex shapes"
 - **Dev Handoff**: "Add annotations and measurements, generate CSS for developers"
 - **Batch Operations**: "Select all text elements and update font size"
-- **Export Operations**: "Export selected components as PNG files to Downloads folder" or "Return design data as base64 for processing"
+- **Export Operations**: "Export selected components as PNG files to default export folder" or "Return design data as base64 for processing"
 
 📚 **[Examples & Usage Guide →](EXAMPLES.md)**
 
@@ -99,6 +99,13 @@ Common use cases:
 
 ### Environment Variables
 - `FIGMA_MCP_PORT` - WebSocket server port (default: 8765)
+
+### Platform Support
+The export system supports Windows and macOS with automatic platform detection:
+- **Windows**: `~/Documents/Figma Exports`
+- **macOS**: `~/Downloads/Figma Exports`
+
+**Note**: Linux and other Unix-like systems are not currently supported for export operations.
 
 ## 🚦 Connection Status
 

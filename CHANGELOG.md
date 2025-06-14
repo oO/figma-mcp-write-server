@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.1] - 2025-06-14
+
+### Changed
+- **Platform Support**: Removed Linux support to focus on Windows and macOS
+  - Export operations now only support Windows (win32) and macOS (darwin)
+  - Simplified cross-platform logic and error handling
+  - Updated default export paths: Windows uses `~/Documents/Figma Exports`, macOS uses `~/Downloads/Figma Exports`
+  - Linux and other Unix systems will receive clear error messages for export operations
+
+### Updated
+- **Documentation**: Updated README.md and DEVELOPMENT.md to reflect Windows/macOS only support
+- **Error Handling**: Added explicit platform validation with helpful error messages
+
 ## [0.25.0] - 2025-06-14
 
 ### Added
