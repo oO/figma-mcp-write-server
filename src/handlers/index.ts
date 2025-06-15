@@ -11,6 +11,7 @@ import { BooleanHandlers } from "./boolean-handlers.js";
 import { DevModeHandlers } from "./dev-mode-handlers.js";
 import { ExportHandlers } from "./export-handlers.js";
 import * as os from "os";
+import * as path from "path";
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -162,9 +163,9 @@ export class HandlerRegistry {
 
     switch (platform) {
       case "win32":
-        return require("path").join(homeDir, "Documents", "Figma Exports");
+        return path.join(homeDir, "Documents", "Figma Exports");
       case "darwin":
-        return require("path").join(homeDir, "Downloads", "Figma Exports");
+        return path.join(homeDir, "Downloads", "Figma Exports");
       default:
         throw new Error(
           `Unsupported platform: ${platform}. This export system only supports Windows (win32) and macOS (darwin).`,

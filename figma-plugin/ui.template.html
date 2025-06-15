@@ -5,11 +5,9 @@
         <title>Figma MCP Plugin</title>
         <style>
             body {
-                font-family:
-                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-                    sans-serif;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
                 margin: 0;
-                padding: 8px;
+                padding: 12px;
                 background: #ffffff;
                 font-size: 13px;
                 line-height: 1.5;
@@ -19,30 +17,45 @@
                 box-sizing: border-box;
                 display: flex;
                 flex-direction: column;
+                gap: 12px;
+            }
+
+            .header {
+                text-align: center;
+                padding: 8px 0;
+                border-bottom: 1px solid #e2e8f0;
             }
 
             .title {
                 font-size: 16px;
                 font-weight: 600;
                 color: #6b7280;
-                margin: 0 0 8px 0;
-                text-align: center;
+                margin: 0;
             }
 
-            .status {
+            .status-section {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                background: #f8fafc;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+            }
+
+            .connection-info {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                margin-top: 8px;
-                margin-bottom: 4px;
+                flex: 1;
             }
 
             .status-dot {
-                width: 12px;
-                height: 12px;
+                width: 14px;
+                height: 14px;
                 border-radius: 50%;
                 background: #ef4444;
-                margin-left: 4px;
+                flex-shrink: 0;
             }
 
             .status-dot.connected {
@@ -52,18 +65,83 @@
             .status-text {
                 color: #374151;
                 font-weight: 500;
+                font-size: 12px;
+                flex: 1;
+            }
+
+            .heartbeat {
+                font-size: 16px;
+                cursor: default;
+                user-select: none;
+                opacity: 0.3;
+            }
+
+            .heartbeat.active {
+                opacity: 1;
+            }
+
+            .heartbeat.broken {
+                opacity: 0.5;
+            }
+
+            .heartbeat.animate {
+                animation: heartbeat-pulse 600ms ease-out;
+            }
+
+            @keyframes heartbeat-pulse {
+                0% { transform: scale(1); }
+                20% { transform: scale(1.25); }
+                40% { transform: scale(1); }
+                60% { transform: scale(1.15); }
+                100% { transform: scale(1); }
+            }
+
+            .stats-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 16px;
+                background: #f1f5f9;
+                padding: 16px;
+                border-radius: 8px;
+            }
+
+            .stat-item {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .stat-value {
+                font-size: 18px;
+                font-weight: 600;
+                color: #334155;
+            }
+
+            .stat-label {
+                font-size: 11px;
+                color: #64748b;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .controls {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
             }
 
             .disconnect-btn {
-                width: 100%;
-                padding: 8px;
+                padding: 8px 16px;
                 border: none;
                 border-radius: 6px;
                 background: #6b7280;
                 color: white;
-                font-size: 13px;
+                font-size: 12px;
                 font-weight: 500;
                 cursor: pointer;
+                transition: background 0.2s;
             }
 
             .disconnect-btn:hover {
@@ -78,51 +156,61 @@
                 background: #2563eb;
             }
 
-            .log {
-                background: #1f2937;
-                color: #f9fafb;
-                padding: 8px;
-                border-radius: 6px;
-                font-family: "SF Mono", Monaco, monospace;
-                font-size: 11px;
-                line-height: 1.5;
-                flex: 1;
-                min-height: 0;
-                overflow-y: auto;
+            .disconnect-btn:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
             }
 
-            .log-entry {
-                margin-bottom: 4px;
+            .debug-control {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px;
+                color: #6b7280;
             }
 
-            .log-entry.error {
-                color: #fca5a5;
-            }
-
-            .log-entry.success {
-                color: #86efac;
-            }
-
-            .log-entry.info {
-                color: #93c5fd;
+            .debug-checkbox {
+                width: 14px;
+                height: 14px;
+                cursor: pointer;
             }
         </style>
     </head>
     <body>
-        <div class="title">MCP WebSocket Client v{{VERSION}}</div>
-
-        <div class="log" id="logContainer">
-            <div class="log-entry info">🚀 Plugin UI loaded</div>
+        <div class="header">
+            <div class="title">MCP WebSocket Client v{{VERSION}}</div>
         </div>
 
-        <div class="status">
-            <div class="status-dot" id="connectionIndicator"></div>
-            <div class="status-text" id="connectionStatus">
-                Connecting to localhost:8765...
+        <div class="status-section">
+            <div class="connection-info">
+                <div class="status-dot" id="statusDot"></div>
+                <div class="status-text" id="connectionStatus">Connecting to localhost:8765...</div>
+            </div>
+            <div class="heartbeat" id="heartbeat" title="Connection heartbeat">💔</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="commandCount">0</div>
+                <div class="stat-label">Commands</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="errorCount">0</div>
+                <div class="stat-label">Errors</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="uptime">00:00</div>
+                <div class="stat-label">Uptime</div>
             </div>
         </div>
 
-        <button class="disconnect-btn" id="connectionToggle">Connect</button>
+        <div class="controls">
+            <button class="disconnect-btn" id="connectionToggle">Connect</button>
+            <div class="debug-control">
+                <input type="checkbox" class="debug-checkbox" id="debugToggle">
+                <label for="debugToggle">Debug</label>
+            </div>
+        </div>
 
         <script>
             let ws = null;
@@ -130,34 +218,100 @@
             let connectionAttempts = 0;
             let maxReconnectAttempts = 10;
             let reconnectTimer = null;
+            let debugMode = false;
+            let startTime = Date.now();
+            let uptimeTimer = null;
+            
+            // Statistics
+            let stats = {
+                commands: 0,
+                errors: 0
+            };
 
-            const connectionIndicator = document.getElementById(
-                "connectionIndicator",
-            );
-            const connectionStatus =
-                document.getElementById("connectionStatus");
-            const connectionToggle =
-                document.getElementById("connectionToggle");
-            const logContainer = document.getElementById("logContainer");
+            // DOM elements
+            const statusDot = document.getElementById("statusDot");
+            const connectionStatus = document.getElementById("connectionStatus");
+            const connectionToggle = document.getElementById("connectionToggle");
+            const debugToggle = document.getElementById("debugToggle");
+            const heartbeat = document.getElementById("heartbeat");
+            const commandCount = document.getElementById("commandCount");
+            const errorCount = document.getElementById("errorCount");
+            const uptime = document.getElementById("uptime");
 
-            function log(message, type = "info") {
-                const entry = document.createElement("div");
-                entry.className = `log-entry ${type}`;
-                entry.textContent = message;
-                logContainer.appendChild(entry);
-                logContainer.scrollTop = logContainer.scrollHeight;
-                console.log(message);
+            function log(message, level = "info") {
+                if (debugMode) {
+                    console.log(`[DEBUG] ${message}`);
+                } else {
+                    console.log(`✓ ${message}`);
+                }
             }
 
-            function updateConnectionStatus(
-                connected,
-                message,
-                isConnecting = false,
-            ) {
+            function logCommand(operation, success = null) {
+                stats.commands++;
+                if (success === false) stats.errors++;
+                updateStats();
+
+                const message = success === null ? operation :
+                    success ? `${operation} executed` : `${operation} failed`;
+                log(message, success === false ? "error" : "info");
+            }
+
+            function updateStats() {
+                commandCount.textContent = stats.commands;
+                errorCount.textContent = stats.errors;
+            }
+
+            function updateUptime() {
+                const elapsed = Date.now() - startTime;
+                const seconds = Math.floor(elapsed / 1000);
+                const minutes = Math.floor(seconds / 60);
+                const hours = Math.floor(minutes / 60);
+                
+                if (hours > 0) {
+                    uptime.textContent = `${hours.toString().padStart(2, '0')}:${(minutes % 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+                } else {
+                    uptime.textContent = `${minutes.toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`;
+                }
+            }
+
+            function startUptimeTimer() {
+                uptimeTimer = setInterval(updateUptime, 1000);
+                updateUptime();
+            }
+
+            function stopUptimeTimer() {
+                if (uptimeTimer) {
+                    clearInterval(uptimeTimer);
+                    uptimeTimer = null;
+                }
+            }
+
+            function animateHeartbeat() {
+                heartbeat.classList.remove('animate');
+                // Force reflow
+                heartbeat.offsetHeight;
+                heartbeat.classList.add('animate');
+            }
+
+            function updateConnectionStatus(connected, message, isConnecting = false) {
                 isConnected = connected;
-                connectionIndicator.className = `status-dot ${connected ? "connected" : ""}`;
+                
+                // Update status dot
+                statusDot.className = `status-dot ${connected ? "connected" : ""}`;
                 connectionStatus.textContent = message;
 
+                // Update heartbeat
+                if (connected) {
+                    heartbeat.textContent = "❤️";
+                    heartbeat.className = "heartbeat active";
+                    startUptimeTimer();
+                } else {
+                    heartbeat.textContent = "💔";
+                    heartbeat.className = "heartbeat broken";
+                    stopUptimeTimer();
+                }
+
+                // Update button
                 if (isConnecting) {
                     connectionToggle.textContent = "Connecting...";
                     connectionToggle.disabled = true;
@@ -179,21 +333,15 @@
                 }
 
                 connectionAttempts++;
-                log(
-                    `Connecting to MCP server (attempt ${connectionAttempts})...`,
-                    "info",
-                );
+                log(`Connecting to MCP server (attempt ${connectionAttempts})`);
                 updateConnectionStatus(false, "Connecting...", true);
 
                 try {
                     ws = new WebSocket("ws://localhost:8765");
 
                     ws.onopen = () => {
-                        log("✅ Connected to MCP server", "success");
-                        updateConnectionStatus(
-                            true,
-                            "Connected to localhost:8765",
-                        );
+                        log("Connected to MCP server");
+                        updateConnectionStatus(true, "Connected to localhost:8765");
                         connectionAttempts = 0;
                         clearReconnectTimer();
                         ws.send(JSON.stringify({ type: "PLUGIN_HELLO" }));
@@ -204,26 +352,23 @@
                             const message = JSON.parse(event.data);
                             handleMessage(message);
                         } catch (error) {
-                            log(
-                                `❌ Failed to parse message: ${error.message}`,
-                                "error",
-                            );
+                            log(`Failed to parse message: ${error.message}`);
                         }
                     };
 
                     ws.onclose = () => {
-                        log("❌ Connection closed", "error");
+                        log("Connection closed");
                         updateConnectionStatus(false, "Disconnected");
                         scheduleReconnect();
                     };
 
                     ws.onerror = (error) => {
-                        console.error('WebSocket error:', error);
-                        log(`💥 WebSocket connection failed`, "error");
+                        console.error("WebSocket error:", error);
+                        log("WebSocket connection failed");
                         updateConnectionStatus(false, "Connection error");
                     };
                 } catch (error) {
-                    log(`❌ Failed to connect: ${error.message}`, "error");
+                    log(`Failed to connect: ${error.message}`);
                     updateConnectionStatus(false, "Connection failed");
                     scheduleReconnect();
                 }
@@ -236,24 +381,18 @@
                     ws = null;
                 }
                 updateConnectionStatus(false, "Disconnected");
-                log("🛑 Disconnected from MCP server", "info");
+                log("Disconnected from MCP server");
             }
 
             function scheduleReconnect() {
-                if (
-                    reconnectTimer ||
-                    connectionAttempts >= maxReconnectAttempts
-                ) {
+                if (reconnectTimer || connectionAttempts >= maxReconnectAttempts) {
                     return;
                 }
 
-                const delay = Math.min(
-                    1000 * Math.pow(2, connectionAttempts - 1),
-                    30000,
-                );
+                const delay = Math.min(1000 * Math.pow(2, connectionAttempts - 1), 30000);
 
                 reconnectTimer = setTimeout(() => {
-                    log(`🔄 Reconnecting in ${delay}ms...`, "info");
+                    log(`Reconnecting in ${delay}ms`);
                     reconnectTimer = null;
                     connect();
                 }, delay);
@@ -267,38 +406,42 @@
             }
 
             function handleMessage(message) {
-                log(`📨 Received: ${message.type}`, "info");
+                if (debugMode) {
+                    console.log(`[DEBUG] Received message: ${JSON.stringify(message)}`);
+                }
 
                 if (message.type && message.id) {
-                    log(`🔄 Forwarding ${message.type} to main thread`, "info");
-                    parent.postMessage(
-                        {
-                            pluginMessage: {
-                                type: "PLUGIN_OPERATION",
-                                operation: message.type,
-                                payload: message.payload,
-                                id: message.id,
-                            },
+                    if (debugMode) {
+                        console.log(`[DEBUG] Forwarding ${message.type} to main thread`);
+                    }
+                    parent.postMessage({
+                        pluginMessage: {
+                            type: "PLUGIN_OPERATION",
+                            operation: message.type,
+                            payload: message.payload,
+                            id: message.id,
                         },
-                        "*",
-                    );
+                    }, "*");
                 } else if (message.type === "CONNECTED") {
-                    log(`✅ Server acknowledged connection`, "success");
+                    log("Server acknowledged connection");
                 } else if (message.type === "HEARTBEAT") {
-                    // Handle heartbeat messages - no id required
-                    log(`💓 Heartbeat received`, "info");
-                    // Send heartbeat acknowledgment back to server
+                    if (debugMode) {
+                        console.log("[DEBUG] Heartbeat received");
+                    }
+                    animateHeartbeat();
                     if (ws && isConnected) {
-                        ws.send(JSON.stringify({ type: 'HEARTBEAT_ACK', timestamp: Date.now() }));
+                        ws.send(JSON.stringify({ 
+                            type: "HEARTBEAT_ACK", 
+                            timestamp: Date.now() 
+                        }));
                     }
                 } else if (message.type === "HEARTBEAT_ACK") {
-                    // Handle heartbeat acknowledgment - no id required
-                    log(`💓 Heartbeat ACK received`, "info");
+                    if (debugMode) {
+                        console.log("[DEBUG] Heartbeat ACK received");
+                    }
+                    animateHeartbeat();
                 } else {
-                    log(
-                        `⚠️ Message missing required fields (type/id): ${JSON.stringify(message)}`,
-                        "error",
-                    );
+                    log(`Message missing required fields: ${JSON.stringify(message)}`);
                 }
             }
 
@@ -306,13 +449,13 @@
                 if (ws && isConnected) {
                     const response = { id, success, data, error };
                     ws.send(JSON.stringify(response));
-                    log(
-                        `📤 Sent response for ${id}`,
-                        success ? "success" : "error",
-                    );
+                    if (debugMode) {
+                        console.log(`[DEBUG] Sent response for ${id}: ${success ? "success" : "error"}`);
+                    }
                 }
             }
 
+            // Event listeners
             window.addEventListener("message", (event) => {
                 const msg = event.data.pluginMessage;
                 if (!msg) return;
@@ -320,6 +463,7 @@
                 switch (msg.type) {
                     case "OPERATION_RESPONSE":
                         sendResponse(msg.id, msg.success, msg.data, msg.error);
+                        logCommand(msg.operation || "UNKNOWN", msg.success);
                         break;
                 }
             });
@@ -332,7 +476,13 @@
                 }
             });
 
-            log("🚀 Auto-connecting to MCP server...", "info");
+            debugToggle.addEventListener("change", (event) => {
+                debugMode = event.target.checked;
+                log(`Debug mode ${debugMode ? "enabled" : "disabled"}`);
+            });
+
+            // Initialize
+            log("Plugin UI loaded");
             setTimeout(connect, 1000);
         </script>
     </body>

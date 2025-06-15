@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.25.2] - 2025-06-15
+
+### Fixed
+- **Plugin UI**: Complete refactor for cleaner, more professional interface
+  - Removed log display from UI - all logs now go to browser console (F12)
+  - Added visual heartbeat indicator (❤️/💔) with double-beat animation on actual heartbeat messages
+  - Replaced continuous status logging with clean status dot (🟢/🔴) and connection text
+  - Added statistics grid showing Commands, Errors, and Uptime (removed success counter)
+  - Implemented simple debug checkbox controlling console logging verbosity
+  - Fixed heartbeat animation to scale to 125% as specified
+  - Corrected title from "Plugin Title" to "MCP WebSocket Client"
+  - Improved visual balance with 14px status dot size
+- **Build System**: Fixed `get_plugin_status` error by replacing `require("path")` with proper ES6 import
+
+### Changed
+- **UI Layout**: New clean layout structure with status section, stats grid, and controls
+- **Debug Logging**: Debug toggle now controls console verbosity instead of UI display
+- **Heartbeat Display**: Visual heartbeat animation only triggers on actual WebSocket heartbeat messages
+
 ## [0.25.1] - 2025-06-14
 
 ### Changed
