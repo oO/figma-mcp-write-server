@@ -61,8 +61,14 @@ export const ManageImagesSchema = z.object({
   imageTransform: ImageTransformSchema.optional(),
   rotation: z.union([z.literal(0), z.literal(90), z.literal(180), z.literal(270)]).optional(),
 
-  // Image Filters
-  filters: ImageFiltersSchema.optional(),
+  // Flattened Image Filter Properties
+  filterExposure: z.number().min(-1).max(1).optional(),
+  filterContrast: z.number().min(-1).max(1).optional(),
+  filterSaturation: z.number().min(-1).max(1).optional(),
+  filterTemperature: z.number().min(-1).max(1).optional(),
+  filterTint: z.number().min(-1).max(1).optional(),
+  filterHighlights: z.number().min(-1).max(1).optional(),
+  filterShadows: z.number().min(-1).max(1).optional(),
 
   // Image Replacement & Smart Fitting
   replaceImageUrl: z.string().url().optional(),

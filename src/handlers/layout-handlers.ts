@@ -20,8 +20,16 @@ export class LayoutHandlers implements ToolHandler {
             nodeId: { type: 'string', description: 'Frame node ID' },
             direction: { type: 'string', enum: ['horizontal', 'vertical'], description: 'Layout direction' },
             spacing: { type: 'number', description: 'Spacing between children' },
+            paddingTop: { type: 'number', description: 'Top padding around content' },
+            paddingRight: { type: 'number', description: 'Right padding around content' },
+            paddingBottom: { type: 'number', description: 'Bottom padding around content' },
+            paddingLeft: { type: 'number', description: 'Left padding around content' },
             primaryAlignment: { type: 'string', enum: ['min', 'center', 'max', 'space_between'], description: 'Primary axis alignment' },
-            counterAlignment: { type: 'string', enum: ['min', 'center', 'max'], description: 'Counter axis alignment' }
+            counterAlignment: { type: 'string', enum: ['min', 'center', 'max'], description: 'Counter axis alignment' },
+            resizingWidth: { type: 'string', enum: ['hug', 'fill', 'fixed'], description: 'Width resizing behavior (hug content, fill container, or fixed size)' },
+            resizingHeight: { type: 'string', enum: ['hug', 'fill', 'fixed'], description: 'Height resizing behavior (hug content, fill container, or fixed size)' },
+            strokesIncludedInLayout: { type: 'boolean', description: 'Whether strokes are included in layout calculations' },
+            layoutWrap: { type: 'string', enum: ['no_wrap', 'wrap'], description: 'Layout wrap behavior' }
           },
           required: ['operation', 'nodeId']
         }
@@ -74,22 +82,28 @@ export class LayoutHandlers implements ToolHandler {
 
   async manageAutoLayout(args: any): Promise<any> {
     const validatedArgs = ManageAutoLayoutSchema.parse(args);
-    const { operation, nodeId, direction, spacing, padding, primaryAlignment, counterAlignment, resizing, strokesIncludedInLayout, layoutWrap } = validatedArgs;
+    const { operation, nodeId, direction, spacing, paddingTop, paddingRight, paddingBottom, paddingLeft, primaryAlignment, counterAlignment, resizingWidth, resizingHeight, strokesIncludedInLayout, layoutWrap } = validatedArgs;
+
+    const payload = {
+      operation,
+      nodeId,
+      direction,
+      spacing,
+      paddingTop,
+      paddingRight,
+      paddingBottom,
+      paddingLeft,
+      primaryAlignment,
+      counterAlignment,
+      resizingWidth,
+      resizingHeight,
+      strokesIncludedInLayout,
+      layoutWrap
+    };
 
     const response = await this.sendToPlugin({
       type: 'MANAGE_AUTO_LAYOUT',
-      payload: {
-        operation,
-        nodeId,
-        direction,
-        spacing,
-        padding,
-        primaryAlignment,
-        counterAlignment,
-        resizing,
-        strokesIncludedInLayout,
-        layoutWrap
-      }
+      payload
     });
 
     if (!response.success) {

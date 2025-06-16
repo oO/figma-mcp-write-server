@@ -187,10 +187,14 @@ export interface AutoLayoutParams {
   nodeId: string;
   direction?: string;
   spacing?: number;
-  padding?: Padding;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
   primaryAlignment?: string;
   counterAlignment?: string;
-  resizing?: Resizing;
+  resizingWidth?: string;
+  resizingHeight?: string;
   strokesIncludedInLayout?: boolean;
   layoutWrap?: string;
 }

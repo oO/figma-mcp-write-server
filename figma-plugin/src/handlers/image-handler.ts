@@ -14,15 +14,13 @@ interface ImageParams {
   scaleMode?: 'FILL' | 'FIT' | 'CROP' | 'TILE';
   imageTransform?: number[][];
   rotation?: 0 | 90 | 180 | 270;
-  filters?: {
-    exposure?: number;
-    contrast?: number;
-    saturation?: number;
-    temperature?: number;
-    tint?: number;
-    highlights?: number;
-    shadows?: number;
-  };
+  filterExposure?: number;
+  filterContrast?: number;
+  filterSaturation?: number;
+  filterTemperature?: number;
+  filterTint?: number;
+  filterHighlights?: number;
+  filterShadows?: number;
   replaceImageUrl?: string;
   replaceImageBytes?: string;
   fitStrategy?: 'preserve_container' | 'preserve_aspect' | 'smart_crop' | 'letterbox';
@@ -292,8 +290,20 @@ export class ImageHandler extends BaseHandler {
   }
 
   private async updateFilters(params: ImageParams): Promise<OperationResult> {
-    if (!params.nodeId || !params.filters) {
-      throw new Error('nodeId and filters are required for update_filters operation');
+    if (!params.nodeId) {
+      throw new Error('nodeId is required for update_filters operation');
+    }
+    
+    const hasFilters = params.filterExposure !== undefined || 
+                      params.filterContrast !== undefined || 
+                      params.filterSaturation !== undefined || 
+                      params.filterTemperature !== undefined || 
+                      params.filterTint !== undefined || 
+                      params.filterHighlights !== undefined || 
+                      params.filterShadows !== undefined;
+    
+    if (!hasFilters) {
+      throw new Error('At least one filter property is required for update_filters operation');
     }
 
     try {
@@ -311,13 +321,13 @@ export class ImageHandler extends BaseHandler {
           fills[i] = {
             ...fill,
             filters: {
-              exposure: params.filters.exposure || 0,
-              contrast: params.filters.contrast || 0,
-              saturation: params.filters.saturation || 0,
-              temperature: params.filters.temperature || 0,
-              tint: params.filters.tint || 0,
-              highlights: params.filters.highlights || 0,
-              shadows: params.filters.shadows || 0,
+              exposure: params.filterExposure !== undefined ? params.filterExposure : (fill.filters?.exposure || 0),
+              contrast: params.filterContrast !== undefined ? params.filterContrast : (fill.filters?.contrast || 0),
+              saturation: params.filterSaturation !== undefined ? params.filterSaturation : (fill.filters?.saturation || 0),
+              temperature: params.filterTemperature !== undefined ? params.filterTemperature : (fill.filters?.temperature || 0),
+              tint: params.filterTint !== undefined ? params.filterTint : (fill.filters?.tint || 0),
+              highlights: params.filterHighlights !== undefined ? params.filterHighlights : (fill.filters?.highlights || 0),
+              shadows: params.filterShadows !== undefined ? params.filterShadows : (fill.filters?.shadows || 0),
             }
           };
         }
@@ -325,10 +335,19 @@ export class ImageHandler extends BaseHandler {
 
       targetNode.fills = fills;
 
+      const appliedFilters: any = {};
+      if (params.filterExposure !== undefined) appliedFilters.exposure = params.filterExposure;
+      if (params.filterContrast !== undefined) appliedFilters.contrast = params.filterContrast;
+      if (params.filterSaturation !== undefined) appliedFilters.saturation = params.filterSaturation;
+      if (params.filterTemperature !== undefined) appliedFilters.temperature = params.filterTemperature;
+      if (params.filterTint !== undefined) appliedFilters.tint = params.filterTint;
+      if (params.filterHighlights !== undefined) appliedFilters.highlights = params.filterHighlights;
+      if (params.filterShadows !== undefined) appliedFilters.shadows = params.filterShadows;
+
       return createSuccessResponse({
         nodeId: targetNode.id,
         nodeName: targetNode.name,
-        filtersApplied: params.filters,
+        filtersApplied: appliedFilters,
         updatedAt: new Date().toISOString()
       });
 
@@ -584,15 +603,23 @@ export class ImageHandler extends BaseHandler {
     }
 
     // Apply filters if provided
-    if (params.filters) {
+    const hasFilters = params.filterExposure !== undefined || 
+                      params.filterContrast !== undefined || 
+                      params.filterSaturation !== undefined || 
+                      params.filterTemperature !== undefined || 
+                      params.filterTint !== undefined || 
+                      params.filterHighlights !== undefined || 
+                      params.filterShadows !== undefined;
+    
+    if (hasFilters) {
       imagePaint.filters = {
-        exposure: params.filters.exposure || 0,
-        contrast: params.filters.contrast || 0,
-        saturation: params.filters.saturation || 0,
-        temperature: params.filters.temperature || 0,
-        tint: params.filters.tint || 0,
-        highlights: params.filters.highlights || 0,
-        shadows: params.filters.shadows || 0,
+        exposure: params.filterExposure || 0,
+        contrast: params.filterContrast || 0,
+        saturation: params.filterSaturation || 0,
+        temperature: params.filterTemperature || 0,
+        tint: params.filterTint || 0,
+        highlights: params.filterHighlights || 0,
+        shadows: params.filterShadows || 0,
       };
     }
 

@@ -52,11 +52,17 @@ export class LayoutHandler extends BaseHandler {
     }
     
     // Set padding
-    if (params.padding) {
-      frame.paddingTop = params.padding.top || 0;
-      frame.paddingRight = params.padding.right || 0;
-      frame.paddingBottom = params.padding.bottom || 0;
-      frame.paddingLeft = params.padding.left || 0;
+    if (params.paddingTop !== undefined) {
+      frame.paddingTop = params.paddingTop;
+    }
+    if (params.paddingRight !== undefined) {
+      frame.paddingRight = params.paddingRight;
+    }
+    if (params.paddingBottom !== undefined) {
+      frame.paddingBottom = params.paddingBottom;
+    }
+    if (params.paddingLeft !== undefined) {
+      frame.paddingLeft = params.paddingLeft;
     }
     
     // Set alignments
@@ -69,10 +75,8 @@ export class LayoutHandler extends BaseHandler {
     }
     
     // Set resizing behavior
-    if (params.resizing) {
-      if (params.resizing.width) {
-        frame.layoutGrow = params.resizing.width === 'fill' ? 1 : 0;
-      }
+    if (params.resizingWidth) {
+      frame.layoutGrow = params.resizingWidth === 'fill' ? 1 : 0;
     }
     
     // Set other properties
@@ -125,11 +129,17 @@ export class LayoutHandler extends BaseHandler {
     }
     
     // Update padding
-    if (params.padding) {
-      if (params.padding.top !== undefined) frame.paddingTop = params.padding.top;
-      if (params.padding.right !== undefined) frame.paddingRight = params.padding.right;
-      if (params.padding.bottom !== undefined) frame.paddingBottom = params.padding.bottom;
-      if (params.padding.left !== undefined) frame.paddingLeft = params.padding.left;
+    if (params.paddingTop !== undefined) {
+      frame.paddingTop = params.paddingTop;
+    }
+    if (params.paddingRight !== undefined) {
+      frame.paddingRight = params.paddingRight;
+    }
+    if (params.paddingBottom !== undefined) {
+      frame.paddingBottom = params.paddingBottom;
+    }
+    if (params.paddingLeft !== undefined) {
+      frame.paddingLeft = params.paddingLeft;
     }
     
     // Update alignments
@@ -182,12 +192,10 @@ export class LayoutHandler extends BaseHandler {
       autoLayout: {
         direction: frame.layoutMode.toLowerCase(),
         spacing: frame.itemSpacing,
-        padding: {
-          top: frame.paddingTop,
-          right: frame.paddingRight,
-          bottom: frame.paddingBottom,
-          left: frame.paddingLeft
-        },
+        paddingTop: frame.paddingTop,
+        paddingRight: frame.paddingRight,
+        paddingBottom: frame.paddingBottom,
+        paddingLeft: frame.paddingLeft,
         primaryAlignment: frame.primaryAxisAlignItems.toLowerCase(),
         counterAlignment: frame.counterAxisAlignItems.toLowerCase(),
         strokesIncludedInLayout: frame.strokesIncludedInLayout,

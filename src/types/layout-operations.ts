@@ -24,16 +24,22 @@ export const ManageAutoLayoutSchema = z.object({
   // Layout Direction
   direction: z.enum(['horizontal', 'vertical']).optional(),
   
-  // Spacing & Padding
+  // Spacing
   spacing: z.number().optional(),
-  padding: PaddingSchema.optional(),
+  
+  // Flattened Padding Properties
+  paddingTop: z.number().optional(),
+  paddingRight: z.number().optional(),
+  paddingBottom: z.number().optional(),
+  paddingLeft: z.number().optional(),
   
   // Alignment
   primaryAlignment: z.enum(['min', 'center', 'max', 'space_between']).optional(),
   counterAlignment: z.enum(['min', 'center', 'max']).optional(),
   
-  // Resizing Behavior
-  resizing: ResizingSchema.optional(),
+  // Flattened Resizing Properties
+  resizingWidth: z.enum(['hug', 'fill', 'fixed']).optional(),
+  resizingHeight: z.enum(['hug', 'fill', 'fixed']).optional(),
   
   // Advanced Properties
   strokesIncludedInLayout: z.boolean().optional(),

@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.2] - 2025-06-16
+
+### Added
+- **Flattened Parameter Structure**: Enhanced MCP tool schemas for improved agent usability
+  - **Auto-Layout Padding**: Individual properties `paddingTop`, `paddingRight`, `paddingBottom`, `paddingLeft`
+  - **Auto-Layout Resizing**: Properties `resizingWidth`, `resizingHeight` with enum values (hug, fill, fixed)
+  - **Image Filters**: Individual properties `filterExposure`, `filterContrast`, `filterSaturation`, `filterTemperature`, `filterTint`, `filterHighlights`, `filterShadows`
+  - Each property can be set independently without affecting others
+  - Eliminates nested object serialization issues that prevented proper MCP parameter discovery
+
+### Enhanced
+- **MCP Tool Discovery**: All complex properties now visible at root level in tool schemas
+  - Enhanced parameter descriptions for better developer understanding
+  - Supports advanced auto-layout properties: `strokesIncludedInLayout`, `layoutWrap`
+  - All image filter properties with -1.0 to +1.0 range validation
+  - Improved agent experience with simplified parameter structure
+
+### Fixed
+- **KISS Implementation**: Removed backward compatibility complexity from parameter handling
+  - Updated plugin handlers to use flattened properties directly
+  - Simplified Zod validation without complex transforms
+  - Eliminated nested object formats throughout the system
+  - Fixed JSON-RPC protocol corruption from debug logging (console.error instead of console.log)
+  - Updated test suite to match new flattened parameter structure
+
 ## [0.26.1] - 2025-06-16
 
 ### Fixed

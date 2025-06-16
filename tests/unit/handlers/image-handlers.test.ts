@@ -136,11 +136,9 @@ describe('ImageHandlers', () => {
       const result = await imageHandlers.handle('manage_images', {
         operation: 'update_filters',
         nodeId: 'node-789',
-        filters: {
-          exposure: 0.2,
-          contrast: 0.1,
-          saturation: -0.3
-        }
+        filterExposure: 0.2,
+        filterContrast: 0.1,
+        filterSaturation: -0.3
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
@@ -148,11 +146,9 @@ describe('ImageHandlers', () => {
         payload: expect.objectContaining({
           operation: 'update_filters',
           nodeId: 'node-789',
-          filters: {
-            exposure: 0.2,
-            contrast: 0.1,
-            saturation: -0.3
-          }
+          filterExposure: 0.2,
+          filterContrast: 0.1,
+          filterSaturation: -0.3
         })
       });
 

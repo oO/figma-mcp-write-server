@@ -79,19 +79,13 @@ export class ImageHandlers implements ToolHandler {
               default: 0,
               description: 'Image rotation in degrees (90° increments)'
             },
-            filters: {
-              type: 'object',
-              properties: {
-                exposure: { type: 'number', minimum: -1, maximum: 1 },
-                contrast: { type: 'number', minimum: -1, maximum: 1 },
-                saturation: { type: 'number', minimum: -1, maximum: 1 },
-                temperature: { type: 'number', minimum: -1, maximum: 1 },
-                tint: { type: 'number', minimum: -1, maximum: 1 },
-                highlights: { type: 'number', minimum: -1, maximum: 1 },
-                shadows: { type: 'number', minimum: -1, maximum: 1 }
-              },
-              description: 'Image color adjustment filters (values from -1.0 to +1.0)'
-            },
+            filterExposure: { type: 'number', minimum: -1, maximum: 1, description: 'Exposure adjustment (-1.0 to +1.0)' },
+            filterContrast: { type: 'number', minimum: -1, maximum: 1, description: 'Contrast adjustment (-1.0 to +1.0)' },
+            filterSaturation: { type: 'number', minimum: -1, maximum: 1, description: 'Saturation adjustment (-1.0 to +1.0)' },
+            filterTemperature: { type: 'number', minimum: -1, maximum: 1, description: 'Color temperature adjustment (-1.0 to +1.0)' },
+            filterTint: { type: 'number', minimum: -1, maximum: 1, description: 'Tint adjustment (-1.0 to +1.0)' },
+            filterHighlights: { type: 'number', minimum: -1, maximum: 1, description: 'Highlights adjustment (-1.0 to +1.0)' },
+            filterShadows: { type: 'number', minimum: -1, maximum: 1, description: 'Shadows adjustment (-1.0 to +1.0)' },
             replaceImageUrl: {
               type: 'string',
               format: 'uri',
@@ -188,7 +182,7 @@ export class ImageHandlers implements ToolHandler {
           '{"operation": "create_from_url", "imageUrl": "https://picsum.photos/400/300", "createNode": true, "scaleMode": "FILL"}',
           '{"operation": "replace_image", "nodeId": "123:456", "replaceImageUrl": "https://example.com/new-image.jpg"}',
           '{"operation": "smart_replace", "nodeId": "123:456", "replaceImageUrl": "https://example.com/hero.jpg", "fitStrategy": "smart_crop", "alignmentX": "center"}',
-          '{"operation": "update_filters", "nodeId": "123:456", "filters": {"exposure": 0.2, "contrast": 0.1, "saturation": -0.3}}',
+          '{"operation": "update_filters", "nodeId": "123:456", "filterExposure": 0.2, "filterContrast": 0.1, "filterSaturation": -0.3}',
           '{"operation": "clone_image", "sourceNodeId": "123:456", "targetNodeId": "789:012", "preserveFilters": true}'
         ]
       }
