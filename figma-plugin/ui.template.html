@@ -415,12 +415,7 @@
                         console.log(`[DEBUG] Forwarding ${message.type} to main thread`);
                     }
                     parent.postMessage({
-                        pluginMessage: {
-                            type: "PLUGIN_OPERATION",
-                            operation: message.type,
-                            payload: message.payload,
-                            id: message.id,
-                        },
+                        pluginMessage: message
                     }, "*");
                 } else if (message.type === "CONNECTED") {
                     log("Server acknowledged connection");
@@ -463,7 +458,7 @@
                 switch (msg.type) {
                     case "OPERATION_RESPONSE":
                         sendResponse(msg.id, msg.success, msg.data, msg.error);
-                        logCommand(msg.operation || "UNKNOWN", msg.success);
+                        logCommand(msg.operation || msg.type || "UNKNOWN", msg.success);
                         break;
                 }
             });

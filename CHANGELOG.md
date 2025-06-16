@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.26.1] - 2025-06-16
+
+### Fixed
+- **Plugin Message Architecture**: Simplified internal message passing between UI thread and main thread
+  - Removed unnecessary `PLUGIN_OPERATION` wrapper for cleaner message flow
+  - Fixed "UNKNOWN executed" logging by using direct message types
+  - Improved debugging with actual operation names instead of fallback values
+  - Reduced code duplication and message complexity
+
+### Improved
+- **Developer Experience**: Cleaner plugin architecture makes future development easier
+- **Error Handling**: Better operation identification and logging
+
+## [0.26.0] - 2025-06-16
+
+### Added
+- **Image Management**: New `manage_images` MCP tool with 11 operations for image handling
+  - `create_from_url` - Load images from web URLs and apply to new or existing nodes
+  - `create_from_bytes` - Create images from base64 encoded data
+  - `apply_to_node` - Apply existing images to different nodes using image hash
+  - `replace_image` - Replace images while preserving container dimensions
+  - `smart_replace` - Intelligent image replacement with fit strategies (preserve_container, preserve_aspect, smart_crop, letterbox)
+  - `update_filters` - Apply color adjustments (exposure, contrast, saturation, temperature, tint, highlights, shadows)
+  - `change_scale_mode` - Modify image scaling behavior (FILL, FIT, CROP, TILE)
+  - `rotate` - Rotate images in 90-degree increments
+  - `get_image_info` - Extract image metadata and properties
+  - `extract_image` - Get image data as base64 for external processing
+  - `clone_image` - Copy images between nodes with optional filter preservation
+- **Smart Fitting**: Advanced image replacement algorithms with automatic aspect ratio handling
+- **Image Filters**: Full color adjustment suite with -1.0 to +1.0 range for all filter values
+- **Transform Support**: 2x3 transform matrix support for precise CROP mode positioning
+- **Auto Layout Awareness**: Smart replacement respects auto layout constraints during container resizing
+
 ## [0.25.2] - 2025-06-15
 
 ### Fixed

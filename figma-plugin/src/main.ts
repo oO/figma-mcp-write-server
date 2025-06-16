@@ -10,6 +10,7 @@ import { LayoutHandler } from './handlers/layout-handler.js';
 import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
 import { ExportHandler } from './handlers/export-handler.js';
+import { ImageHandler } from './handlers/image-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
   performAnnotationOperation, 
@@ -37,6 +38,7 @@ class FigmaPlugin {
     const componentHandler = new ComponentHandler();
     const variableHandler = new VariableHandler();
     const exportHandler = new ExportHandler();
+    const imageHandler = new ImageHandler();
 
     // Register all operations
     Object.assign(this.handlers, 
@@ -49,6 +51,7 @@ class FigmaPlugin {
       componentHandler.getOperations(),
       variableHandler.getOperations(),
       exportHandler.getOperations(),
+      imageHandler.getOperations(),
       // Boolean and vector operations
       {
         'BOOLEAN_OPERATION': performBooleanOperation,
@@ -81,19 +84,19 @@ class FigmaPlugin {
     figma.ui.onmessage = async (msg) => {
       console.log('📨 Received from UI:', msg.type);
       
-      switch (msg.type) {
-        case 'PLUGIN_OPERATION':
-          console.log('🔧 About to handle operation:', msg.operation);
-          await this.handlePluginOperation(msg.operation, msg.payload, msg.id);
-          break;
-          
-        case 'CLOSE':
-          console.log('👋 Closing plugin');
-          figma.closePlugin();
-          break;
-          
-        default:
-          console.log('❓ Unknown message type:', msg.type);
+      // Handle special plugin control messages
+      if (msg.type === 'CLOSE') {
+        console.log('👋 Closing plugin');
+        figma.closePlugin();
+        return;
+      }
+      
+      // Handle operation messages directly (no PLUGIN_OPERATION wrapper)
+      if (msg.type && msg.id && this.handlers[msg.type]) {
+        console.log('🔧 About to handle operation:', msg.type);
+        await this.handlePluginOperation(msg.type, msg.payload, msg.id);
+      } else {
+        console.log('❓ Unknown message or missing handler:', msg.type);
       }
     };
   }
@@ -121,6 +124,7 @@ class FigmaPlugin {
       figma.ui.postMessage({
         type: 'OPERATION_RESPONSE',
         id,
+        operation,
         success: result.success,
         data: result.success ? result.data : result,
         error: result.success ? undefined : result.error
@@ -135,6 +139,7 @@ class FigmaPlugin {
       figma.ui.postMessage({
         type: 'OPERATION_RESPONSE',
         id,
+        operation,
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       });
