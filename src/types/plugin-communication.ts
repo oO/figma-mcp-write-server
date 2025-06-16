@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { ManageImagesSchema } from './image-operations.js';
 
 // ================================================================================
 // Plugin Communication & MCP Server Types
@@ -61,6 +62,7 @@ export const PluginMessageSchema = z.object({
     'MANAGE_INSTANCES',
     'MANAGE_COLLECTIONS',
     'MANAGE_VARIABLES',
+    'MANAGE_IMAGES',
     'PLUGIN_READY',
     'HEARTBEAT'
   ]),
@@ -69,6 +71,7 @@ export const PluginMessageSchema = z.object({
     NodeUpdatePayloadSchema,
     SelectionPayloadSchema,
     ExportPayloadSchema,
+    ManageImagesSchema,
     z.record(z.unknown())
   ]).optional(),
 });

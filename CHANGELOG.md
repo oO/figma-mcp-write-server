@@ -17,7 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed heartbeat animation to scale to 125% as specified
   - Corrected title from "Plugin Title" to "MCP WebSocket Client"
   - Improved visual balance with 14px status dot size
-- **Build System**: Fixed `get_plugin_status` error by replacing `require("path")` with proper ES6 import
 
 ### Changed
 - **UI Layout**: New clean layout structure with status section, stats grid, and controls

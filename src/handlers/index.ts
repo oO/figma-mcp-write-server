@@ -10,6 +10,7 @@ import { VariableHandlers } from "./variable-handlers.js";
 import { BooleanHandlers } from "./boolean-handlers.js";
 import { DevModeHandlers } from "./dev-mode-handlers.js";
 import { ExportHandlers } from "./export-handlers.js";
+import { ImageHandlers } from "./image-handlers.js";
 import * as os from "os";
 import * as path from "path";
 
@@ -30,6 +31,7 @@ export class HandlerRegistry {
     this.registerHandler(new BooleanHandlers(sendToPluginFn));
     this.registerHandler(new DevModeHandlers(sendToPluginFn));
     this.registerHandler(new ExportHandlers(sendToPluginFn));
+    this.registerHandler(new ImageHandlers(sendToPluginFn));
 
     // Add plugin status tool
     this.addPluginStatusTool();

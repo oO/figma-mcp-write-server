@@ -23,6 +23,9 @@ export * from './component-operations.js';
 // Variable system operations
 export * from './variable-operations.js';
 
+// Image management operations
+export * from './image-operations.js';
+
 // Plugin communication and MCP server types
 export * from './plugin-communication.js';
 

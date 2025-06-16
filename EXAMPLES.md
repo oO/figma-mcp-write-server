@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.24.0)**: Features 23 MCP tools with YAML response format, test coverage (174 tests), dev mode integration, boolean & vector operations, component system, and variables & design tokens.
+> **Current State (v0.26.0)**: Features 24 MCP tools with YAML response format, test coverage, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
 
 ## 🚀 Getting Started
 
@@ -184,6 +184,56 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 
 - **"Reset all overrides on this card instance back to defaults"**
   - AI resets instance to match main component properties
+
+## 🖼️ Image Operations
+
+### Image Loading & Creation
+**User Instructions → AI Actions:**
+
+- **"Load this hero image from URL and create a rectangle for it"**
+  - AI uses `manage_images` with `create_from_url` operation and `createNode: true`
+
+- **"Apply this base64 image data to the selected rectangle"**
+  - AI uses `manage_images` with `create_from_bytes` operation and specified nodeId
+
+- **"Replace the product image with a new one from this URL"**
+  - AI uses `manage_images` with `replace_image` operation to swap images while preserving container size
+
+### Image Filtering & Enhancement
+**User Instructions → AI Actions:**
+
+- **"Make the hero image brighter and more saturated"**
+  - AI uses `manage_images` with `update_filters` operation, applying positive exposure and saturation values
+
+- **"Adjust the background image to be warmer and less contrasty"**
+  - AI applies filters with positive temperature and negative contrast adjustments
+
+- **"Darken the highlights and lift the shadows on this portrait"**
+  - AI uses filters with negative highlights and positive shadows values
+
+### Smart Image Replacement
+**User Instructions → AI Actions:**
+
+- **"Replace this banner image but crop it smartly to focus on the center"**
+  - AI uses `manage_images` with `smart_replace` operation and `fitStrategy: "smart_crop"`
+
+- **"Swap the product photo and resize the container to match the new aspect ratio"**
+  - AI uses `smart_replace` with `fitStrategy: "preserve_aspect"` to adjust container dimensions
+
+- **"Update this image but keep it contained without cropping"**
+  - AI uses `smart_replace` with `fitStrategy: "letterbox"` to fit entire image within existing bounds
+
+### Image Transformations
+**User Instructions → AI Actions:**
+
+- **"Rotate this logo 90 degrees clockwise"**
+  - AI uses `manage_images` with `rotate` operation and `rotation: 90`
+
+- **"Change how this background image fills the frame to crop instead of fit"**
+  - AI uses `change_scale_mode` operation with `scaleMode: "CROP"`
+
+- **"Copy the image from the header to this footer rectangle"**
+  - AI uses `clone_image` operation between source and target nodes
 
 ## 🏗️ Workflows
 

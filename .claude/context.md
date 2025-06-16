@@ -79,7 +79,7 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 ## Project Architecture
 
 This is a Figma MCP Write Server with:
-- 23 MCP tools organized by domain
+- 24 MCP tools organized by domain
 - Handler-based architecture with auto-discovery
 - WebSocket communication with Figma plugin
 - Test coverage with unit and integration tests
