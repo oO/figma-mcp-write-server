@@ -55,8 +55,38 @@ export const ManageConstraintsSchema = z.object({
   vertical: z.enum(['top', 'bottom', 'top_bottom', 'center', 'scale']).optional(),
 });
 
+// ================================================================================
+// Alignment Operations
+// ================================================================================
+
+export const ManageAlignmentSchema = z.object({
+  // Operations
+  horizontalOperation: z.enum(['position', 'align', 'distribute']).optional(),
+  horizontalDirection: z.enum(['left', 'center', 'right']).optional(),
+  horizontalReferencePoint: z.enum(['left', 'center', 'right']).optional(),
+  horizontalAlignmentPoint: z.enum(['left', 'center', 'right']).optional(),
+  horizontalSpacing: z.number().optional(),
+  
+  verticalOperation: z.enum(['position', 'align', 'distribute']).optional(),
+  verticalDirection: z.enum(['top', 'middle', 'bottom']).optional(),
+  verticalReferencePoint: z.enum(['top', 'middle', 'bottom']).optional(),
+  verticalAlignmentPoint: z.enum(['top', 'middle', 'bottom']).optional(),
+  verticalSpacing: z.number().optional(),
+  
+  // Target nodes
+  nodeIds: z.array(z.string()),
+  
+  // Reference modes
+  referenceMode: z.enum(['bounds', 'key_object', 'relative']).optional().default('bounds'),
+  referenceNodeId: z.string().optional(),
+  
+  // Additional options
+  margin: z.number().optional()
+});
+
 // Export types
 export type ManageAutoLayoutParams = z.infer<typeof ManageAutoLayoutSchema>;
 export type ManageConstraintsParams = z.infer<typeof ManageConstraintsSchema>;
+export type ManageAlignmentParams = z.infer<typeof ManageAlignmentSchema>;
 export type Padding = z.infer<typeof PaddingSchema>;
 export type Resizing = z.infer<typeof ResizingSchema>;

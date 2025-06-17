@@ -1,4 +1,4 @@
-import { ManageAutoLayoutSchema, ManageConstraintsSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
+import { ManageAutoLayoutSchema, ManageConstraintsSchema, ManageAlignmentSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class LayoutHandlers implements ToolHandler {
@@ -63,6 +63,30 @@ export class LayoutHandlers implements ToolHandler {
           },
           required: ['operation']
         }
+      },
+      {
+        name: 'manage_alignment',
+        description: 'Align, position, or distribute nodes with professional precision',
+        inputSchema: {
+          type: 'object',
+          properties: {
+            horizontalOperation: { type: 'string', enum: ['position', 'align', 'distribute'], description: 'Horizontal operation type' },
+            horizontalDirection: { type: 'string', enum: ['left', 'center', 'right'], description: 'Horizontal alignment direction' },
+            horizontalReferencePoint: { type: 'string', enum: ['left', 'center', 'right'], description: 'Which part of reference to align to' },
+            horizontalAlignmentPoint: { type: 'string', enum: ['left', 'center', 'right'], description: 'Which part of moving node to use for alignment' },
+            horizontalSpacing: { type: 'number', description: 'Horizontal spacing for position/distribute operations' },
+            verticalOperation: { type: 'string', enum: ['position', 'align', 'distribute'], description: 'Vertical operation type' },
+            verticalDirection: { type: 'string', enum: ['top', 'middle', 'bottom'], description: 'Vertical alignment direction' },
+            verticalReferencePoint: { type: 'string', enum: ['top', 'middle', 'bottom'], description: 'Which part of reference to align to' },
+            verticalAlignmentPoint: { type: 'string', enum: ['top', 'middle', 'bottom'], description: 'Which part of moving node to use for alignment' },
+            verticalSpacing: { type: 'number', description: 'Vertical spacing for position/distribute operations' },
+            nodeIds: { type: 'array', items: { type: 'string' }, description: 'Array of node IDs to align' },
+            referenceMode: { type: 'string', enum: ['bounds', 'key_object', 'relative'], description: 'Reference calculation mode' },
+            referenceNodeId: { type: 'string', description: 'Reference node ID for key_object or relative modes' },
+            margin: { type: 'number', description: 'Additional margin for positioning operations' }
+          },
+          required: ['nodeIds']
+        }
       }
     ];
   }
@@ -75,6 +99,8 @@ export class LayoutHandlers implements ToolHandler {
         return this.manageConstraints(args);
       case 'manage_hierarchy':
         return this.manageHierarchy(args);
+      case 'manage_alignment':
+        return this.manageAlignment(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);
     }
@@ -165,6 +191,58 @@ export class LayoutHandlers implements ToolHandler {
 
     if (!response.success) {
       throw new Error(response.error || 'Failed to manage hierarchy');
+    }
+
+    return {
+      content: [{
+        type: 'text',
+        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+      }],
+      isError: false
+    };
+  }
+
+  async manageAlignment(args: any): Promise<any> {
+    const validatedArgs = ManageAlignmentSchema.parse(args);
+    const { 
+      horizontalOperation, 
+      horizontalDirection, 
+      horizontalReferencePoint,
+      horizontalAlignmentPoint,
+      horizontalSpacing,
+      verticalOperation, 
+      verticalDirection, 
+      verticalReferencePoint,
+      verticalAlignmentPoint,
+      verticalSpacing,
+      nodeIds, 
+      referenceMode, 
+      referenceNodeId, 
+      margin 
+    } = validatedArgs;
+
+    const response = await this.sendToPlugin({
+      type: 'MANAGE_ALIGNMENT',
+      payload: {
+        horizontalOperation,
+        horizontalDirection,
+        horizontalReferencePoint,
+        horizontalAlignmentPoint,
+        horizontalSpacing,
+        verticalOperation,
+        verticalDirection,
+        verticalReferencePoint,
+        verticalAlignmentPoint,
+        verticalSpacing,
+        nodeIds,
+        referenceMode: referenceMode || 'bounds',
+        referenceNodeId,
+        margin
+      }
+    });
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to manage alignment');
     }
 
     return {

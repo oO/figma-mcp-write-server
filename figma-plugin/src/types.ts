@@ -321,6 +321,50 @@ export interface StyleInfo {
 
 export type OperationHandler = (params: any) => Promise<OperationResult>;
 
+export interface AlignmentParams {
+  horizontalOperation?: 'position' | 'align' | 'distribute';
+  horizontalDirection?: 'left' | 'center' | 'right';
+  horizontalReferencePoint?: 'left' | 'center' | 'right';
+  horizontalAlignmentPoint?: 'left' | 'center' | 'right';
+  horizontalSpacing?: number;
+  verticalOperation?: 'position' | 'align' | 'distribute';
+  verticalDirection?: 'top' | 'middle' | 'bottom';
+  verticalReferencePoint?: 'top' | 'middle' | 'bottom';
+  verticalAlignmentPoint?: 'top' | 'middle' | 'bottom';
+  verticalSpacing?: number;
+  nodeIds: string[];
+  referenceMode?: 'bounds' | 'key_object' | 'relative';
+  referenceNodeId?: string;
+  margin?: number;
+}
+
+export interface NodeBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  centerX: number;
+  centerY: number;
+}
+
+export interface AlignmentResult {
+  nodeId: string;
+  name: string;
+  operation: string;
+  newPosition: {
+    x: number;
+    y: number;
+  };
+  originalPosition: {
+    x: number;
+    y: number;
+  };
+}
+
 export interface HandlerRegistry {
   [operation: string]: OperationHandler;
 }

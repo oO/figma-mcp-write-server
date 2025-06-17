@@ -64,6 +64,7 @@ graph LR
 | `manage_dev_resources` | CSS generation and dev status tracking (generate_css, set_dev_status, add_dev_link, remove_dev_link, get_dev_resources) | operation, nodeId, status, linkUrl, linkTitle, linkId, cssOptions |
 | `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
 | `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
+| `manage_alignment` | Node alignment and positioning with reference point control | nodeIds, horizontalOperation/Direction, verticalOperation/Direction, referenceMode, referencePoints, alignmentPoints, spacing |
 | `manage_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
 | `update_node` | Update node properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked |
 | `manage_nodes` | Move, delete, or duplicate nodes | operation, nodeId, x, y, offsetX, offsetY |
@@ -80,6 +81,7 @@ graph LR
 Common use cases:
 - **Create Layout**: "Create a header frame with title and subtitle"
 - **Auto Layout**: "Make this frame arrange its children vertically with 16px spacing"
+- **Alignment**: "Center text within frame" or "Align circle's center to rectangle's left edge"
 - **Constraints**: "Pin this sidebar to the left and stretch to full height"
 - **Typography**: "Make a styled heading with mixed formatting"
 - **Design System**: "Create color palette and apply styles consistently"
@@ -182,4 +184,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 18 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 22 MCP tools and runs a WebSocket server on port 8765 for plugin communication.

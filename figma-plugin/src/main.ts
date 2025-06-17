@@ -11,6 +11,7 @@ import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
 import { ExportHandler } from './handlers/export-handler.js';
 import { ImageHandler } from './handlers/image-handler.js';
+import { AlignmentHandler } from './handlers/alignment-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
   performAnnotationOperation, 
@@ -39,6 +40,7 @@ class FigmaPlugin {
     const variableHandler = new VariableHandler();
     const exportHandler = new ExportHandler();
     const imageHandler = new ImageHandler();
+    const alignmentHandler = new AlignmentHandler();
 
     // Register all operations
     Object.assign(this.handlers, 
@@ -52,6 +54,7 @@ class FigmaPlugin {
       variableHandler.getOperations(),
       exportHandler.getOperations(),
       imageHandler.getOperations(),
+      alignmentHandler.getOperations(),
       // Boolean and vector operations
       {
         'BOOLEAN_OPERATION': performBooleanOperation,
@@ -72,6 +75,7 @@ class FigmaPlugin {
     console.log('🔍 MANAGE_INSTANCES handler exists:', !!this.handlers['MANAGE_INSTANCES']);
     console.log('🔍 MANAGE_COLLECTIONS handler exists:', !!this.handlers['MANAGE_COLLECTIONS']);
     console.log('🔍 MANAGE_VARIABLES handler exists:', !!this.handlers['MANAGE_VARIABLES']);
+    console.log('🔍 MANAGE_ALIGNMENT handler exists:', !!this.handlers['MANAGE_ALIGNMENT']);
     console.log('🔍 BOOLEAN_OPERATION handler exists:', !!this.handlers['BOOLEAN_OPERATION']);
     console.log('🔍 VECTOR_OPERATION handler exists:', !!this.handlers['VECTOR_OPERATION']);
     console.log('🔍 ANNOTATION_OPERATION handler exists:', !!this.handlers['ANNOTATION_OPERATION']);

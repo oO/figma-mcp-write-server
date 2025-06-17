@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.0] - 2025-06-17
+
+### Added
+- **Precision Alignment System**: Reference point and alignment point parameters for 3×3 matrix positioning control
+  - **Reference Points**: `horizontalReferencePoint`, `verticalReferencePoint` specify which part of reference to align to
+  - **Alignment Points**: `horizontalAlignmentPoint`, `verticalAlignmentPoint` specify which part of moving node to use
+  - **Single-Node Parent Alignment**: Automatic parent bounds detection for centering nodes within frames
+  - **Real Unit Tests**: Mathematical validation tests for alignment calculations covering edge cases
+
+### Fixed
+- **Parent Coordinate System**: Single-node alignment now correctly uses parent-relative coordinates
+  - Nodes are positioned correctly within their parent frames instead of absolute canvas coordinates
+  - Parent bounds calculation simplified to use relative coordinate system (0,0 at parent top-left)
+
+### Enhanced
+- **Alignment Precision**: All 6 alignment directions (left/center/right, top/middle/bottom) work correctly
+- **Backwards Compatibility**: Existing direction parameters continue to work alongside new reference/alignment points
+
 ## [0.26.2] - 2025-06-16
 
 ### Added

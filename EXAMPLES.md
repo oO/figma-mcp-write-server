@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.26.0)**: Features 24 MCP tools with YAML response format, test coverage, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
+> **Current State (v0.27.0)**: Features 22 MCP tools with YAML response format, test coverage, precision alignment system, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
 
 ## 🚀 Getting Started
 
@@ -377,6 +377,43 @@ The AI can perform these operations:
 3. **Padding**: Adds 20px padding around all content
 4. **Sizing**: Configures to "hug" content so card resizes based on content
 5. **Alignment**: Centers content and stretches elements appropriately
+
+### Precision Alignment System
+**User Instructions → AI Actions:**
+
+- **"Center this text within the frame"**
+  - AI uses `manage_alignment` with horizontal "center" and vertical "middle" operations for single-node parent alignment
+
+- **"Align the circle's center to the rectangle's left edge"**
+  - AI uses reference point "left" and alignment point "center" for precise point-to-point positioning
+
+- **"Distribute these 3 buttons horizontally with equal spacing"**
+  - AI uses "distribute" operation with horizontal direction for even spacing
+
+- **"Position the logo 20px to the right of the title"**
+  - AI uses "position" operation with "right" direction and 20px spacing
+
+- **"Align all these icons to the bottom edge"**
+  - AI aligns multiple nodes with "bottom" vertical direction using bounds reference
+
+### Alignment Workflows
+**User Instructions:**
+"Position the profile picture so its center aligns with the card's left edge, and center it vertically"
+
+**What the AI does:**
+1. **Reference Setup**: Uses the card as reference with "relative" mode  
+2. **Horizontal Position**: Sets reference point to "left" and alignment point to "center"
+3. **Vertical Center**: Uses "middle" alignment for vertical centering
+4. **Result**: Profile picture's center touches the card's left edge, vertically centered
+
+**User Instructions:**
+"Create a grid layout by aligning these 6 cards in 2 rows and 3 columns"
+
+**What the AI does:**
+1. **Row Alignment**: Aligns cards to consistent horizontal positions (top, middle)
+2. **Column Distribution**: Distributes cards evenly across 3 column positions  
+3. **Spacing Control**: Uses consistent spacing between rows and columns
+4. **Reference Points**: Uses bounds calculation for precise grid positioning
 
 ### Moving Elements into Auto Layout
 **User Instructions → AI Actions:**
