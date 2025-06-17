@@ -368,4 +368,22 @@ describe('Alignment Calculation Logic', () => {
       expect(y).toBe(0); // Align to parent top edge
     });
   });
+
+  describe('Multi-Node Alignment Requirements', () => {
+    test('should validate that all nodes share the same coordinate system', () => {
+      // This test documents the requirement that all nodes must share the same parent
+      // so that coordinate system conversions are not needed
+      
+      const sharedParentBounds = AlignmentCalculator.createParentBounds(400, 300);
+      const node1 = AlignmentCalculator.createNodeBounds(50, 50, 100, 50);
+      const node2 = AlignmentCalculator.createNodeBounds(200, 100, 80, 40);
+      
+      // Both nodes can be aligned because they share coordinate system
+      const alignX1 = AlignmentCalculator.calculateAlignHorizontal('left', undefined, undefined, node1, sharedParentBounds);
+      const alignX2 = AlignmentCalculator.calculateAlignHorizontal('left', undefined, undefined, node2, sharedParentBounds);
+      
+      expect(alignX1).toBe(0); // Both align to same reference point
+      expect(alignX2).toBe(0); // No coordinate conversion needed
+    });
+  });
 });

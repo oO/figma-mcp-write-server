@@ -392,6 +392,22 @@ describe('LayoutHandlers - Alignment', () => {
         ManageAlignmentSchema.parse(params);
       }).not.toThrow();
     });
+
+    test('should validate nodes with different parents should error', async () => {
+      const params = {
+        nodeIds: ['node-in-frame-a', 'node-in-frame-b'],
+        horizontalOperation: 'align' as const,
+        horizontalDirection: 'center' as const
+      };
+
+      mockSendToPlugin.mockResolvedValue({
+        success: false,
+        error: 'All nodes must share the same parent for alignment operations. Node node-in-frame-b has a different parent.'
+      });
+
+      await expect(handler.handle('manage_alignment', params))
+        .rejects.toThrow('All nodes must share the same parent for alignment operations');
+    });
   });
 
   describe('Complex Scenarios', () => {

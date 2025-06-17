@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.1] - 2025-06-17
+
+### Added
+- **Parent Validation**: All nodes must share the same parent for alignment operations
+  - Clear error message when nodes have different parents
+  - Eliminates coordinate system conversion complexity
+
+### Enhanced  
+- **Simplified Alignment Logic**: No coordinate system conversions needed since all nodes share same coordinate space
+- **Test Coverage**: Additional validation tests for multi-node parent requirements
+
 ## [0.27.0] - 2025-06-17
 
 ### Added

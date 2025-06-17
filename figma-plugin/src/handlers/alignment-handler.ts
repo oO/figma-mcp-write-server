@@ -23,11 +23,21 @@ export class AlignmentHandler extends BaseHandler {
 
       // Find all target nodes
       const nodes: SceneNode[] = [];
+      let commonParent: BaseNode | null = null;
+      
       for (const nodeId of params.nodeIds) {
         const node = findNodeById(nodeId);
         if (!('x' in node) || !('y' in node) || !('width' in node) || !('height' in node)) {
           throw new Error(`Node ${nodeId} does not support positioning`);
         }
+        
+        // Validate all nodes share the same parent
+        if (commonParent === null) {
+          commonParent = node.parent;
+        } else if (node.parent !== commonParent) {
+          throw new Error(`All nodes must share the same parent for alignment operations. Node ${nodeId} has a different parent.`);
+        }
+        
         nodes.push(node);
       }
 

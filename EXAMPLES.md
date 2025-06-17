@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.27.0)**: Features 22 MCP tools with YAML response format, test coverage, precision alignment system, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
+> **Current State (v0.27.1)**: Features 22 MCP tools with YAML response format, test coverage, precision alignment system with parent validation, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
 
 ## 🚀 Getting Started
 
@@ -395,6 +395,7 @@ The AI can perform these operations:
 
 - **"Align all these icons to the bottom edge"**
   - AI aligns multiple nodes with "bottom" vertical direction using bounds reference
+  - Note: All icons must be in the same parent container for alignment to work
 
 ### Alignment Workflows
 **User Instructions:**
@@ -414,6 +415,7 @@ The AI can perform these operations:
 2. **Column Distribution**: Distributes cards evenly across 3 column positions  
 3. **Spacing Control**: Uses consistent spacing between rows and columns
 4. **Reference Points**: Uses bounds calculation for precise grid positioning
+5. **Parent Requirement**: All cards must be in the same parent container
 
 ### Moving Elements into Auto Layout
 **User Instructions → AI Actions:**
