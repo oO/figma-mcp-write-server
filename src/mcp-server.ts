@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import * as yaml from 'js-yaml';
 
-import { ServerConfig, DEFAULT_CONFIG } from './types/index.js';
+import { ServerConfig, LegacyServerConfig, DEFAULT_WS_CONFIG, loadConfig } from './types/index.js';
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
 import { HandlerRegistry } from './handlers/index.js';
 
@@ -25,8 +25,9 @@ export class FigmaMCPServer {
   private handlerRegistry: HandlerRegistry;
   private config: ServerConfig;
 
-  constructor(config: Partial<ServerConfig> = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+  constructor(configOverrides: Partial<ServerConfig> = {}) {
+    // Load config from file system with overrides
+    this.config = { ...loadConfig(), ...configOverrides };
     
     // Initialize MCP server
     this.server = new Server(
@@ -41,8 +42,12 @@ export class FigmaMCPServer {
       }
     );
 
-    // Initialize WebSocket server
-    this.wsServer = new FigmaWebSocketServer(this.config);
+    // Initialize WebSocket server with legacy config
+    const wsConfig: LegacyServerConfig = {
+      ...DEFAULT_WS_CONFIG,
+      port: this.config.port
+    };
+    this.wsServer = new FigmaWebSocketServer(wsConfig);
 
     // Initialize handler registry with WebSocket communication
     this.handlerRegistry = new HandlerRegistry(
@@ -87,9 +92,20 @@ export class FigmaMCPServer {
         };
       }
     });
+
   }
 
   async start(): Promise<void> {
+    // Debug logging for Node.js environment
+    console.error(`[DEBUG] Node.js version: ${process.version}`);
+    console.error(`[DEBUG] Node.js executable path: ${process.execPath}`);
+    console.error(`[DEBUG] Node.js platform: ${process.platform}`);
+    console.error(`[DEBUG] Node.js arch: ${process.arch}`);
+    console.error(`[DEBUG] NODE_MODULE_VERSION: ${process.versions.modules}`);
+    console.error(`[DEBUG] Process argv0: ${process.argv0}`);
+    console.error(`[DEBUG] Process cwd: ${process.cwd()}`);
+    console.error(`[DEBUG] Process versions:`, JSON.stringify(process.versions, null, 2));
+    
     // Start WebSocket server
     await this.wsServer.start();
     

@@ -17,7 +17,8 @@ export interface CommunicationConfig {
   healthCheckInterval: number;
 }
 
-export interface ServerConfig {
+// Legacy WebSocket server config (still used by WebSocket server)
+export interface LegacyServerConfig {
   port: number;
   corsOrigin: string;
   pluginId: string;
@@ -25,6 +26,10 @@ export interface ServerConfig {
   heartbeatInterval: number;
   communication: CommunicationConfig;
 }
+
+// Re-export new config system
+export type { ServerConfig, FontDatabaseConfig } from '../config/config.js';
+export { loadConfig, saveConfig, getDefaultPaths } from '../config/config.js';
 
 export const DEFAULT_COMMUNICATION_CONFIG: CommunicationConfig = {
   defaultTimeout: 30000, // 30 seconds
@@ -55,7 +60,7 @@ export const DEFAULT_COMMUNICATION_CONFIG: CommunicationConfig = {
   healthCheckInterval: 5000 // 5 seconds
 };
 
-export const DEFAULT_CONFIG: ServerConfig = {
+export const DEFAULT_WS_CONFIG: LegacyServerConfig = {
   port: 8765,
   corsOrigin: '*',
   pluginId: 'figma-mcp-write-plugin',

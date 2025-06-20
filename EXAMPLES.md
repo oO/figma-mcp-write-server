@@ -2,7 +2,7 @@
 
 This guide shows how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State (v0.27.1)**: Features 22 MCP tools with YAML response format, test coverage, precision alignment system with parent validation, dev mode integration, boolean & vector operations, component system, variables & design tokens, and image management.
+> **Current State (v0.28.0)**: Features 23 MCP tools with YAML response format, test coverage, precision alignment system with parent validation, dev mode integration, boolean & vector operations, component system, variables & design tokens, image management, and SQLite font database with cross-platform configuration.
 
 ## 🚀 Getting Started
 
@@ -57,6 +57,72 @@ This guide shows how to use the Figma MCP Write Server through natural language 
   - AI uses styleRanges to apply different colors to text segments
   - Mixed text styling allows different fonts, sizes, and colors within same text node
 
+## 🔤 Font Management
+
+### Font Search Examples
+**User Instructions → AI Actions:**
+
+- **"Find all Google Fonts with bold and italic styles available"**
+  - AI uses `manage_fonts` with `search_fonts` operation, filtering by source "google" and minimum style count
+  - Returns font families with their available styles and metadata
+
+- **"Search for serif fonts that have 'Times' in the name"**
+  - AI searches fonts with name pattern filter and font family type
+  - Provides detailed information about matching font families
+
+- **"Find fonts with at least 8 different styles for my design system"**
+  - AI uses minimum style count filter to locate comprehensive font families
+  - Returns fonts suitable for complex typography hierarchies
+
+- **"Search for system fonts available on this device"**
+  - AI filters by font source "system" to show locally installed fonts
+  - Useful for designs that need to work with device fonts
+
+### Project Font Usage Examples
+**User Instructions → AI Actions:**
+
+- **"Show me all fonts currently used in this document"**
+  - AI uses `get_document_fonts` operation to list fonts actively used in the design
+  - Provides usage count and style breakdown for each font family
+
+- **"Count how many Google Fonts vs system fonts are in this project"**
+  - AI analyzes document fonts and categorizes by source type
+  - Helps optimize font loading and performance planning
+
+- **"List all the font weights being used in this design"**
+  - AI examines document fonts and shows weight distribution
+  - Identifies typography patterns and potential consolidation opportunities
+
+### Font Validation and Info Examples
+**User Instructions → AI Actions:**
+
+- **"Check if 'Inter' font family is available for use"**
+  - AI uses `validate_fonts` operation to confirm font availability
+  - Returns status and available styles for the specified font
+
+- **"Get all available styles for the Roboto font family"**
+  - AI uses `get_font_info` operation to retrieve complete style list
+  - Shows weight, style, and variant information for font selection
+
+- **"Verify these 5 fonts are available before applying them to text"**
+  - AI validates multiple fonts in batch and reports availability status
+  - Prevents font application errors in design workflows
+
+- **"Get detailed information about the current font including licensing"**
+  - AI retrieves comprehensive font metadata including source and usage rights
+  - Provides information needed for commercial font usage decisions
+
+### Font Database Operations
+**User Instructions → AI Actions:**
+
+- **"Update the font database with latest available fonts"**
+  - AI uses `refresh_font_database` operation to sync with current font sources
+  - Ensures font search reflects most recent font availability
+
+- **"Show database statistics for font management"**
+  - AI provides font database metrics including total families and sources
+  - Useful for understanding font library scope and coverage
+
 ## 🎨 Style Management
 
 ### Creating Styles
@@ -85,6 +151,100 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 
 - **"Show me all the color styles in this file"**
   - AI lists all paint styles with their names and properties
+
+## 🔤 Font Management
+
+### Font Search
+**User Instructions → AI Actions:**
+
+- **"Find Google fonts with Bold style"**
+  - AI uses `manage_fonts` with `search_fonts` operation, source filter for Google fonts, and hasStyle parameter for Bold
+  - Returns fonts that include Bold weights from Google's library
+
+- **"Search for fonts matching 'Inter'"**
+  - AI searches font database using text query, returning Inter, Inter Display, and similar fonts
+  - Fast sub-100ms response from SQLite database
+
+- **"Find fonts with at least 8 style variations for our design system"**
+  - AI uses `minStyleCount` parameter to filter fonts with comprehensive style families
+  - Useful for selecting fonts that support full typographic scales
+
+- **"Show me system fonts only, no external fonts"**
+  - AI filters by source type to show platform-native fonts
+  - Ensures fonts are available without external dependencies
+
+### Project Font Usage
+**User Instructions → AI Actions:**
+
+- **"What fonts are used in this document?"**
+  - AI uses `get_project_fonts` to scan all text nodes and return actually used fonts
+  - Provides summary of active typography in the design
+
+- **"Count how many Google fonts vs system fonts are available"**
+  - AI uses `get_font_count` with source filters to get statistics
+  - Returns counts by font category for font management decisions
+
+### Font Validation and Info
+**User Instructions → AI Actions:**
+
+- **"Check if Roboto Medium is available before using it"**
+  - AI uses `check_availability` to verify font exists before applying to text
+  - Prevents font loading errors in typography operations
+
+- **"List all styles available for Inter font family"**
+  - AI uses `get_font_styles` to show complete style list (Regular, Medium, Bold, etc.)
+  - Helps select appropriate font weights for text hierarchy
+
+- **"Get detailed information about SF Pro Display font"**
+  - AI uses `get_font_info` to return font metadata, category, and availability status
+  - Provides licensing and usage information for font decisions
+
+## 🔧 Configuration
+
+### config.yaml Example
+The server automatically creates a configuration file on first run:
+
+```yaml
+# Figma MCP Write Server Configuration
+# Windows: %APPDATA%\figma-mcp-write-server\config.yaml
+# macOS: ~/Library/Application Support/figma-mcp-write-server/config.yaml  
+# Linux: ~/.config/figma-mcp-write-server/config.yaml
+
+# WebSocket server settings
+port: 3000
+host: localhost
+
+# Font database configuration
+fontDatabase:
+  # Enable SQLite database for fast font search (recommended)
+  enabled: true
+  
+  # Database file path (defaults to platform-specific cache directory)
+  # Windows: %LOCALAPPDATA%\figma-mcp-write-server\fonts.db
+  # macOS: ~/Library/Caches/figma-mcp-write-server/fonts.db
+  # Linux: ~/.cache/figma-mcp-write-server/fonts.db
+  # databasePath: /custom/path/to/fonts.db
+  
+  # Maximum age of cached font data before sync (hours)
+  maxAgeHours: 24
+  
+  # Automatically sync fonts on server startup if needed
+  syncOnStartup: true
+  
+  # Enable background font synchronization
+  backgroundSync: true
+
+# Logging configuration
+logging:
+  # Log level: error, warn, info, debug
+  level: info
+  
+  # Enable logging to file
+  enableFileLogging: false
+  
+  # Log file path (defaults to platform-specific cache directory)
+  # logPath: /custom/path/to/server.log
+```
 
 ## 🔧 Boolean & Vector Operations
 

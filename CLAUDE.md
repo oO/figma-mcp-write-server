@@ -48,10 +48,44 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - Always add tests when adding new features
 - Run `npm test` before committing
 
+### JSON-RPC Error Handling
+- NEVER use `error.message` in JSON-RPC contexts as it can create protocol issues
+- ALWAYS use `error.toString()` instead for error logging and responses
+- This applies to all plugin communication and MCP responses
+
 ### Code Style
 - No hardcoded numbers in documentation that require frequent updates
 - Use descriptive variable and function names
 - Follow existing patterns for consistency
+
+### Implementation Pattern Guidelines
+**CRITICAL**: Before implementing any new feature, always examine existing implementations first to match established patterns.
+
+#### Handler Implementation Pattern
+When adding new handlers to the Figma plugin:
+1. **First**: Read existing handlers (e.g., `style-handler.ts`, `node-handler.ts`) to understand the pattern
+2. **Follow this exact structure**:
+```typescript
+export class NewHandler extends BaseHandler {
+  getHandlerName(): string {
+    return 'NewHandler';
+  }
+
+  getOperations(): Record<string, OperationHandler> {
+    return {
+      'OPERATION_NAME': (payload) => this.methodName(payload)
+    };
+  }
+
+  private async methodName(payload: any): Promise<OperationResult> {
+    return this.executeOperation('methodName', payload, async () => {
+      // Implementation here
+    });
+  }
+}
+```
+3. **Do NOT use**: `async handle(type: string, payload: any)` patterns
+4. **Always match**: The exact interface contracts used by existing handlers
 
 ### Documentation Guidelines
 

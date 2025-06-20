@@ -11,6 +11,7 @@ import { ComponentHandler } from './handlers/component-handler.js';
 import { VariableHandler } from './handlers/variable-handler.js';
 import { ExportHandler } from './handlers/export-handler.js';
 import { ImageHandler } from './handlers/image-handler.js';
+import { FontHandler } from './handlers/font-handler.js';
 import { AlignmentHandler } from './handlers/alignment-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
@@ -40,6 +41,7 @@ class FigmaPlugin {
     const variableHandler = new VariableHandler();
     const exportHandler = new ExportHandler();
     const imageHandler = new ImageHandler();
+    const fontHandler = new FontHandler();
     const alignmentHandler = new AlignmentHandler();
 
     // Register all operations
@@ -54,6 +56,7 @@ class FigmaPlugin {
       variableHandler.getOperations(),
       exportHandler.getOperations(),
       imageHandler.getOperations(),
+      fontHandler.getOperations(),
       alignmentHandler.getOperations(),
       // Boolean and vector operations
       {
@@ -65,6 +68,10 @@ class FigmaPlugin {
         'ANNOTATION_OPERATION': performAnnotationOperation,
         'MEASUREMENT_OPERATION': performMeasurementOperation,
         'DEV_RESOURCE_OPERATION': performDevResourceOperation
+      },
+      // Font sync operation
+      {
+        'SYNC_FONTS': this.syncFonts.bind(this)
       }
     );
 
@@ -81,6 +88,8 @@ class FigmaPlugin {
     console.log('🔍 ANNOTATION_OPERATION handler exists:', !!this.handlers['ANNOTATION_OPERATION']);
     console.log('🔍 MEASUREMENT_OPERATION handler exists:', !!this.handlers['MEASUREMENT_OPERATION']);
     console.log('🔍 DEV_RESOURCE_OPERATION handler exists:', !!this.handlers['DEV_RESOURCE_OPERATION']);
+    console.log('🔍 MANAGE_FONTS handler exists:', !!this.handlers['MANAGE_FONTS']);
+    console.log('🔍 SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
   }
 
   private setupUIMessageHandler(): void {
@@ -145,8 +154,22 @@ class FigmaPlugin {
         id,
         operation,
         success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.toString() : 'Unknown error'
       });
+    }
+  }
+
+  // Font sync operation for database synchronization
+  private async syncFonts(payload: any): Promise<any> {
+    try {
+      // Get all available fonts using Figma API
+      const availableFonts = await figma.listAvailableFontsAsync();
+      
+      // Return raw font data for sync service processing
+      return availableFonts;
+    } catch (error) {
+      console.error('❌ Font sync failed:', error);
+      throw new Error(`Font sync failed: ${error instanceof Error ? error.toString() : 'Unknown error'}`);
     }
   }
 

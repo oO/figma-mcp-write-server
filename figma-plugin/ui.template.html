@@ -184,7 +184,7 @@
         <div class="status-section">
             <div class="connection-info">
                 <div class="status-dot" id="statusDot"></div>
-                <div class="status-text" id="connectionStatus">Connecting to localhost:8765...</div>
+                <div class="status-text" id="connectionStatus">Connecting to localhost:{{PORT}}...</div>
             </div>
             <div class="heartbeat" id="heartbeat" title="Connection heartbeat">💔</div>
         </div>
@@ -337,11 +337,11 @@
                 updateConnectionStatus(false, "Connecting...", true);
 
                 try {
-                    ws = new WebSocket("ws://localhost:8765");
+                    ws = new WebSocket("ws://localhost:{{PORT}}");
 
                     ws.onopen = () => {
                         log("Connected to MCP server");
-                        updateConnectionStatus(true, "Connected to localhost:8765");
+                        updateConnectionStatus(true, "Connected to localhost:{{PORT}}");
                         connectionAttempts = 0;
                         clearReconnectTimer();
                         ws.send(JSON.stringify({ type: "PLUGIN_HELLO" }));

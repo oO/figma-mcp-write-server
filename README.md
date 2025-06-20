@@ -4,6 +4,10 @@ A Model Context Protocol (MCP) server that provides **write access** to Figma th
 
 Designed with ❤️ by a human. Coded with ✨ by an AI agent.
 
+> [!WARNING]
+> This project in in pre-release development mode (Semantic Versioning < 1.0.0) this means that all tools, interfaces and definitions are subject to change.
+
+
 ## 🚀 Overview
 
 Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
@@ -26,6 +30,7 @@ Because the Figma REST API is mostly read-only, this project uses the Plugin API
 - ✅ **Manage** selections and page content
 - ✅ **Export** designs programmatically with flexible file/data output options
 - ✅ **Image Management** for loading, filtering, and transforming images applied to design elements
+- ✅ **Font Management** with SQLite database for fast search across 37K+ fonts
 
 ## 🏗️ Architecture
 
@@ -73,6 +78,7 @@ graph LR
 | `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
 | `manage_exports` | Export nodes as files or data with cross-platform output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
 | `manage_images` | Image management for design elements | operation, imageUrl/imageBytes, nodeId, createNode, scaleMode, filters, rotation, alignmentX/Y, fitStrategy |
+| `manage_fonts` | Font search and management with SQLite database | operation (search_fonts/get_project_fonts/get_font_count/check_availability/get_font_styles/validate_font/get_font_info/preload_fonts), query, source, hasStyle, minStyleCount, limit, sortBy |
 | `get_plugin_status` | Check plugin connection | - |
 | `get_connection_health` | Get detailed connection metrics | - |
 
@@ -91,6 +97,7 @@ Common use cases:
 - **Vector Creation**: "Create custom icons with SVG paths and flatten complex shapes"
 - **Dev Handoff**: "Add annotations and measurements, generate CSS for developers"
 - **Image Operations**: "Load hero image from URL and apply filters" or "Replace product images with smart cropping"
+- **Font Search**: "Find Google fonts with Bold style" or "Search fonts matching 'Inter'"
 - **Batch Operations**: "Select all text elements and update font size"
 - **Export Operations**: "Export selected components as PNG files to default export folder" or "Return design data as base64 for processing"
 
@@ -99,11 +106,42 @@ Common use cases:
 ## 🛠️ Installation & Setup
 
 ### Command Line Options
-- `--port <number>` - WebSocket server port (default: 8765)
+- `--port <number>` - WebSocket server port (default: 3000)
 - `--help, -h` - Show help message
 
-### Environment Variables
-- `FIGMA_MCP_PORT` - WebSocket server port (default: 8765)
+### Plugin Build System
+The Figma plugin uses a configurable build system that automatically matches the server port:
+
+```bash
+# Build plugin with default port (3000)
+cd figma-plugin && node build.js
+
+# Build plugin with custom port
+cd figma-plugin && node build.js --port=8765
+
+# Watch mode for development
+cd figma-plugin && node build.js --watch --port=3000
+```
+
+The build system automatically injects the correct WebSocket port and version into the plugin UI, ensuring the plugin always connects to the right server port.
+
+### Configuration
+The server uses YAML configuration files with platform-specific defaults:
+
+- **Windows**: `%APPDATA%\figma-mcp-write-server\config.yaml`
+- **macOS**: `~/Library/Application Support/figma-mcp-write-server/config.yaml`
+- **Linux**: `~/.config/figma-mcp-write-server/config.yaml`
+
+Configuration files are automatically created on first run. See `config.example.yaml` for all available options.
+
+### Font Database
+SQLite database for fast font search is automatically configured:
+
+- **Windows**: `%LOCALAPPDATA%\figma-mcp-write-server\fonts.db`
+- **macOS**: `~/Library/Caches/figma-mcp-write-server/fonts.db`
+- **Linux**: `~/.cache/figma-mcp-write-server/fonts.db`
+
+Database synchronizes automatically with Figma's available fonts.
 
 ### Platform Support
 The export system supports Windows and macOS with automatic platform detection:
@@ -123,7 +161,7 @@ The system provides real-time connection monitoring:
 ## 🔍 Troubleshooting
 
 ### Plugin Won't Connect
-1. Check WebSocket port (default: 8765)
+1. Check WebSocket port (default: 3000) - ensure plugin was built with matching port
 2. Verify MCP server is running
 3. Verify Figma plugin is running
 4. Check plugin console for connection logs
@@ -184,4 +222,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 22 MCP tools and runs a WebSocket server on port 8765 for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 24 MCP tools and runs a WebSocket server on port 3000 (configurable) for plugin communication.

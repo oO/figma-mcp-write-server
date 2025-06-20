@@ -28,6 +28,12 @@ npm run test:integration  # Run integration tests only
 npm run test:coverage # Generate coverage report
 ```
 
+### Configuration Development
+The server uses a cross-platform configuration system:
+- Config files auto-generate on first run
+- Database paths are platform-specific by default
+- Font synchronization configurable via YAML
+
 ## 🎯 Core Design Principles
 
 MCP servers should be designed from the perspective of both the Human User and their AI Agent. Rather than a thin wrapper around an application API, the design of a MCP server should take into account the Agent Experience ( AX ?) with tools that take into account discoverability and usability.
@@ -37,6 +43,91 @@ MCP servers should be designed from the perspective of both the Human User and t
 2. **YAML Response Format**: All tools return structured YAML data within MCP's text field
 4. **MCP Protocol Compliance**: Strict adherence to Model Context Protocol standards
 5. **Extensible Design**: Easy to add new operations without creating new tools
+
+## 🗄️ Database Architecture
+
+The server implements a database-first approach for font management with graceful fallback to API-based operations.
+
+### SQLite Font Database
+
+**Schema Structure:**
+- `fonts` table: Primary font metadata (family, style, technology, file paths)
+- `font_styles` table: Style-specific properties (weight, width, slope)
+- `sync_metadata` table: Synchronization tracking and cache management
+
+**Full-Text Search Implementation:**
+- FTS5 virtual table indexes font family names and metadata
+- Tokenization optimized for font naming conventions
+- Fuzzy matching for font discovery and suggestions
+
+**Indexing Strategy:**
+- Primary indices on font family and style combinations
+- Composite indices for platform-specific paths
+- Query optimization for common font lookup patterns
+
+### Font Service Architecture
+
+**Database-First Pattern:**
+The font service prioritizes local database operations with API fallback:
+```typescript
+async getFontsByFamily(family: string): Promise<FontInfo[]> {
+  try {
+    return await this.database.queryFontsByFamily(family);
+  } catch (error) {
+    return await this.api.fetchFontsByFamily(family);
+  }
+}
+```
+
+**Background Synchronization Service:**
+- Scheduled sync operations with system font directories
+- Incremental updates to minimize I/O overhead
+- Conflict resolution for font file changes
+
+**Graceful Degradation:**
+When database operations fail, the service automatically falls back to:
+- Direct filesystem scanning for local fonts
+- API-based font metadata retrieval
+- In-memory caching for session-based operations
+
+### Configuration System
+
+**Platform-Specific Path Detection:**
+- macOS: `/System/Library/Fonts`, `/Library/Fonts`, `~/Library/Fonts`
+- Windows: `C:\Windows\Fonts`, `%LOCALAPPDATA%\Microsoft\Windows\Fonts`
+- Cross-platform user font directories
+
+**YAML Config Merging Strategy:**
+Configuration files are merged in order of precedence:
+1. User-specific config files
+2. Project-level configuration
+3. System defaults
+4. Built-in fallback values
+
+**Auto-Generation of Config Files:**
+- First-run detection creates default configurations
+- Platform-appropriate default paths
+- User preferences preserved across updates
+
+### Testing Database Features
+
+**Database Operation Testing:**
+```typescript
+describe('FontDatabase', () => {
+  let testDb: FontDatabase;
+  
+  beforeEach(async () => {
+    testDb = new FontDatabase(':memory:');
+    await testDb.initialize();
+  });
+});
+```
+
+**Mock Strategies:**
+- In-memory SQLite databases for unit tests
+- Mock file system operations for path testing
+- Stubbed API responses for fallback testing
+- Transaction rollback for test isolation
 
 ### 1. Logical Tool Consolidation
 **Goal**: Tools are designed to be easily discovered and used by the AI Agent.
@@ -297,8 +388,8 @@ figma-mcp-write-server/
 
 **Build Process**
 - Server: TypeScript compilation to `dist/`
-- Plugin: Custom build script compiles TypeScript and generates UI
-- UI generation: Injects version from package.json into template
+- Plugin: Custom build script compiles TypeScript and generates UI with configurable port injection
+- UI generation: Injects version and WebSocket port from package.json and build arguments into template
 
 ## 🔧 Development Environment Setup
 
@@ -342,6 +433,10 @@ npm start                 # Start production server
 npm test                  # Run all tests (unit + integration)
 npm run test:unit         # Run unit tests only
 npm run test:integration  # Run integration tests only
+
+# Plugin build with custom port
+cd figma-plugin && node build.js --port=3000
+cd figma-plugin && node build.js --watch --port=8765
 npm run test:coverage     # Generate test coverage report
 npm run test:watch        # Watch mode for testing
 npm run test:connectivity # WebSocket connection test
@@ -370,10 +465,11 @@ Command-line interface and application bootstrap:
 ### WebSocket Server (`src/websocket/websocket-server.ts`)
 Dedicated server for Figma plugin communication:
 
-- **Connection Management**: Handles plugin connections on port 8765
+- **Connection Management**: Handles plugin connections on configurable port (default: 3000)
 - **Message Routing**: Bidirectional communication with plugin
 - **Status Monitoring**: Tracks plugin connection state
 - **Error Recovery**: Automatic reconnection handling
+- **Port Configuration**: Automatically uses server config port, overridable via command line
 
 ## 📋 Handler System
 
@@ -389,11 +485,12 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 23 consolidated tools organized by domain:
+The server provides 24 consolidated tools organized by domain:
 
 - **Node Operations**: `create_node`, `create_text`, `update_node`, `manage_nodes`
 - **Selection & Page Management**: `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
 - **Style System**: `manage_styles`
+- **Typography & Fonts**: `manage_fonts`
 - **Layout Management**: `manage_auto_layout`, `manage_constraints`, `manage_hierarchy`
 - **Boolean & Vector Operations**: `manage_boolean_operations`, `manage_vector_operations`
 - **Dev Mode Integration**: `manage_annotations`, `manage_measurements`, `manage_dev_resources`
@@ -428,6 +525,24 @@ Figma style system integration:
 - **Style Application**: Apply styles to compatible nodes
 - **Style Discovery**: List and search existing styles
 - **Comprehensive Management**: All style operations in a single unified tool
+
+#### Font Handlers (`src/handlers/font-handlers.ts`)
+Typography and font management with SQLite database:
+- **Font Search**: Fast font discovery with `manage_fonts` (search_fonts operation)
+  - Full-text search across 37K+ fonts with sub-100ms response times
+  - Filter by source (Google, System, Custom), style availability, and popularity
+  - SQLite database with FTS5 indexing for instant results
+- **Font Operations**: Comprehensive font management
+  - **Check Availability**: Verify if fonts are loaded in Figma
+  - **Get Missing**: Find missing fonts in current document
+  - **Get Font Styles**: List all available styles for a font family
+  - **Validate Font**: Check if font/style combination exists
+  - **Get Font Info**: Detailed font metadata and classification
+  - **Preload Fonts**: Load fonts before using in text operations
+  - **Project Fonts**: Get all fonts used in current document
+  - **Font Count**: Statistics on total available fonts
+- **Database Integration**: Automatic synchronization and fallback to Figma API
+- **Cross-Platform Support**: Font database with platform-specific caching
 
 #### Layout Handlers (`src/handlers/layout-handlers.ts`)
 Auto layout, constraints, and hierarchy:
@@ -1234,7 +1349,8 @@ ps aux | grep figma-mcp
 ### Common Issues
 
 #### Plugin Connection Failures
-- **Port Conflicts**: Use `--check-port 8765` to identify conflicts
+- **Port Mismatch**: Ensure plugin built with same port as server (use `node build.js --port=3000`)
+- **Port Conflicts**: Use `--check-port 3000` to identify conflicts
 - **Firewall**: Ensure localhost connections allowed
 - **Plugin State**: Restart plugin if connection stuck
 - **Server State**: Restart server to clear zombie processes

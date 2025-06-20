@@ -16,6 +16,8 @@ const config = {
   outfile: join(__dirname, 'code.js'),
   distDir: join(__dirname, 'dist'),
   tempFile: join(__dirname, 'dist/bundled.js'),
+  uiTemplate: join(__dirname, 'ui.template.html'),
+  uiOutput: join(__dirname, 'ui.html'),
   minify: process.env.NODE_ENV === 'production',
   sourcemap: process.env.NODE_ENV !== 'production'
 };
@@ -33,10 +35,46 @@ if (typeof figma === 'undefined') {
 }
 `.trim();
 
+// Get version and port from package.json and config
+function getBuildInfo() {
+  const packageJsonPath = join(__dirname, '..', 'package.json');
+  const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
+  
+  // Default port (can be overridden by --port argument)
+  let port = 8765;
+  const portArg = process.argv.find(arg => arg.startsWith('--port='));
+  if (portArg) {
+    port = parseInt(portArg.split('=')[1], 10);
+  }
+  
+  return {
+    version: packageJson.version,
+    port: port
+  };
+}
+
+// Process UI template
+function processUITemplate(buildInfo) {
+  console.log('🎨 Processing UI template...');
+  
+  const template = readFileSync(config.uiTemplate, 'utf-8');
+  const processed = template
+    .replace(/\{\{VERSION\}\}/g, buildInfo.version)
+    .replace(/\{\{PORT\}\}/g, buildInfo.port);
+  
+  writeFileSync(config.uiOutput, processed, 'utf-8');
+  console.log(`✅ UI template processed: ${config.uiOutput}`);
+  console.log(`📡 WebSocket port: ${buildInfo.port}`);
+}
+
 async function build() {
   console.log('🏗️  Building Figma plugin...');
   
   try {
+    // Step 0: Get build info and process UI template
+    const buildInfo = getBuildInfo();
+    processUITemplate(buildInfo);
+    
     // Step 1: Bundle TypeScript modules
     console.log('📦 Bundling TypeScript modules...');
     await esbuild.build({
@@ -104,6 +142,10 @@ const args = process.argv.slice(2);
 
 if (args.includes('--watch') || args.includes('-w')) {
   console.log('👀 Watching for changes...');
+  
+  // Process UI template initially
+  const buildInfo = getBuildInfo();
+  processUITemplate(buildInfo);
   
   const context = await esbuild.context({
     entryPoints: [config.entryPoint],

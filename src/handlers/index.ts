@@ -11,6 +11,8 @@ import { BooleanHandlers } from "./boolean-handlers.js";
 import { DevModeHandlers } from "./dev-mode-handlers.js";
 import { ExportHandlers } from "./export-handlers.js";
 import { ImageHandlers } from "./image-handlers.js";
+import { FontHandlers } from "./font-handlers.js";
+import { getDefaultPaths } from "../config/config.js";
 import * as os from "os";
 import * as path from "path";
 
@@ -21,6 +23,14 @@ export class HandlerRegistry {
 
   constructor(sendToPluginFn: (request: any) => Promise<any>, wsServer?: any) {
     this.wsServer = wsServer;
+    
+    // Database configuration for font handlers
+    const paths = getDefaultPaths();
+    const fontDbConfig = {
+      databasePath: paths.databasePath,
+      enableDatabase: true
+    };
+    
     // Auto-register all handlers
     this.registerHandler(new NodeHandlers(sendToPluginFn));
     this.registerHandler(new SelectionHandlers(sendToPluginFn));
@@ -32,6 +42,7 @@ export class HandlerRegistry {
     this.registerHandler(new DevModeHandlers(sendToPluginFn));
     this.registerHandler(new ExportHandlers(sendToPluginFn));
     this.registerHandler(new ImageHandlers(sendToPluginFn));
+    this.registerHandler(new FontHandlers(sendToPluginFn, fontDbConfig));
 
     // Add plugin status tool
     this.addPluginStatusTool();

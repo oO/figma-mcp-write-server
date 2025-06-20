@@ -5,6 +5,59 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.28.1] - 2025-06-20
+
+### Added
+- **Configurable Plugin Build System**: Enhanced build system with dynamic port injection
+  - Template-based UI generation with `{{PORT}}` and `{{VERSION}}` placeholders
+  - Command-line port configuration: `node build.js --port=3000`
+  - Watch mode support: `node build.js --watch --port=8765`
+  - Automatic synchronization between server and plugin ports
+
+### Fixed
+- **Port Configuration Consistency**: Resolved port mismatch between server default (3000) and plugin hardcoded (8765)
+  - Plugin now dynamically configures to match server port
+  - Updated documentation to reflect consistent port usage
+  - Enhanced troubleshooting guide with port mismatch solutions
+
+### Changed
+- **Default Port Usage**: All components now consistently use port 3000 as default
+- **Documentation Updates**: README and DEVELOPMENT guides updated with new build system
+- **Enhanced Setup Instructions**: Clearer instructions for plugin-server port coordination
+- **Complete Handler Documentation**: Added missing FontHandlers documentation to DEVELOPMENT.md
+
+## [0.28.0] - 2025-06-19
+
+### Added
+- **SQLite Font Database**: Local database for fast font search and filtering
+  - Sub-100ms search response times for 37K+ fonts
+  - Full-text search on font names with FTS5 indexing
+  - Background synchronization from Figma API
+  - Graceful fallback to API when database unavailable
+  - Font categorization (Google, System, Custom)
+  - Database schema with fonts, font_styles, and sync_metadata tables
+
+- **Cross-Platform Configuration System**: YAML configuration files with platform-specific defaults
+  - Windows: `%APPDATA%\figma-mcp-write-server\config.yaml`
+  - macOS: `~/Library/Application Support/figma-mcp-write-server/config.yaml`
+  - Linux: `~/.config/figma-mcp-write-server/config.yaml`
+  - Automatic directory creation and config generation
+  - Database path configuration with platform-specific cache directories
+  - Font sync settings and logging configuration
+
+- **Updated Font Operations**: Replaced bulk operations with intelligent search
+  - `search_fonts`: Text search, source filtering, style requirements with result limits
+  - `get_project_fonts`: Returns fonts used in current document
+  - `get_font_count`: Quick statistics without loading full data
+  - Removed `list_available` and `get_font_families` (exceeded response limits)
+
+### Enhanced
+- **Font Service Architecture**: Database-first with API fallback
+  - Hybrid approach combines local database performance with API reliability
+  - Background initialization and synchronization
+  - Memory-efficient result handling
+  - Configurable sync intervals and database settings
+
 ## [0.27.1] - 2025-06-17
 
 ### Added

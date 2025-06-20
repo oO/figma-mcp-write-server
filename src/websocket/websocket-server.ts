@@ -1,13 +1,13 @@
 import { WebSocketServer } from 'ws';
 import WebSocket from 'ws';
 import { v4 as uuidv4 } from 'uuid';
-import { ServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types/index.js';
+import { LegacyServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types/index.js';
 import { checkPortAvailable, findZombieProcesses, killZombieProcesses, findAvailablePort } from '../utils/port-utils.js';
 
 export class FigmaWebSocketServer {
   private wsServer: WebSocketServer | null = null;
   private pluginConnection: WebSocket | null = null;
-  private config: ServerConfig;
+  private config: LegacyServerConfig;
   
   // Enhanced request management
   private requestQueue: QueuedRequest[] = [];
@@ -21,7 +21,7 @@ export class FigmaWebSocketServer {
   private healthCheckTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
 
-  constructor(config: ServerConfig) {
+  constructor(config: LegacyServerConfig) {
     this.config = config;
     
     // Initialize connection status
@@ -475,7 +475,7 @@ export class FigmaWebSocketServer {
     }, this.config.communication.reconnectDelay * this.connectionStatus.reconnectAttempts);
   }
 
-  getConfig(): ServerConfig {
+  getConfig(): LegacyServerConfig {
     return this.config;
   }
   

@@ -26,6 +26,9 @@ export * from './variable-operations.js';
 // Image management operations
 export * from './image-operations.js';
 
+// Font management operations
+export * from './font-operations.js';
+
 // Plugin communication and MCP server types
 export * from './plugin-communication.js';
 

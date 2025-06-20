@@ -1,0 +1,40 @@
+# Figma MCP Write Server Configuration
+# This file will be automatically created at:
+# - Windows: %APPDATA%\figma-mcp-write-server\config.yaml
+# - macOS: ~/Library/Application Support/figma-mcp-write-server/config.yaml  
+# - Linux: ~/.config/figma-mcp-write-server/config.yaml
+
+# WebSocket server settings
+port: 3000
+host: localhost
+
+# Font database configuration
+fontDatabase:
+  # Enable SQLite database for fast font search (recommended)
+  enabled: true
+  
+  # Database file path (defaults to platform-specific cache directory)
+  # Windows: %LOCALAPPDATA%\figma-mcp-write-server\fonts.db
+  # macOS: ~/Library/Caches/figma-mcp-write-server/fonts.db
+  # Linux: ~/.cache/figma-mcp-write-server/fonts.db
+  # databasePath: /custom/path/to/fonts.db
+  
+  # Maximum age of cached font data before sync (hours)
+  maxAgeHours: 24
+  
+  # Automatically sync fonts on server startup if needed
+  syncOnStartup: true
+  
+  # Enable background font synchronization
+  backgroundSync: true
+
+# Logging configuration
+logging:
+  # Log level: error, warn, info, debug
+  level: info
+  
+  # Enable logging to file
+  enableFileLogging: false
+  
+  # Log file path (defaults to platform-specific cache directory)
+  # logPath: /custom/path/to/server.log
