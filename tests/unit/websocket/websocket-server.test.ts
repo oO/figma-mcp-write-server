@@ -1,6 +1,6 @@
 import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
 import { FigmaWebSocketServer } from '../../../src/websocket/websocket-server.js';
-import { DEFAULT_CONFIG } from '../../../src/types/index.js';
+import { DEFAULT_WS_CONFIG } from '../../../src/types/index.js';
 
 // Mock the port utils to avoid actual port operations in tests
 jest.mock('../../../src/utils/port-utils.js', () => ({
@@ -39,7 +39,7 @@ describe('FigmaWebSocketServer', () => {
 
   beforeEach(() => {
     testConfig = {
-      ...DEFAULT_CONFIG,
+      ...DEFAULT_WS_CONFIG,
       port: 8765,
       heartbeatInterval: 1000
     };
@@ -212,7 +212,7 @@ describe('FigmaWebSocketServer', () => {
       const shortTimeoutConfig = {
         ...testConfig,
         communication: {
-          ...DEFAULT_CONFIG.communication,
+          ...DEFAULT_WS_CONFIG.communication,
           defaultTimeout: 100,
           operationTimeouts: { CREATE_NODE: 100 }
         }
@@ -352,6 +352,25 @@ describe('FigmaWebSocketServer', () => {
       
       // Should handle gracefully without crashing
       expect(true).toBe(true);
+    });
+
+    test('should reset health metrics correctly', async () => {
+      await wsServer.start();
+      
+      // Get initial health metrics
+      const initialHealth = wsServer.getHealthMetrics();
+      expect(initialHealth.errorCount).toBe(0);
+      expect(initialHealth.successCount).toBe(0);
+      
+      // Test that resetHealthMetrics works
+      wsServer.resetHealthMetrics();
+      
+      const resetHealth = wsServer.getHealthMetrics();
+      expect(resetHealth.errorCount).toBe(0);
+      expect(resetHealth.successCount).toBe(0);
+      expect(resetHealth.responseTime).toEqual([]);
+      expect(resetHealth.lastError).toBeNull();
+      expect(resetHealth.lastSuccess).toBeNull();
     });
   });
 });

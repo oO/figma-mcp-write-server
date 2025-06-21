@@ -29,6 +29,9 @@ export * from './image-operations.js';
 // Font management operations
 export * from './font-operations.js';
 
+// Typography operations (coming in future release)
+// export * from './typography-operations.js';
+
 // Plugin communication and MCP server types
 export * from './plugin-communication.js';
 

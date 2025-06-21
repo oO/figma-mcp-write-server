@@ -65,14 +65,13 @@ export class MessageRouter {
       type: 'PLUGIN_HELLO',
       payload: {
         pluginId: 'figma-mcp-write-plugin',
-        version: '0.13.1',
+        version: '0.28.2',
         timestamp: Date.now()
       }
     });
   }
 
   private async handleMessage(message: PluginMessage): Promise<void> {
-    console.log('📨 Received message:', message.type);
 
     // Handle heartbeat
     if (message.type === 'HEARTBEAT') {
@@ -88,7 +87,6 @@ export class MessageRouter {
 
     // Handle connection acknowledgment
     if (message.type === 'CONNECTED') {
-      console.log('✅ Server acknowledged connection');
       return;
     }
 
@@ -99,7 +97,7 @@ export class MessageRouter {
       return;
     }
 
-    console.warn('⚠️ Unhandled message type:', message.type);
+    // Unhandled message type
   }
 
   private async executeOperation(operation: string, payload: any): Promise<OperationResult> {
@@ -115,7 +113,7 @@ export class MessageRouter {
     try {
       return await handler(payload);
     } catch (error) {
-      console.error(`❌ Operation ${operation} failed:`, error);
+      // Operation failed
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -133,8 +131,6 @@ export class MessageRouter {
   private sendToServer(message: any): void {
     if (this.ws && this.isConnected) {
       this.ws.send(JSON.stringify(message));
-    } else {
-      console.warn('⚠️ Cannot send message: not connected to server');
     }
   }
 
@@ -151,7 +147,7 @@ export class MessageRouter {
           await this.connectToServer();
           break;
         default:
-          console.log('❓ Unknown UI message:', msg.type);
+          // Unknown UI message
       }
     };
   }
@@ -167,7 +163,6 @@ export class MessageRouter {
 
   private async attemptReconnect(): Promise<void> {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.log('💀 Max reconnection attempts reached');
       this.notifyUI('failed', 'Connection failed after multiple attempts');
       return;
     }
@@ -175,7 +170,6 @@ export class MessageRouter {
     this.reconnectAttempts++;
     const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
     
-    console.log(`🔄 Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts}) in ${delay}ms`);
     this.notifyUI('reconnecting', `Reconnecting... (attempt ${this.reconnectAttempts})`);
 
     setTimeout(() => {
@@ -233,11 +227,8 @@ export class MessageRouter {
     const requests = message.payload?.requests || message.requests;
     
     if (!batchId || !requests) {
-      console.error('❌ Invalid batch request format');
       return;
     }
-    
-    console.log(`📦 Processing batch with ${requests.length} requests`);
     
     const responses = [];
     

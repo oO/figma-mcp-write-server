@@ -12,6 +12,7 @@ export class SelectionHandler extends BaseHandler {
     return {
       GET_SELECTION: () => this.getSelection(),
       SET_SELECTION: (params) => this.setSelection(params),
+      CLEAR_SELECTION: () => this.clearSelection(),
       GET_PAGE_NODES: (params) => this.getPageNodes(params),
     };
   }

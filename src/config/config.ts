@@ -23,7 +23,7 @@ export interface ServerConfig {
 }
 
 const DEFAULT_CONFIG: ServerConfig = {
-  port: 3000,
+  port: 8765,
   host: 'localhost',
   fontDatabase: {
     enabled: true,
@@ -193,8 +193,8 @@ function normalizeConfig(config: ServerConfig): ServerConfig {
   
   // Validate port range
   if (config.port < 1 || config.port > 65535) {
-    console.warn(`Invalid port ${config.port}, using default 3000`);
-    config.port = 3000;
+    console.warn(`Invalid port ${config.port}, using default 8765`);
+    config.port = 8765;
   }
   
   // Validate max age hours

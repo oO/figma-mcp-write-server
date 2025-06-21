@@ -20,6 +20,7 @@ export class FigmaWebSocketServer {
   private healthMetrics: HealthMetrics;
   private healthCheckTimer: NodeJS.Timeout | null = null;
   private reconnectTimer: NodeJS.Timeout | null = null;
+  private startupTime: number;
 
   constructor(config: LegacyServerConfig) {
     this.config = config;
@@ -43,6 +44,9 @@ export class FigmaWebSocketServer {
       lastError: null,
       lastSuccess: null
     };
+    
+    // Track startup time to ignore early handshake failures
+    this.startupTime = Date.now();
   }
 
   async start(): Promise<void> {
@@ -91,7 +95,15 @@ export class FigmaWebSocketServer {
       }
     });
     
-    this.wsServer.on('connection', (ws) => {
+    this.wsServer.on('listening', () => {
+      // Server ready
+    });
+    
+    this.wsServer.on('connection', (ws, req) => {
+      const clientIP = req?.socket?.remoteAddress;
+      
+      this.connectionStatus.activeClients++;
+      
       ws.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
@@ -101,7 +113,8 @@ export class FigmaWebSocketServer {
         }
       });
       
-      ws.on('close', () => {
+      ws.on('close', (code, reason) => {
+        this.connectionStatus.activeClients--;
         if (ws === this.pluginConnection) {
           this.pluginConnection = null;
           this.connectionStatus.pluginConnected = false;
@@ -176,7 +189,9 @@ export class FigmaWebSocketServer {
       this.connectionStatus.pluginConnected = true;
       this.connectionStatus.connectionHealth = 'healthy';
       this.connectionStatus.reconnectAttempts = 0;
-      ws.send(JSON.stringify({ type: 'CONNECTED', role: 'plugin' }));
+      
+      const response = { type: 'CONNECTED', role: 'plugin' };
+      ws.send(JSON.stringify(response));
       
       // Process any queued requests
       this.processRequestQueue();
@@ -223,8 +238,15 @@ export class FigmaWebSocketServer {
       this.healthMetrics.lastSuccess = new Date();
       request.resolve(message);
     } else {
-      this.healthMetrics.errorCount++;
-      this.healthMetrics.lastError = message.error || 'Plugin operation failed';
+      // Don't count startup handshake failures in health metrics
+      const timeSinceStartup = Date.now() - this.startupTime;
+      const isStartupFailure = timeSinceStartup < 5000; // 5 second grace period
+      
+      if (!isStartupFailure) {
+        this.healthMetrics.errorCount++;
+        this.healthMetrics.lastError = message.error || 'Plugin operation failed';
+      }
+      
       request.reject(new Error(message.error || 'Plugin operation failed'));
     }
   }
@@ -247,7 +269,14 @@ export class FigmaWebSocketServer {
           this.healthMetrics.successCount++;
           request.resolve(response);
         } else {
-          this.healthMetrics.errorCount++;
+          // Don't count startup handshake failures in health metrics
+          const timeSinceStartup = Date.now() - this.startupTime;
+          const isStartupFailure = timeSinceStartup < 5000; // 5 second grace period
+          
+          if (!isStartupFailure) {
+            this.healthMetrics.errorCount++;
+          }
+          
           request.reject(new Error(response.error || 'Batch operation failed'));
         }
       }
@@ -502,5 +531,27 @@ export class FigmaWebSocketServer {
   // Method to send low priority requests (for background operations)
   async sendLowPriorityToPlugin(request: any): Promise<any> {
     return this.sendToPlugin(request, 'low');
+  }
+  
+  // Reset health metrics to clean state
+  resetHealthMetrics(): void {
+    this.healthMetrics = {
+      responseTime: [],
+      errorCount: 0,
+      successCount: 0,
+      lastError: null,
+      lastSuccess: null
+    };
+    
+    // Also reset connection status metrics
+    this.connectionStatus = {
+      ...this.connectionStatus,
+      averageResponseTime: 0,
+      queuedRequests: 0,
+      reconnectAttempts: 0
+    };
+    
+    // Reset startup time to give new grace period
+    this.startupTime = Date.now();
   }
 }

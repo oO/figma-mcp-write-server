@@ -96,22 +96,26 @@ export class FigmaMCPServer {
   }
 
   async start(): Promise<void> {
-    // Debug logging for Node.js environment
-    console.error(`[DEBUG] Node.js version: ${process.version}`);
-    console.error(`[DEBUG] Node.js executable path: ${process.execPath}`);
-    console.error(`[DEBUG] Node.js platform: ${process.platform}`);
-    console.error(`[DEBUG] Node.js arch: ${process.arch}`);
-    console.error(`[DEBUG] NODE_MODULE_VERSION: ${process.versions.modules}`);
-    console.error(`[DEBUG] Process argv0: ${process.argv0}`);
-    console.error(`[DEBUG] Process cwd: ${process.cwd()}`);
-    console.error(`[DEBUG] Process versions:`, JSON.stringify(process.versions, null, 2));
-    
     // Start WebSocket server
     await this.wsServer.start();
     
     // Start MCP server
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
+    
+    // Reset health metrics after MCP server starts
+    await this.resetHealthMetrics();
+  }
+  
+  private async resetHealthMetrics(): Promise<void> {
+    try {
+      // Wait a moment for potential plugin connection, then reset metrics
+      setTimeout(() => {
+        this.wsServer.resetHealthMetrics();
+      }, 500); // Short delay to allow any pending operations to complete
+    } catch (error) {
+      console.warn('Failed to reset health metrics:', error);
+    }
   }
 
   async stop(): Promise<void> {

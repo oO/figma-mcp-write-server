@@ -222,4 +222,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 24 MCP tools and runs a WebSocket server on port 3000 (configurable) for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 24 MCP tools and runs a WebSocket server on port 8765 (configurable) for plugin communication.

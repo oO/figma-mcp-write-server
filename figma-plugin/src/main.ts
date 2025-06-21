@@ -12,6 +12,7 @@ import { VariableHandler } from './handlers/variable-handler.js';
 import { ExportHandler } from './handlers/export-handler.js';
 import { ImageHandler } from './handlers/image-handler.js';
 import { FontHandler } from './handlers/font-handler.js';
+import { TypographyHandler } from './handlers/typography-handler.js';
 import { AlignmentHandler } from './handlers/alignment-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
@@ -42,6 +43,7 @@ class FigmaPlugin {
     const exportHandler = new ExportHandler();
     const imageHandler = new ImageHandler();
     const fontHandler = new FontHandler();
+    const typographyHandler = new TypographyHandler();
     const alignmentHandler = new AlignmentHandler();
 
     // Register all operations
@@ -57,6 +59,7 @@ class FigmaPlugin {
       exportHandler.getOperations(),
       imageHandler.getOperations(),
       fontHandler.getOperations(),
+      typographyHandler.getOperations(),
       alignmentHandler.getOperations(),
       // Boolean and vector operations
       {
@@ -72,6 +75,10 @@ class FigmaPlugin {
       // Font sync operation
       {
         'SYNC_FONTS': this.syncFonts.bind(this)
+      },
+      // Connection test operations
+      {
+        'PING_TEST': this.handlePingTest.bind(this)
       }
     );
 
@@ -89,7 +96,9 @@ class FigmaPlugin {
     console.log('🔍 MEASUREMENT_OPERATION handler exists:', !!this.handlers['MEASUREMENT_OPERATION']);
     console.log('🔍 DEV_RESOURCE_OPERATION handler exists:', !!this.handlers['DEV_RESOURCE_OPERATION']);
     console.log('🔍 MANAGE_FONTS handler exists:', !!this.handlers['MANAGE_FONTS']);
+    console.log('🔍 MANAGE_TYPOGRAPHY handler exists:', !!this.handlers['MANAGE_TYPOGRAPHY']);
     console.log('🔍 SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
+    console.log('🔍 PING_TEST handler exists:', !!this.handlers['PING_TEST']);
   }
 
   private setupUIMessageHandler(): void {
@@ -104,32 +113,34 @@ class FigmaPlugin {
         return;
       }
       
-      // Handle operation messages directly (no PLUGIN_OPERATION wrapper)
-      if (msg.type && msg.id && this.handlers[msg.type]) {
-        console.log('🔧 About to handle operation:', msg.type);
-        await this.handlePluginOperation(msg.type, msg.payload, msg.id);
+      // Handle operation messages from UI (wrapped in pluginMessage)
+      const message = msg.pluginMessage || msg; // Support both wrapped and direct messages
+      if (message.type && message.id && this.handlers[message.type]) {
+        await this.handlePluginOperation(message.type, message.payload, message.id);
       } else {
-        console.log('❓ Unknown message or missing handler:', msg.type);
+        console.error('Unknown message or missing handler:', message.type);
+        
+        // Send error response
+        figma.ui.postMessage({
+          type: 'OPERATION_RESPONSE',
+          id: message.id || 'unknown',
+          operation: message.type || 'unknown',
+          success: false,
+          error: `Unknown operation: ${message.type || 'undefined'}`
+        });
       }
     };
   }
 
   // Handle operations from MCP server via UI thread
   private async handlePluginOperation(operation: string, payload: any, id: string): Promise<void> {
-    console.log(`🔧 Executing ${operation}:`, payload);
-    console.log('🔍 Available handlers:', Object.keys(this.handlers));
-    console.log('🔍 Looking for handler:', operation);
     
     try {
       const handler = this.handlers[operation];
       
       if (!handler) {
-        console.error(`❌ Handler not found for operation: ${operation}`);
-        console.error('❌ Available handlers:', Object.keys(this.handlers));
         throw new Error(`Unknown operation: ${operation}`);
       }
-      
-      console.log(`✅ Found handler for ${operation}, executing...`);
 
       const result = await handler(payload);
       
@@ -170,6 +181,30 @@ class FigmaPlugin {
     } catch (error) {
       console.error('❌ Font sync failed:', error);
       throw new Error(`Font sync failed: ${error instanceof Error ? error.toString() : 'Unknown error'}`);
+    }
+  }
+
+  // Connection test operation
+  private async handlePingTest(payload: any): Promise<any> {
+    try {
+      const startTime = payload.timestamp || Date.now();
+      const responseTime = Date.now() - startTime;
+      
+      return {
+        success: true,
+        data: {
+          pong: true,
+          roundTripTime: responseTime,
+          pluginVersion: '0.27.1',
+          timestamp: Date.now()
+        }
+      };
+    } catch (error) {
+      console.error('❌ Ping test failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.toString() : 'Unknown error'
+      };
     }
   }
 

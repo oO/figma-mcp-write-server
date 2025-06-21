@@ -40,11 +40,20 @@ function getBuildInfo() {
   const packageJsonPath = join(__dirname, '..', 'package.json');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   
-  // Default port (can be overridden by --port argument)
-  let port = 8765;
-  const portArg = process.argv.find(arg => arg.startsWith('--port='));
-  if (portArg) {
-    port = parseInt(portArg.split('=')[1], 10);
+  // Load port from config file if available
+  let port = 8765; // Default
+  try {
+    const os = require('os');
+    const yaml = require('js-yaml');
+    const configFile = join(os.homedir(), 'Library', 'Application Support', 'figma-mcp-write-server', 'config.yaml');
+    const configContent = readFileSync(configFile, 'utf-8');
+    const config = yaml.load(configContent);
+    if (config.port) {
+      port = config.port;
+    }
+  } catch (error) {
+    // Config file doesn't exist or can't be read, use default
+    console.log('⚠️ Using default port 8765 (config file not found)');
   }
   
   return {
