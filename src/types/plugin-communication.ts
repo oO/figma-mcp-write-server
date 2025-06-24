@@ -45,7 +45,7 @@ export const PluginMessageSchema = z.object({
   type: z.enum([
     'GET_SELECTION',
     'CREATE_NODE',
-    'CREATE_TEXT',
+    'MANAGE_TEXT',
     'CREATE_STAR',
     'CREATE_POLYGON',
     'UPDATE_NODE',

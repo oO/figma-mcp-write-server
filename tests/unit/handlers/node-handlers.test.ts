@@ -16,7 +16,6 @@ describe('NodeHandlers', () => {
       const toolNames = tools.map(tool => tool.name);
       
       expect(toolNames).toContain('create_node');
-      expect(toolNames).toContain('create_text');
       expect(toolNames).toContain('update_node');
       expect(toolNames).toContain('manage_nodes');
     });
@@ -73,32 +72,12 @@ describe('NodeHandlers', () => {
       });
     });
 
-    test('should create text node with valid parameters', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          nodeId: 'node-456',
-          nodeType: 'text',
-          content: 'Hello World',
-          fontSize: 16
-        }
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await nodeHandlers.handle('create_node', {
+    test('should reject text node creation through schema validation', async () => {
+      await expect(nodeHandlers.handle('create_node', {
         nodeType: 'text',
         content: 'Hello World',
         fontSize: 16
-      });
-
-      expect(result.isError).toBe(false);
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
-        type: 'CREATE_TEXT',
-        payload: expect.objectContaining({
-          characters: 'Hello World',
-          fontSize: 16
-        })
-      });
+      })).rejects.toThrow(); // Schema validation will reject 'text' as invalid nodeType
     });
 
     test('should handle color format conversion', async () => {
@@ -121,48 +100,6 @@ describe('NodeHandlers', () => {
     });
   });
 
-  describe('createText', () => {
-    test('should create text with advanced typography', async () => {
-      const mockResponse = {
-        success: true,
-        data: {
-          nodeId: 'text-123',
-          content: 'Advanced Text',
-          fontFamily: 'Helvetica',
-          fontSize: 24,
-          fontWeight: 700
-        }
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await nodeHandlers.handle('create_text', {
-        characters: 'Advanced Text',
-        fontFamily: 'Helvetica',
-        fontSize: 24,
-        fontWeight: 700,
-        textAlignHorizontal: 'center'
-      });
-
-      expect(result.isError).toBe(false);
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
-        type: 'CREATE_TEXT',
-        payload: expect.objectContaining({
-          characters: 'Advanced Text',
-          fontSize: 24,
-          fontName: expect.objectContaining({
-            family: 'Helvetica',
-            style: 'Regular'
-          }),
-          textAlignHorizontal: 'CENTER'
-        })
-      });
-    });
-
-    test('should validate required content parameter', async () => {
-      await expect(nodeHandlers.handle('create_text', {}))
-        .rejects.toThrow('characters');
-    });
-  });
 
   describe('updateNode', () => {
     test('should update existing node properties', async () => {

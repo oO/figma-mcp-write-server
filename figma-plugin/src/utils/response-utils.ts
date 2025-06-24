@@ -47,7 +47,7 @@ export function formatSelection(selection: readonly SceneNode[]): NodeInfo[] {
 
 export function formatStyleResponse(style: PaintStyle | TextStyle | EffectStyle | GridStyle) {
   const response: any = {
-    id: style.id,
+    id: style.id.replace(/,$/, ''), // Fix: Remove trailing comma from style ID
     name: style.name,
     type: style.type,
     description: style.description || ''

@@ -19,7 +19,7 @@ export class StyleHandlers implements ToolHandler {
             operation: { type: 'string', enum: ['create', 'list', 'apply', 'delete', 'get'], description: 'Style operation to perform' },
             styleType: { type: 'string', enum: ['paint', 'text', 'effect', 'grid'], description: 'Type of style' },
             styleName: { type: 'string', description: 'Name of the style' },
-            styleId: { type: 'string', description: 'ID of the style' },
+            styleId: { type: 'string', description: 'ID of the style (required for delete and get operations)' },
             nodeId: { type: 'string', description: 'Node ID (for apply operation)' }
           },
           required: ['operation']

@@ -266,7 +266,8 @@ export class StyleHandler extends BaseHandler {
       const effectStyles = figma.getLocalEffectStyles();
       const gridStyles = figma.getLocalGridStyles();
       const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
-      style = allStyles.find(s => s.id === params.styleId);
+      // Fix: Remove trailing comma from style IDs (Figma API bug)
+      style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
     } else if (params.styleName) {
       const paintStyles = figma.getLocalPaintStyles();
       const textStyles = figma.getLocalTextStyles();
@@ -314,55 +315,93 @@ export class StyleHandler extends BaseHandler {
   }
 
   private async deleteStyle(params: StyleParams): Promise<any> {
-    let style: PaintStyle | TextStyle | EffectStyle | GridStyle | undefined;
+    this.validateParams(params, ['styleId']);
     
+    // Debug: Log the requested style ID
+    console.log('DELETE STYLE DEBUG - Requested ID:', params.styleId);
+    
+    // Find the style by searching through all local styles
     const paintStyles = figma.getLocalPaintStyles();
     const textStyles = figma.getLocalTextStyles();
     const effectStyles = figma.getLocalEffectStyles();
     const gridStyles = figma.getLocalGridStyles();
-    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
+    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
     
-    if (params.styleId) {
-      style = allStyles.find(s => s.id === params.styleId);
-    } else if (params.styleName) {
-      style = allStyles.find(s => s.name === params.styleName);
-    }
+    // Debug: Log all available style IDs
+    console.log('DELETE STYLE DEBUG - Available style IDs:');
+    allStyles.forEach(s => {
+      console.log(`  - ${s.name}: ${s.id} (type: ${s.type})`);
+    });
+    
+    // Fix: Remove trailing comma from style IDs (Figma API bug)
+    const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
+    
+    console.log('DELETE STYLE DEBUG - Fixed comparison result:', !!style);
     
     if (!style) {
-      throw new Error('Style not found');
+      // Enhanced error with more debugging info
+      throw new Error(`Style not found with ID: ${params.styleId}. Found ${allStyles.length} total styles in file. Check console for available IDs.`);
     }
     
-    const styleInfo = {
+    console.log('DELETE STYLE DEBUG - Found style to delete:', {
       id: style.id,
+      name: style.name,
+      type: style.type
+    });
+    
+    // Capture style info BEFORE deletion - create minimal response to avoid issues
+    const styleInfo: any = {
+      id: style.id.replace(/,$/, ''), // Clean ID for response
       name: style.name,
       type: style.type
     };
     
+    // Safely capture description
+    try {
+      styleInfo.description = style.description || '';
+    } catch (e) {
+      styleInfo.description = '';
+    }
+    
+    // Safely add type-specific properties before deletion
+    if (style.type === 'TEXT') {
+      try {
+        const textStyle = style as TextStyle;
+        styleInfo.fontName = textStyle.fontName;
+        styleInfo.fontSize = textStyle.fontSize;
+        styleInfo.letterSpacing = textStyle.letterSpacing;
+        styleInfo.lineHeight = textStyle.lineHeight;
+      } catch (e) {
+        console.warn('Could not capture text style properties:', e);
+      }
+    }
+    
+    // Delete the style using the correct API pattern
     style.remove();
+    
+    console.log('DELETE STYLE DEBUG - Style removed successfully');
     
     return {
       deletedStyle: styleInfo,
-      message: `Deleted ${style.type.toLowerCase()} style "${style.name}"`
+      message: `Successfully deleted ${styleInfo.type.toLowerCase()} style "${styleInfo.name}"`
     };
   }
 
   private async getStyle(params: StyleParams): Promise<any> {
-    let style: PaintStyle | TextStyle | EffectStyle | GridStyle | undefined;
+    this.validateParams(params, ['styleId']);
     
+    // Find the style by searching through all local styles
     const paintStyles = figma.getLocalPaintStyles();
     const textStyles = figma.getLocalTextStyles();
     const effectStyles = figma.getLocalEffectStyles();
     const gridStyles = figma.getLocalGridStyles();
-    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
+    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
     
-    if (params.styleId) {
-      style = allStyles.find(s => s.id === params.styleId);
-    } else if (params.styleName) {
-      style = allStyles.find(s => s.name === params.styleName);
-    }
+    // Fix: Remove trailing comma from style IDs (Figma API bug)
+    const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
     
     if (!style) {
-      throw new Error('Style not found');
+      throw new Error(`Style not found with ID: ${params.styleId}`);
     }
     
     return formatStyleResponse(style);

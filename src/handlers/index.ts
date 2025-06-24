@@ -12,10 +12,17 @@ import { DevModeHandlers } from "./dev-mode-handlers.js";
 import { ExportHandlers } from "./export-handlers.js";
 import { ImageHandlers } from "./image-handlers.js";
 import { FontHandlers } from "./font-handlers.js";
-import { TypographyHandlers } from "./typography-handlers.js";
+import { TextHandlers } from "./text-handlers.js";
 import { getDefaultPaths } from "../config/config.js";
 import * as os from "os";
 import * as path from "path";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "url";
+
+// Get version from package.json
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(path.join(__dirname, "../../package.json"), "utf8"));
+const VERSION = packageJson.version;
 
 export class HandlerRegistry {
   private handlers = new Map<string, ToolHandler>();
@@ -46,7 +53,7 @@ export class HandlerRegistry {
     this.registerHandler(new ExportHandlers(sendToPluginFn));
     this.registerHandler(new ImageHandlers(sendToPluginFn));
     this.registerHandler(new FontHandlers(sendToPluginFn, fontDbConfig));
-    this.registerHandler(new TypographyHandlers(sendToPluginFn));
+    this.registerHandler(new TextHandlers(sendToPluginFn));
 
     // Add plugin status tool
     this.addPluginStatusTool();
@@ -135,6 +142,7 @@ export class HandlerRegistry {
       
       connectionData = {
         operation: "status",
+        version: VERSION,
         connected: status.pluginConnected,
         status: this.mapConnectionStatus(status),
         lastResponse: status.lastHeartbeat ? new Date(status.lastHeartbeat).toISOString() : null,
@@ -150,6 +158,7 @@ export class HandlerRegistry {
     } else {
       connectionData = {
         operation: "status",
+        version: VERSION,
         connected: false,
         status: "disconnected",
         lastResponse: null,
@@ -185,6 +194,7 @@ export class HandlerRegistry {
     if (!this.wsServer) {
       const data = {
         operation: "health",
+        version: VERSION,
         available: false,
         message: "Connection health monitoring not available",
       };
@@ -216,6 +226,7 @@ export class HandlerRegistry {
 
     const data = {
       operation: "health",
+      version: VERSION,
       connectionMetrics: {
         uptime: status.lastHeartbeat ? Date.now() - new Date(status.lastHeartbeat).getTime() : 0,
         totalRequests: metrics.successCount + metrics.errorCount,
@@ -270,6 +281,7 @@ export class HandlerRegistry {
 
     const data = {
       operation: "test",
+      version: VERSION,
       testType,
       timeout,
       testResult

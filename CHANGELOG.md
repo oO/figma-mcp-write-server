@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.0] - 2025-06-24
+
+### Added
+- **Text Management Tool**: New `manage_text` tool for text operations in Figma
+  - Create text nodes with font loading and fallback system
+  - Update existing text content and formatting  
+  - Character-level styling with mixed formatting support
+  - Apply and create text styles for design system consistency
+  - Hyperlink support for interactive text elements
+  - Replaces previous typography functionality with streamlined interface
+
+### Removed
+- **Text Creation from create_node**: Text creation removed from `create_node` tool to eliminate duplication
+  - Users should use `manage_text` tool for all text operations
+  - `create_node` now supports: rectangle, ellipse, frame (no longer text)
+  - Removed text-related parameters: content, fontSize, fontFamily, fontStyle, textAlignHorizontal
+
+### Fixed
+- **Style Management Reliability**: Fixed trailing comma issues in Figma API style operations
+  - Style deletion now properly handles Figma's trailing comma style IDs
+  - Text style application uses correct style ID format for setTextStyleIdAsync
+  - Style response formatting removes trailing commas for consistent parameter usage
+- **Font Loading in Text Operations**: Added comprehensive font loading to prevent "unloaded font" errors
+  - All text operations now load fonts before applying changes
+  - Font loading applied to create, update, character styling, and style operations
+- **Plugin Status Versioning**: All get_plugin_status responses now include version information
+
 ## [0.28.2] - 2025-06-21
 
 ### Fixed

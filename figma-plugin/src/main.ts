@@ -12,7 +12,6 @@ import { VariableHandler } from './handlers/variable-handler.js';
 import { ExportHandler } from './handlers/export-handler.js';
 import { ImageHandler } from './handlers/image-handler.js';
 import { FontHandler } from './handlers/font-handler.js';
-import { TypographyHandler } from './handlers/typography-handler.js';
 import { AlignmentHandler } from './handlers/alignment-handler.js';
 import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
 import { 
@@ -43,7 +42,6 @@ class FigmaPlugin {
     const exportHandler = new ExportHandler();
     const imageHandler = new ImageHandler();
     const fontHandler = new FontHandler();
-    const typographyHandler = new TypographyHandler();
     const alignmentHandler = new AlignmentHandler();
 
     // Register all operations
@@ -59,7 +57,6 @@ class FigmaPlugin {
       exportHandler.getOperations(),
       imageHandler.getOperations(),
       fontHandler.getOperations(),
-      typographyHandler.getOperations(),
       alignmentHandler.getOperations(),
       // Boolean and vector operations
       {
@@ -82,7 +79,7 @@ class FigmaPlugin {
       }
     );
 
-    console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers));
+    console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers).sort());
     
     // Debug: Specifically check for component, variable, and boolean operations
     console.log('🔍 MANAGE_COMPONENTS handler exists:', !!this.handlers['MANAGE_COMPONENTS']);
@@ -96,7 +93,7 @@ class FigmaPlugin {
     console.log('🔍 MEASUREMENT_OPERATION handler exists:', !!this.handlers['MEASUREMENT_OPERATION']);
     console.log('🔍 DEV_RESOURCE_OPERATION handler exists:', !!this.handlers['DEV_RESOURCE_OPERATION']);
     console.log('🔍 MANAGE_FONTS handler exists:', !!this.handlers['MANAGE_FONTS']);
-    console.log('🔍 MANAGE_TYPOGRAPHY handler exists:', !!this.handlers['MANAGE_TYPOGRAPHY']);
+    console.log('🔍 MANAGE_TEXT handler exists:', !!this.handlers['MANAGE_TEXT']);
     console.log('🔍 SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
     console.log('🔍 PING_TEST handler exists:', !!this.handlers['PING_TEST']);
   }
@@ -195,7 +192,7 @@ class FigmaPlugin {
         data: {
           pong: true,
           roundTripTime: responseTime,
-          pluginVersion: '0.27.1',
+          pluginVersion: '0.29.0',
           timestamp: Date.now()
         }
       };
