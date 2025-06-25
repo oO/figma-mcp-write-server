@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.2] - 2025-06-25
+
+### Enhanced
+- **Case-Insensitive Enum Preprocessing**: Major Agent Experience (AX) improvement for enum validation
+  - Accept any case variation: `'left'`, `'LEFT'`, `'Left'` all normalize to canonical form
+  - Smart camelCase conversion: `'gradientLinear'` → `'GRADIENT_LINEAR'` for underscore enums
+  - Comprehensive coverage: All 15+ Figma enum types now support case-insensitive input
+  - Backward compatible: No breaking changes to existing tool interfaces
+  - Performance optimized: Cached mappings for efficient repeated parsing
+  - Eliminates trial-and-error: AI agents no longer need to guess exact enum casing
+  - Added comprehensive test suite with 40+ test scenarios covering all case variations
+
 ## [0.29.1] - 2025-06-25
 
 ### Refactored

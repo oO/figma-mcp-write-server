@@ -7,6 +7,9 @@ import { StandardOperations } from './figma-enums.js';
 // This file provides utilities for creating consistent operation schemas across
 // all tools, reducing boilerplate and ensuring uniform validation patterns.
 
+// Import enum utilities to avoid circular dependencies
+export { EnumPreprocessor, caseInsensitiveEnum, preprocessEnumFields } from './enum-utils.js';
+
 /**
  * Type for operation validation rules
  */

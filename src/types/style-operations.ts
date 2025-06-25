@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { 
-  FigmaStyleTypes, 
+  FigmaStyleTypesCompat, 
   FigmaPaintTypes, 
   FigmaScaleModes,
   FigmaTextAlign,
@@ -60,11 +60,17 @@ export const LayoutGridSchema = z.object({
 export const ManageStylesSchema = createManagementSchema(
   ['apply', 'apply_bulk'], // Style-specific operations beyond CRUD
   {
-    // Use shared identification fields
-    ...IdentificationFields,
+    // Use shared identification fields (but make nodeIds optional for some operations)
+    nodeId: z.string().optional(),
+    styleId: z.string().optional(),
+    componentId: z.string().optional(),
+    instanceId: z.string().optional(),
+    variableId: z.string().optional(),
+    collectionId: z.string().optional(),
+    nodeIds: z.array(z.string()).optional(), // Optional for non-bulk operations
     
     // Style-specific fields
-    styleType: FigmaStyleTypes.optional(),
+    styleType: FigmaStyleTypesCompat.optional(),
     styleName: z.string().optional(),
     
     // Paint Style Properties

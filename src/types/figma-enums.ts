@@ -1,104 +1,127 @@
 import { z } from 'zod';
+import { caseInsensitiveEnum } from './enum-utils.js';
 
 // ================================================================================
-// Figma Enum Constants - Centralized Definitions
+// Figma Enum Constants - Centralized Definitions (Case-Insensitive)
 // ================================================================================
-// This file consolidates all Figma-specific enums to eliminate redundancy
-// across operation files and ensure consistency.
+// This file consolidates all Figma-specific enums with case-insensitive preprocessing
+// to improve Agent Experience by accepting any case variation of enum values.
 
 /**
  * Text alignment enums used across text, style, and layout operations
+ * Case-insensitive: accepts 'left', 'LEFT', 'Left', etc.
  */
 export const FigmaTextAlign = {
-  horizontal: z.enum(['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED']),
-  vertical: z.enum(['TOP', 'CENTER', 'BOTTOM']),
+  horizontal: caseInsensitiveEnum(['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED']),
+  vertical: caseInsensitiveEnum(['TOP', 'CENTER', 'BOTTOM']),
 } as const;
 
 /**
  * Text styling enums for typography operations
+ * Case-insensitive: accepts 'original', 'ORIGINAL', 'Original', etc.
  */
 export const FigmaTextStyle = {
-  case: z.enum(['ORIGINAL', 'UPPER', 'LOWER', 'TITLE']),
-  decoration: z.enum(['NONE', 'UNDERLINE', 'STRIKETHROUGH']),
-  fontWeight: z.enum(['THIN', 'EXTRA_LIGHT', 'LIGHT', 'NORMAL', 'MEDIUM', 'SEMI_BOLD', 'BOLD', 'EXTRA_BOLD', 'BLACK']),
+  case: caseInsensitiveEnum(['ORIGINAL', 'UPPER', 'LOWER', 'TITLE']),
+  decoration: caseInsensitiveEnum(['NONE', 'UNDERLINE', 'STRIKETHROUGH']),
+  fontWeight: caseInsensitiveEnum(['THIN', 'EXTRA_LIGHT', 'LIGHT', 'NORMAL', 'MEDIUM', 'SEMI_BOLD', 'BOLD', 'EXTRA_BOLD', 'BLACK']),
 } as const;
 
 /**
  * Export format options for asset export operations
+ * Case-insensitive: accepts 'png', 'PNG', 'Png', etc.
  */
-export const FigmaExportFormats = z.enum(['PNG', 'JPG', 'SVG', 'PDF']);
+export const FigmaExportFormats = caseInsensitiveEnum(['PNG', 'JPG', 'SVG', 'PDF']);
 
 /**
  * Scale modes for image and fill operations
+ * Case-insensitive: accepts 'fill', 'FILL', 'Fill', etc.
  */
-export const FigmaScaleModes = z.enum(['FILL', 'FIT', 'CROP', 'TILE']);
+export const FigmaScaleModes = caseInsensitiveEnum(['FILL', 'FIT', 'CROP', 'TILE']);
 
 /**
  * Layout and positioning enums
+ * Case-insensitive: accepts 'horizontal', 'HORIZONTAL', 'Horizontal', etc.
  */
 export const FigmaLayout = {
-  direction: z.enum(['HORIZONTAL', 'VERTICAL']),
-  alignment: z.enum(['MIN', 'CENTER', 'MAX', 'SPACE_BETWEEN']),
-  distribution: z.enum(['SPACE_BETWEEN', 'SPACE_AROUND', 'SPACE_EVENLY']),
-  counterAxisAlignment: z.enum(['MIN', 'CENTER', 'MAX']),
-  wrap: z.enum(['NO_WRAP', 'WRAP']),
+  direction: caseInsensitiveEnum(['HORIZONTAL', 'VERTICAL']),
+  alignment: caseInsensitiveEnum(['MIN', 'CENTER', 'MAX', 'SPACE_BETWEEN']),
+  distribution: caseInsensitiveEnum(['SPACE_BETWEEN', 'SPACE_AROUND', 'SPACE_EVENLY']),
+  counterAxisAlignment: caseInsensitiveEnum(['MIN', 'CENTER', 'MAX']),
+  wrap: caseInsensitiveEnum(['NO_WRAP', 'WRAP']),
 } as const;
 
 /**
  * Constraint types for responsive design
+ * Case-insensitive: accepts 'min', 'MIN', 'Min', etc.
  */
-export const FigmaConstraints = z.enum(['MIN', 'CENTER', 'MAX', 'STRETCH', 'SCALE']);
+export const FigmaConstraints = caseInsensitiveEnum(['MIN', 'CENTER', 'MAX', 'STRETCH', 'SCALE']);
 
 /**
  * Node types supported by the system
- * Note: These match Figma's actual node type constants (uppercase)
+ * Case-insensitive: accepts 'rectangle', 'RECTANGLE', 'Rectangle', etc.
  */
-export const FigmaNodeTypes = z.enum([
+export const FigmaNodeTypes = caseInsensitiveEnum([
   'RECTANGLE', 'ELLIPSE', 'FRAME', 'GROUP', 'TEXT', 'VECTOR', 'STAR', 'POLYGON',
   'LINE', 'COMPONENT', 'INSTANCE', 'SECTION', 'SLICE'
 ]);
 
 /**
- * Node types for creation operations (lowercase for API compatibility)
+ * Node types for creation operations
+ * Case-insensitive: accepts 'rectangle', 'RECTANGLE', 'Rectangle', etc.
+ * Note: Will normalize to lowercase for API compatibility
  */
-export const FigmaCreateNodeTypes = z.enum([
+export const FigmaCreateNodeTypes = caseInsensitiveEnum([
   'rectangle', 'ellipse', 'frame', 'text', 'star', 'polygon'
 ]);
 
 /**
  * Paint and fill types
+ * Case-insensitive: accepts 'solid', 'SOLID', 'Solid', etc.
  */
-export const FigmaPaintTypes = z.enum(['SOLID', 'GRADIENT_LINEAR', 'GRADIENT_RADIAL', 'GRADIENT_ANGULAR', 'GRADIENT_DIAMOND', 'IMAGE']);
+export const FigmaPaintTypes = caseInsensitiveEnum(['SOLID', 'GRADIENT_LINEAR', 'GRADIENT_RADIAL', 'GRADIENT_ANGULAR', 'GRADIENT_DIAMOND', 'IMAGE']);
 
 /**
  * Effect types for styling
+ * Case-insensitive: accepts 'drop_shadow', 'DROP_SHADOW', 'dropShadow', etc.
  */
-export const FigmaEffectTypes = z.enum(['DROP_SHADOW', 'INNER_SHADOW', 'LAYER_BLUR', 'BACKGROUND_BLUR']);
+export const FigmaEffectTypes = caseInsensitiveEnum(['DROP_SHADOW', 'INNER_SHADOW', 'LAYER_BLUR', 'BACKGROUND_BLUR']);
 
 /**
  * Boolean operation types for vector operations
+ * Case-insensitive: accepts 'union', 'UNION', 'Union', etc.
  */
-export const FigmaBooleanOperations = z.enum(['UNION', 'SUBTRACT', 'INTERSECT', 'EXCLUDE']);
+export const FigmaBooleanOperations = caseInsensitiveEnum(['UNION', 'SUBTRACT', 'INTERSECT', 'EXCLUDE']);
 
 /**
  * Standard CRUD operations used across most tools
+ * Case-insensitive: accepts 'create', 'CREATE', 'Create', etc.
  */
-export const StandardOperations = z.enum(['create', 'update', 'delete', 'get', 'list']);
+export const StandardOperations = caseInsensitiveEnum(['create', 'update', 'delete', 'get', 'list']);
 
 /**
- * Style types in Figma
+ * Style types in Figma (internal uppercase)
+ * Case-insensitive: accepts 'paint', 'PAINT', 'Paint', etc.
  */
-export const FigmaStyleTypes = z.enum(['PAINT', 'TEXT', 'EFFECT', 'GRID']);
+export const FigmaStyleTypes = caseInsensitiveEnum(['PAINT', 'TEXT', 'EFFECT', 'GRID']);
+
+/**
+ * Style types for API compatibility (lowercase for backward compatibility)
+ * Case-insensitive: accepts 'paint', 'PAINT', 'Paint', etc.
+ * Note: Will normalize to lowercase for backward compatibility
+ */
+export const FigmaStyleTypesCompat = caseInsensitiveEnum(['paint', 'text', 'effect', 'grid']);
 
 /**
  * Variable types for design tokens
+ * Case-insensitive: accepts 'color', 'COLOR', 'Color', etc.
  */
-export const FigmaVariableTypes = z.enum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']);
+export const FigmaVariableTypes = caseInsensitiveEnum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']);
 
 /**
  * Blend modes for visual effects
+ * Case-insensitive: accepts 'normal', 'NORMAL', 'Normal', etc.
  */
-export const FigmaBlendModes = z.enum([
+export const FigmaBlendModes = caseInsensitiveEnum([
   'NORMAL', 'DARKEN', 'MULTIPLY', 'LINEAR_BURN', 'COLOR_BURN',
   'LIGHTEN', 'SCREEN', 'LINEAR_DODGE', 'COLOR_DODGE',
   'OVERLAY', 'SOFT_LIGHT', 'HARD_LIGHT', 'VIVID_LIGHT', 'LINEAR_LIGHT', 'PIN_LIGHT', 'HARD_MIX',
@@ -108,18 +131,21 @@ export const FigmaBlendModes = z.enum([
 
 /**
  * Component property types
+ * Case-insensitive: accepts 'boolean', 'BOOLEAN', 'Boolean', etc.
  */
-export const FigmaComponentPropertyTypes = z.enum(['BOOLEAN', 'TEXT', 'INSTANCE_SWAP', 'VARIANT']);
+export const FigmaComponentPropertyTypes = caseInsensitiveEnum(['BOOLEAN', 'TEXT', 'INSTANCE_SWAP', 'VARIANT']);
 
 /**
  * Export settings quality options
+ * Case-insensitive: accepts 'low', 'LOW', 'Low', etc.
  */
-export const FigmaExportQuality = z.enum(['LOW', 'MEDIUM', 'HIGH']);
+export const FigmaExportQuality = caseInsensitiveEnum(['LOW', 'MEDIUM', 'HIGH']);
 
 /**
  * Auto-layout sizing options
+ * Case-insensitive: accepts 'fixed', 'FIXED', 'Fixed', etc.
  */
-export const FigmaAutoLayoutSizing = z.enum(['FIXED', 'HUG_CONTENTS', 'FILL_CONTAINER']);
+export const FigmaAutoLayoutSizing = caseInsensitiveEnum(['FIXED', 'HUG_CONTENTS', 'FILL_CONTAINER']);
 
 // Re-export commonly used enum values for convenience
 export type FigmaTextAlignHorizontal = z.infer<typeof FigmaTextAlign.horizontal>;
