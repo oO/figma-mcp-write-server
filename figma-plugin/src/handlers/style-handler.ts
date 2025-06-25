@@ -23,12 +23,14 @@ export class StyleHandler extends BaseHandler {
       const operation = this.validateStringParam(
         params.operation,
         'operation',
-        ['create', 'list', 'apply', 'delete', 'get']
+        ['create', 'update', 'list', 'apply', 'delete', 'get']
       );
 
       switch (operation) {
         case 'create':
           return await this.createStyle(params);
+        case 'update':
+          return await this.updateStyle(params);
         case 'list':
           return await this.listStyles(params);
         case 'apply':
@@ -63,6 +65,78 @@ export class StyleHandler extends BaseHandler {
         return await this.createGridStyle(params);
       default:
         throw new Error(`Unknown style type: ${styleType}`);
+    }
+  }
+
+  private async updateStyle(params: StyleParams): Promise<any> {
+    this.validateParams(params, ['styleId']);
+    
+    const styleId = params.styleId!.replace(/,$/, ''); // Remove trailing comma
+    
+    // Get all styles and find the one to update
+    const paintStyles = figma.getLocalPaintStyles();
+    const textStyles = figma.getLocalTextStyles();
+    const effectStyles = figma.getLocalEffectStyles();
+    const gridStyles = figma.getLocalGridStyles();
+    const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
+    
+    const style = allStyles.find(s => s.id.replace(/,$/, '') === styleId);
+    if (!style) {
+      throw new Error(`Style with ID ${styleId} not found`);
+    }
+    
+    // Update style name if provided
+    if (params.styleName) {
+      style.name = params.styleName;
+    }
+    
+    // Update style properties based on type
+    if (style.type === 'PAINT') {
+      await this.updatePaintStyle(style as PaintStyle, params);
+    } else if (style.type === 'TEXT') {
+      await this.updateTextStyle(style as TextStyle, params);
+    } else if (style.type === 'EFFECT') {
+      await this.updateEffectStyle(style as EffectStyle, params);
+    } else if (style.type === 'GRID') {
+      await this.updateGridStyle(style as GridStyle, params);
+    }
+    
+    return {
+      styleId: style.id,
+      styleName: style.name,
+      styleType: style.type.toLowerCase(),
+      message: `Updated ${style.type.toLowerCase()} style: ${style.name}`
+    };
+  }
+
+  private async updatePaintStyle(style: PaintStyle, params: StyleParams): Promise<void> {
+    if (params.color) {
+      const paint = await this.createPaint(params);
+      style.paints = [paint];
+    }
+  }
+
+  private async updateTextStyle(style: TextStyle, params: StyleParams): Promise<void> {
+    if (params.fontFamily && params.fontStyle) {
+      const fontName = { family: params.fontFamily, style: params.fontStyle };
+      await ensureFontLoaded(fontName);
+      style.fontName = fontName;
+    }
+    
+    if (params.fontSize !== undefined) {
+      style.fontSize = params.fontSize;
+    }
+  }
+
+  private async updateEffectStyle(style: EffectStyle, params: StyleParams): Promise<void> {
+    if (params.effects && params.effects.length > 0) {
+      style.effects = params.effects.map(effect => this.createEffect(effect));
+    }
+  }
+
+  private async updateGridStyle(style: GridStyle, params: StyleParams): Promise<void> {
+    if (params.layoutGrids && params.layoutGrids.length > 0) {
+      style.layoutGrids = params.layoutGrids.map(grid => this.createLayoutGrid(grid));
     }
   }
 

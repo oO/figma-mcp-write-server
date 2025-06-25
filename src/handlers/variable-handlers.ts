@@ -81,11 +81,11 @@ export class VariableHandlers implements ToolHandler {
             },
             variableId: {
               type: 'string',
-              description: 'Variable ID for variable-specific operations'
+              description: 'Variable ID (required for: update, delete, get, bind, unbind, get_bindings)'
             },
             collectionId: {
               type: 'string',
-              description: 'Collection context for creation'
+              description: 'Collection ID (required for: create, list)'
             },
             variableName: {
               type: 'string',

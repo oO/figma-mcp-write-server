@@ -12,14 +12,18 @@ export class StyleHandlers implements ToolHandler {
     return [
       {
         name: 'manage_styles',
-        description: 'Create, list, apply, or delete Figma styles (paint, text, effect, grid)',
+        description: 'Create, update, list, apply, or delete Figma styles (paint, text, effect, grid)',
         inputSchema: {
           type: 'object',
           properties: {
-            operation: { type: 'string', enum: ['create', 'list', 'apply', 'delete', 'get'], description: 'Style operation to perform' },
+            operation: { 
+              type: 'string', 
+              enum: ['create', 'update', 'delete', 'get', 'list', 'apply'], 
+              description: 'Style operation to perform' 
+            },
             styleType: { type: 'string', enum: ['paint', 'text', 'effect', 'grid'], description: 'Type of style' },
             styleName: { type: 'string', description: 'Name of the style' },
-            styleId: { type: 'string', description: 'ID of the style (required for delete and get operations)' },
+            styleId: { type: 'string', description: 'ID of the style (required for update, delete, get, apply operations)' },
             nodeId: { type: 'string', description: 'Node ID (for apply operation)' }
           },
           required: ['operation']

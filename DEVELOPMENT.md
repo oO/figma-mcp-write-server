@@ -16,12 +16,15 @@ npm run dev
 
 ### Adding Your First Tool
 1. **Define Schema** using shared type components from `src/types/`
-   - Use `figma-enums.ts` for Figma-specific enums
+   - Use `figma-enums.ts` for case-insensitive Figma-specific enums
    - Use `common-fields.ts` for reusable field patterns
    - Use `operation-factory.ts` for standardized operation schemas
-2. **Add Handler Method** to appropriate handler class
-3. **Register Tool** in handler's `getTools()` method
-4. **Test** with `npm test`
+2. **Add MCP Handler Method** to appropriate handler class in `src/handlers/`
+3. **Add Plugin Implementation** in `figma-plugin/src/handlers/`
+4. **Register Tool** in handler's `getTools()` method
+5. **Test** with `npm test`
+
+**Important**: Ensure both MCP server and Figma plugin handlers implement the same operations to avoid schema/implementation mismatches.
 
 ### Quick Test
 ```bash

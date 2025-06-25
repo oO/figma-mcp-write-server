@@ -2,11 +2,14 @@ import { z } from 'zod';
 import { FigmaNodeTypes, FigmaCreateNodeTypes, FigmaTextAlign, FigmaExportFormats } from './figma-enums.js';
 import { 
   BasicNodeFields,
+  BasicCreateFields,
+  BasicUpdateFields,
   TypographyFields,
   ColorFields,
   PositionFields,
   DimensionFields,
   IdentificationFields,
+  OptionalIdentificationFields,
   ExportFields
 } from './common-fields.js';
 import { 
@@ -30,7 +33,7 @@ export const TextStyleRangeSchema = z.object({
 // Node creation schema using shared components
 export const CreateNodeSchema = z.object({
   nodeType: FigmaCreateNodeTypes,
-  ...BasicNodeFields,
+  ...BasicCreateFields, // Use creation fields without ID requirements
   ...ColorFields,
   
   // Node-specific properties
@@ -65,8 +68,7 @@ export const CreateNodeSchema = z.object({
 
 // Node update schema using shared components
 export const UpdateNodeSchema = z.object({
-  ...IdentificationFields, // Includes nodeId field
-  ...BasicNodeFields,
+  ...BasicUpdateFields, // Includes required nodeId field
   ...ColorFields,
   ...TypographyFields,
   
@@ -84,40 +86,19 @@ export const UpdateNodeSchema = z.object({
   
   // Legacy support for arbitrary properties
   properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
-}).refine((data) => {
-  // Must have nodeId for updates
-  return !!data.nodeId;
-}, {
-  message: "Node ID is required for update operations"
-});
+}); // nodeId is now required by BasicUpdateFields, no need for refine
 
 // Node management operations using operation factory
 export const ManageNodesSchema = createActionSchema(
-  ['move', 'delete', 'duplicate', 'move_bulk', 'delete_bulk', 'duplicate_bulk'],
+  ['move', 'delete', 'duplicate'],
   {
-    ...IdentificationFields,
+    nodeId: z.string(), // Required for all operations
     ...PositionFields,
-    
-    // Bulk operation support
-    nodeIds: z.array(z.string()).optional(),
-    
-    // For bulk creation patterns
-    count: z.number().min(1).optional(),
-    layout: z.object({
-      direction: z.enum(['horizontal', 'vertical']).optional(),
-      spacing: z.number().optional(),
-    }).optional(),
   },
-  combineValidationRules(
-    CommonValidationRules.requiresId('nodeId'),
-    CommonValidationRules.requiresNodeIds(),
-    {
-      move: (data) => !!data.nodeId && (data.x !== undefined || data.y !== undefined),
-      move_bulk: (data) => Array.isArray(data.nodeIds) && data.nodeIds.length > 0,
-      delete_bulk: (data) => Array.isArray(data.nodeIds) && data.nodeIds.length > 0,
-      duplicate_bulk: (data) => Array.isArray(data.nodeIds) && data.nodeIds.length > 0,
-    }
-  )
+  {
+    // Operation-specific validation
+    move: (data) => data.x !== undefined || data.y !== undefined,
+  }
 );
 
 // Selection operations using shared fields
