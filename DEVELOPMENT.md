@@ -15,7 +15,10 @@ npm run dev
 ```
 
 ### Adding Your First Tool
-1. **Define Schema** in `src/types.ts`
+1. **Define Schema** using shared type components from `src/types/`
+   - Use `figma-enums.ts` for Figma-specific enums
+   - Use `common-fields.ts` for reusable field patterns
+   - Use `operation-factory.ts` for standardized operation schemas
 2. **Add Handler Method** to appropriate handler class
 3. **Register Tool** in handler's `getTools()` method
 4. **Test** with `npm test`

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.1] - 2025-06-25
+
+### Refactored
+- **Type System Consolidation**: Major type system refactoring to eliminate redundancy and improve maintainability
+  - Extract common enums: Consolidated 80+ duplicate enum definitions across operation files into centralized `figma-enums.ts`
+  - Create reusable field mixins: Eliminated 50+ duplicate property patterns with shared field components in `common-fields.ts`
+  - Operation schema factory: Added standardized schema creation utilities with validation patterns in `operation-factory.ts`
+  - Updated operation files: Refactored `style-operations.ts` and `node-operations.ts` to use shared type components
+  - Reduced type definition size by 300+ lines (20-25% decrease) while maintaining full backward compatibility
+  - Single source of truth for all Figma enums and common validation patterns
+
 ## [0.29.0] - 2025-06-24
 
 ### Added

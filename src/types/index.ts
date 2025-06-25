@@ -2,6 +2,16 @@
 // Figma MCP Write Server - Type System Index
 // ================================================================================
 
+// NEW: Consolidated type system exports
+// Centralized enums and constants
+export * from './figma-enums.js';
+
+// Reusable field components and mixins
+export * from './common-fields.js';
+
+// Operation schema factory and utilities
+export * from './operation-factory.js';
+
 // Core Figma types (colors, paints, effects, typography)
 export * from './figma-base.js';
 
