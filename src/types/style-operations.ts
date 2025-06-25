@@ -58,16 +58,15 @@ export const LayoutGridSchema = z.object({
 
 // Style management schema using shared components
 export const ManageStylesSchema = createManagementSchema(
-  ['apply', 'apply_bulk'], // Style-specific operations beyond CRUD
+  ['apply'], // Style-specific operations beyond CRUD
   {
-    // Use shared identification fields (but make nodeIds optional for some operations)
+    // Use shared identification fields
     nodeId: z.string().optional(),
     styleId: z.string().optional(),
     componentId: z.string().optional(),
     instanceId: z.string().optional(),
     variableId: z.string().optional(),
     collectionId: z.string().optional(),
-    nodeIds: z.array(z.string()).optional(), // Optional for non-bulk operations
     
     // Style-specific fields
     styleType: FigmaStyleTypesCompat.optional(),
@@ -106,19 +105,14 @@ export const ManageStylesSchema = createManagementSchema(
     // Use shared metadata fields
     ...MetadataFields,
   },
-  // Validation rules using shared patterns
-  combineValidationRules(
-    CommonValidationRules.requiresId('styleId'),
-    CommonValidationRules.requiresName('styleName'),
-    CommonValidationRules.requiresNodeAndStyleId(),
-    CommonValidationRules.requiresNodeIds(),
-    // Style-specific validation
-    {
-      create: (data) => !!data.styleName && !!data.styleType,
-      apply: (data) => !!data.nodeId && !!data.styleId,
-      apply_bulk: (data) => Array.isArray(data.nodeIds) && data.nodeIds.length > 0 && !!data.styleId,
-    }
-  )
+  // Validation rules for implemented operations only
+  {
+    create: (data) => !!data.styleName && !!data.styleType,
+    update: (data) => !!data.styleId,
+    delete: (data) => !!data.styleId,
+    get: (data) => !!data.styleId,
+    apply: (data) => !!data.nodeId && !!data.styleId,
+  }
 );
 
 // Export types

@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.29.3] - 2025-06-25
+
+### Fixed
+- **Comprehensive QA Resolution**: Complete fixes addressing all identified issues from systematic testing
+  - **Node Creation Schema**: Fixed `nodeId` requirement bug preventing node creation operations
+  - **Documentation Alignment**: Updated tool schemas to match actual implementation capabilities
+  - **Bulk Operations Cleanup**: Removed unimplemented bulk operations from schemas and documentation
+  - **Style Update Implementation**: Added missing update operation for all style types with full plugin support
+  - **Error Handling Enhancement**: Improved error messages for invalid node IDs and validation failures
+  - **Parameter Validation**: Added proper schema validation for all tool parameters
+  - **Schema/Implementation Consistency**: Eliminated mismatches between documented and actual capabilities
+
 ## [0.29.2] - 2025-06-25
 
 ### Enhanced

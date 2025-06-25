@@ -11,8 +11,21 @@ import { FigmaTextAlign, FigmaTextStyle, FigmaConstraints, FigmaAutoLayoutSizing
  * Core identification fields used across multiple operations
  */
 export const IdentificationFields = {
+  nodeId: z.string(), // Required for operations that need existing node
+  nodeIds: z.array(z.string()).optional(), // For bulk operations
+  styleId: z.string().optional(),
+  componentId: z.string().optional(),
+  instanceId: z.string().optional(),
+  variableId: z.string().optional(),
+  collectionId: z.string().optional(),
+} as const;
+
+/**
+ * Optional identification fields for operations that may need node references
+ */
+export const OptionalIdentificationFields = {
   nodeId: z.string().optional(),
-  nodeIds: z.array(z.string()),
+  nodeIds: z.array(z.string()).optional(),
   styleId: z.string().optional(),
   componentId: z.string().optional(),
   instanceId: z.string().optional(),
@@ -140,10 +153,31 @@ export const MetadataFields = {
 // ================================================================================
 
 /**
- * Basic node properties - most commonly used combination
+ * Basic node properties for creation - no ID fields needed
+ */
+export const BasicCreateFields = {
+  ...PositionFields,
+  ...DimensionFields,
+  ...VisualFields,
+  ...MetadataFields,
+} as const;
+
+/**
+ * Basic node properties for updates - requires nodeId
+ */
+export const BasicUpdateFields = {
+  ...IdentificationFields, // nodeId is required
+  ...PositionFields,
+  ...DimensionFields,
+  ...VisualFields,
+  ...MetadataFields,
+} as const;
+
+/**
+ * Basic node properties with optional IDs - for mixed operations
  */
 export const BasicNodeFields = {
-  ...IdentificationFields,
+  ...OptionalIdentificationFields,
   ...PositionFields,
   ...DimensionFields,
   ...VisualFields,

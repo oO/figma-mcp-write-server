@@ -1,4 +1,4 @@
-import { SetSelectionSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData } from '../types/index.js';
+import { SetSelectionSchema, GetPageNodesSchema, ToolHandler, ToolResult, Tool, validateAndParse, SelectionPayload, SelectionData } from '../types/index.js';
 import * as yaml from 'js-yaml';
 
 export class SelectionHandlers implements ToolHandler {
@@ -120,9 +120,18 @@ export class SelectionHandlers implements ToolHandler {
   }
 
   async getPageNodes(args: any = {}): Promise<any> {
+    // Use enhanced validation for parameter checking
+    const validation = validateAndParse(GetPageNodesSchema, args, 'getPageNodes');
+    
+    if (!validation.success) {
+      throw new Error(`Validation failed: ${validation.error}`);
+    }
+    
+    const params = validation.data;
+    
     const response = await this.sendToPlugin({
       type: 'GET_PAGE_NODES',
-      payload: args
+      payload: params
     });
 
     return {

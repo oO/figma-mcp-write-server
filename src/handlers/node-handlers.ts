@@ -13,13 +13,13 @@ export class NodeHandlers implements ToolHandler {
     return [
       {
         name: 'create_node',
-        description: 'Create a new node in Figma (rectangle, ellipse, or frame)',
+        description: 'Create a new node in Figma (rectangle, ellipse, frame, text, star, or polygon)',
         inputSchema: {
           type: 'object',
           properties: {
             nodeType: {
               type: 'string',
-              enum: ['rectangle', 'ellipse', 'frame'],
+              enum: ['rectangle', 'ellipse', 'frame', 'text', 'star', 'polygon'],
               description: 'Type of node to create'
             },
             name: { type: 'string', description: 'Node name' },
@@ -32,11 +32,13 @@ export class NodeHandlers implements ToolHandler {
           required: ['nodeType']
         },
         annotations: {
-          description_extra: "For text creation, use the manage_text tool instead."
+          description_extra: "Supports all basic node types. For advanced text styling, consider using the manage_text tool."
         },
         examples: [
           '{"nodeType": "rectangle", "width": 100, "height": 100, "fillColor": "#FF0000"}',
-          '{"nodeType": "frame", "width": 200, "height": 150, "name": "Container"}'
+          '{"nodeType": "frame", "width": 200, "height": 150, "name": "Container"}',
+          '{"nodeType": "text", "characters": "Hello World", "fontSize": 16}',
+          '{"nodeType": "star", "pointCount": 5, "innerRadius": 0.5}'
         ]
       },
       {
@@ -66,7 +68,11 @@ export class NodeHandlers implements ToolHandler {
         inputSchema: {
           type: 'object',
           properties: {
-            operation: { type: 'string', enum: ['move', 'delete', 'duplicate'], description: 'Node operation to perform' },
+            operation: { 
+              type: 'string', 
+              enum: ['move', 'delete', 'duplicate'], 
+              description: 'Node operation to perform' 
+            },
             nodeId: { type: 'string', description: 'ID of the node to operate on' },
             x: { type: 'number', description: 'New X position (required for move operation)' },
             y: { type: 'number', description: 'New Y position (required for move operation)' },
@@ -157,18 +163,41 @@ export class NodeHandlers implements ToolHandler {
   async updateNode(args: any): Promise<any> {
     const params = UpdateNodeSchema.parse(args);
     
-    const response = await this.sendToPlugin({
-      type: 'UPDATE_NODE',
-      payload: params
-    });
+    try {
+      const response = await this.sendToPlugin({
+        type: 'UPDATE_NODE',
+        payload: params
+      });
 
-    return {
-      content: [{
-        type: 'text',
-        text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
-      }],
-      isError: false
-    };
+      if (!response.success) {
+        // Improve error message for common issues
+        const errorMsg = response.error || 'Update failed';
+        if (errorMsg.includes("invalid 'in' operand") || errorMsg.includes('not found') || errorMsg.includes('does not exist')) {
+          throw new Error(`Node with ID '${params.nodeId}' not found. Please verify the node ID is correct and the node exists.`);
+        }
+        throw new Error(errorMsg);
+      }
+
+      return {
+        content: [{
+          type: 'text',
+          text: yaml.dump(response.data, { indent: 2, lineWidth: 100 })
+        }],
+        isError: false
+      };
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Node with ID')) {
+        throw error; // Re-throw our improved error messages
+      }
+      
+      // Check for common node ID errors in the original error message
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      if (errorMsg.includes("invalid 'in' operand") || errorMsg.includes('not found') || errorMsg.includes('does not exist')) {
+        throw new Error(`Node with ID '${params.nodeId}' not found. Please verify the node ID is correct and the node exists.`);
+      }
+      
+      throw new Error(`Failed to update node: ${errorMsg}`);
+    }
   }
 
   async manageNodes(args: any): Promise<any> {
