@@ -31,15 +31,15 @@ export class NodeHandlers implements ToolHandler {
             // Node identification
             nodeId: { type: 'string', description: 'ID of the node (required for update, move, delete, duplicate operations)' },
             // Positioning and sizing
-            x: { type: 'number', description: 'X position' },
-            y: { type: 'number', description: 'Y position' },
-            width: { type: 'number', description: 'Width of the node' },
-            height: { type: 'number', description: 'Height of the node' },
-            // Visual properties
             name: { type: 'string', description: 'Node name' },
+            width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
+            height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
             fillColor: { type: 'string', description: 'Fill color (hex)' },
             strokeColor: { type: 'string', description: 'Stroke color (hex)' },
             strokeWidth: { type: 'number', description: 'Stroke width' },
+            x: { type: 'number', description: 'X position' },
+            y: { type: 'number', description: 'Y position' },
+            // Visual properties
             cornerRadius: { type: 'number', minimum: 0, description: 'Corner radius (applies to all corners)' },
             opacity: { type: 'number', minimum: 0, maximum: 1, description: 'Opacity (0-1)' },
             visible: { type: 'boolean', description: 'Visibility' },
