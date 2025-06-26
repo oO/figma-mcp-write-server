@@ -16,7 +16,7 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Create a blue rectangle"**
-  - AI uses `create_node` tool with rectangle type and blue fill
+  - AI uses `figma_nodes` tool with operation `create`, rectangle type and blue fill
 
 - **"Make a red circle at position 100, 50"**
   - AI creates ellipse with red color at specified coordinates
@@ -28,16 +28,16 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Create a rounded rectangle with 12px corners"**
-  - AI uses `create_node` tool with rectangle type and corner radius property
+  - AI uses `figma_nodes` tool with operation `create`, rectangle type and corner radius property
 
 - **"Make a card with different corner radii - rounded top, square bottom"**
   - AI creates rectangle with individual corner radius settings for each corner
 
 - **"Create a 5-pointed star with golden color"**
-  - AI uses `create_node` with star type, point count, and golden fill color
+  - AI uses `figma_nodes` with operation `create`, star type, point count, and golden fill color
 
 - **"Add a hexagon (6-sided polygon) for an icon"**
-  - AI creates polygon with 6 sides and applies styling
+  - AI uses `figma_nodes` with operation `create` for polygon with 6 sides and applies styling
 
 - **"Create a semi-transparent overlay frame"**
   - AI makes frame with black fill, 50% opacity, and content clipping enabled
@@ -46,7 +46,7 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Add the title 'Welcome' in large bold text"**
-  - AI uses `create_text` tool with appropriate font size and weight
+  - AI uses `figma_text` tool with operation `create` and appropriate font size and weight
   - Tool automatically loads required fonts and applies typography settings
 
 - **"Create a paragraph with custom line spacing"**
@@ -63,7 +63,7 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Find all Google Fonts with bold and italic styles available"**
-  - AI uses `manage_fonts` with `search_fonts` operation, filtering by source "google" and minimum style count
+  - AI uses `figma_fonts` with `search_fonts` operation, filtering by source "google" and minimum style count
   - Returns font families with their available styles and metadata
 
 - **"Search for serif fonts that have 'Times' in the name"**
@@ -129,7 +129,7 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Create a primary blue color style"**
-  - AI uses `manage_styles` to create paint style with solid blue color
+  - AI uses `figma_styles` to create paint style with solid blue color
 
 - **"Make a gradient from orange to blue for hero sections"**
   - AI creates gradient paint style with linear gradient stops
@@ -158,7 +158,7 @@ This guide shows how to use the Figma MCP Write Server through natural language 
 **User Instructions → AI Actions:**
 
 - **"Find Google fonts with Bold style"**
-  - AI uses `manage_fonts` with `search_fonts` operation, source filter for Google fonts, and hasStyle parameter for Bold
+  - AI uses `figma_fonts` with `search_fonts` operation, source filter for Google fonts, and hasStyle parameter for Bold
   - Returns fonts that include Bold weights from Google's library
 
 - **"Search for fonts matching 'Inter'"**
@@ -252,16 +252,16 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Combine these two rectangles into a single shape"**
-  - AI uses `manage_boolean_operations` with `union` operation to merge overlapping shapes
+  - AI uses `figma_boolean_operations` with `union` operation to merge overlapping shapes
 
 - **"Cut a circle hole in the middle of this rectangle"**
-  - AI uses `manage_boolean_operations` with `subtract` operation to remove the circle area from the rectangle
+  - AI uses `figma_boolean_operations` with `subtract` operation to remove the circle area from the rectangle
 
 - **"Create a shape from only the overlapping part of these elements"**
-  - AI uses `manage_boolean_operations` with `intersect` operation to keep only shared areas
+  - AI uses `figma_boolean_operations` with `intersect` operation to keep only shared areas
 
 - **"Remove the overlapping areas to create a complex cutout effect"**
-  - AI uses `manage_boolean_operations` with `exclude` operation for advanced shape combinations
+  - AI uses `figma_boolean_operations` with `exclude` operation for advanced shape combinations
 
 - **"Combine these logo elements but keep the original shapes for editing"**
   - AI performs boolean operations with `preserveOriginal: true` to maintain source shapes
@@ -270,16 +270,16 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Create a custom arrow icon with precise curves"**
-  - AI uses `manage_vector_operations` with `create_vector` and SVG path data for custom shapes
+  - AI uses `figma_vector_operations` with `create_vector` and SVG path data for custom shapes
 
 - **"Turn this complex grouped design into a single vector shape"**
-  - AI uses `manage_vector_operations` with `flatten` to convert hierarchies into unified vectors
+  - AI uses `figma_vector_operations` with `flatten` to convert hierarchies into unified vectors
 
 - **"Convert the stroke outline of this shape into a filled path"**
-  - AI uses `manage_vector_operations` with `outline_stroke` to transform strokes into solid shapes
+  - AI uses `figma_vector_operations` with `outline_stroke` to transform strokes into solid shapes
 
 - **"Extract the path data from this icon so I can modify it"**
-  - AI uses `manage_vector_operations` with `get_vector_paths` to retrieve SVG-compatible path information
+  - AI uses `figma_vector_operations` with `get_vector_paths` to retrieve SVG-compatible path information
 
 ### Advanced Shape Creation Workflows
 **User Instructions:**
@@ -322,13 +322,13 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Turn this button design into a reusable component"**
-  - AI uses `manage_components` tool to convert existing node to component
+  - AI uses `figma_components` tool to convert existing node to component
 
 - **"Create a button component set with Primary, Secondary, and Tertiary variants"**
   - AI creates individual button components then combines into component set with variant properties
 
 - **"Make instances of this card component across the page"**
-  - AI uses `manage_instances` to create multiple instances with different positions
+  - AI uses `figma_instances` to create multiple instances with different positions
 
 ### Component Management
 **User Instructions → AI Actions:**
@@ -351,19 +351,19 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Load this hero image from URL and create a rectangle for it"**
-  - AI uses `manage_images` with `create_from_url` operation and `createNode: true`
+  - AI uses `figma_images` with `create_from_url` operation and `createNode: true`
 
 - **"Apply this base64 image data to the selected rectangle"**
-  - AI uses `manage_images` with `create_from_bytes` operation and specified nodeId
+  - AI uses `figma_images` with `create_from_bytes` operation and specified nodeId
 
 - **"Replace the product image with a new one from this URL"**
-  - AI uses `manage_images` with `replace_image` operation to swap images while preserving container size
+  - AI uses `figma_images` with `replace_image` operation to swap images while preserving container size
 
 ### Image Filtering & Enhancement
 **User Instructions → AI Actions:**
 
 - **"Make the hero image brighter and more saturated"**
-  - AI uses `manage_images` with `update_filters` operation, applying positive exposure and saturation values
+  - AI uses `figma_images` with `update_filters` operation, applying positive exposure and saturation values
 
 - **"Adjust the background image to be warmer and less contrasty"**
   - AI applies filters with positive temperature and negative contrast adjustments
@@ -375,7 +375,7 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Replace this banner image but crop it smartly to focus on the center"**
-  - AI uses `manage_images` with `smart_replace` operation and `fitStrategy: "smart_crop"`
+  - AI uses `figma_images` with `smart_replace` operation and `fitStrategy: "smart_crop"`
 
 - **"Swap the product photo and resize the container to match the new aspect ratio"**
   - AI uses `smart_replace` with `fitStrategy: "preserve_aspect"` to adjust container dimensions
@@ -387,7 +387,7 @@ logging:
 **User Instructions → AI Actions:**
 
 - **"Rotate this logo 90 degrees clockwise"**
-  - AI uses `manage_images` with `rotate` operation and `rotation: 90`
+  - AI uses `figma_images` with `rotate` operation and `rotation: 90`
 
 - **"Change how this background image fills the frame to crop instead of fit"**
   - AI uses `change_scale_mode` operation with `scaleMode: "CROP"`
@@ -491,7 +491,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Make this frame automatically arrange its children vertically"**
-  - AI uses `manage_auto_layout` with `enable` operation, direction "vertical"
+  - AI uses `figma_auto_layout` with `enable` operation, direction "vertical"
 
 - **"Create a horizontal button with proper spacing and padding"**
   - AI enables auto layout with horizontal direction, sets spacing and padding for professional button appearance
@@ -506,7 +506,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Make this sidebar stay on the left and stretch with the window height"**
-  - AI uses `manage_constraints` with horizontal "left" and vertical "top_bottom"
+  - AI uses `figma_constraints` with horizontal "left" and vertical "top_bottom"
 
 - **"Pin this header to the top and make it stretch across the full width"**
   - AI sets constraints with horizontal "left_right" and vertical "top"
@@ -542,7 +542,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Center this text within the frame"**
-  - AI uses `manage_alignment` with horizontal "center" and vertical "middle" operations for single-node parent alignment
+  - AI uses `figma_alignment` with horizontal "center" and vertical "middle" operations for single-node parent alignment
 
 - **"Align the circle's center to the rectangle's left edge"**
   - AI uses reference point "left" and alignment point "center" for precise point-to-point positioning
@@ -581,7 +581,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Move this button into the navigation bar"**
-  - AI uses `manage_hierarchy` with `move` operation to place element in container
+  - AI uses `figma_hierarchy` with `move` operation to place element in container
   - Element automatically positions according to auto layout settings
 
 - **"Add this text to the card component"**
@@ -609,40 +609,40 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Group these navigation elements together"**
-  - AI uses `manage_hierarchy` with `group` operation and array of node IDs
+  - AI uses `figma_hierarchy` with `group` operation and array of node IDs
 
 - **"Create a frame around these components"**
-  - AI uses `manage_hierarchy` with `group` operation to wrap elements in a container
+  - AI uses `figma_hierarchy` with `group` operation to wrap elements in a container
 
 - **"Ungroup this navigation bar so I can edit individual elements"**
-  - AI uses `manage_hierarchy` with `ungroup` operation to dissolve groups
+  - AI uses `figma_hierarchy` with `ungroup` operation to dissolve groups
 
 ### Layer & Node Management
 **User Instructions → AI Actions:**
 
 - **"Move this button to position 100, 50"**
-  - AI uses `manage_nodes` with `move` operation and coordinates
+  - AI uses `figma_nodes` with `move` operation and coordinates
 
 - **"Delete this unused element"**
-  - AI uses `manage_nodes` with `delete` operation
+  - AI uses `figma_nodes` with `delete` operation
 
 - **"Duplicate this card with 20px offset"**
-  - AI uses `manage_nodes` with `duplicate` operation and offset values
+  - AI uses `figma_nodes` with `duplicate` operation and offset values
 
 - **"Reorder this element in its container"**
-  - AI uses `manage_hierarchy` with `reorder` operation and new index
+  - AI uses `figma_hierarchy` with `reorder` operation and new index
 
 ### Page & Selection Management
 **User Instructions → AI Actions:**
 
 - **"Show me all nodes on this page"**
-  - AI uses `get_page_nodes` to list all elements with hierarchy information
+  - AI uses `figma_selection` with `get_page_hierarchy` operation to list all elements with hierarchy information
 
 - **"Find all text elements in this design"**
-  - AI uses `get_page_nodes` with nodeTypes filter for "TEXT" elements
+  - AI uses `figma_selection` with `get_page_hierarchy` operation and nodeTypes filter for "TEXT" elements
 
 - **"Select these specific components"**
-  - AI uses `set_selection` with array of node IDs to choose elements
+  - AI uses `figma_selection` with `set_nodes` operation and array of node IDs to choose elements
 
 ### Layout Workflows
 **User Instructions:**
@@ -680,7 +680,7 @@ The AI can perform these operations:
 "Organize this messy layout - group related elements, fix layer order, and structure everything properly"
 
 **What the AI does:**
-1. **Analysis**: Uses `get_page_nodes` and hierarchy queries to understand current structure
+1. **Analysis**: Uses `figma_selection` with `get_page_hierarchy` operation and hierarchy queries to understand current structure
 2. **Grouping**: Groups related elements (navigation items, buttons, content sections)
 3. **Layer Management**: Brings important elements forward, sends backgrounds back
 4. **Restructuring**: Moves elements into logical parent containers
@@ -693,15 +693,15 @@ The AI can perform these operations:
 "Select all text elements and change their font size to 16px"
 
 **What the AI does:**
-1. Uses `get_page_nodes` to find all text nodes on the page
-2. Uses `set_selection` to select all found text elements
-3. Uses `update_node` to modify font size property for all selected items
+1. Uses `figma_selection` with `get_page_hierarchy` operation to find all text nodes on the page
+2. Uses `figma_selection` with `set_nodes` operation to select all found text elements
+3. Uses `figma_nodes` with `update` operation to modify font size property for all selected items
 
 ### Enhanced Node Updates
 **User Instructions → AI Actions:**
 
 - **"Make this rectangle have rounded corners with 16px radius"**
-  - AI uses `update_node` tool to modify corner radius property
+  - AI uses `figma_nodes` tool with `update` operation to modify corner radius property
   - Supports both uniform and individual corner radius settings
 
 - **"Update this card to have different corner radii - rounded top, square bottom"**
@@ -709,7 +709,7 @@ The AI can perform these operations:
   - Properties: `topLeftRadius`, `topRightRadius`, `bottomLeftRadius`, `bottomRightRadius`
 
 - **"Rotate this element 45 degrees and make it semi-transparent"**
-  - AI uses `update_node` to apply rotation and opacity changes
+  - AI uses `figma_nodes` with `update` operation to apply rotation and opacity changes
   - Rotation in degrees, opacity from 0-1 with automatic validation
 
 - **"Change this star to have 8 points instead of 5"**
@@ -729,8 +729,8 @@ The AI can perform these operations:
 "Update all buttons to have rounded corners and consistent spacing"
 
 **What the AI does:**
-1. Uses `get_page_nodes` to identify all button-like elements (rectangles with text)
-2. Applies `update_node` with corner radius updates to all button frames  
+1. Uses `figma_selection` with `get_page_hierarchy` operation to identify all button-like elements (rectangles with text)
+2. Applies `figma_nodes` with `update` operation and corner radius updates to all button frames  
 3. Standardizes internal padding and text positioning
 4. Ensures consistent styling across all variants
 5. Provides YAML response with summary of all changes made
@@ -741,7 +741,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Create a color collection with light and dark modes"**
-  - AI uses `manage_collections` to create collection with multiple modes
+  - AI uses `figma_collections` to create collection with multiple modes
 
 - **"Set up a spacing system with variables"**
   - AI creates collection for spacing tokens with consistent values
@@ -750,7 +750,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Create a primary color variable with #0066CC for light mode and #4A9EFF for dark mode"**
-  - AI uses `manage_variables` to create COLOR variable with mode-specific values
+  - AI uses `figma_variables` to create COLOR variable with mode-specific values
 
 - **"Add a base spacing variable set to 16 pixels"**
   - AI creates FLOAT variable for consistent spacing throughout the design
@@ -796,7 +796,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Add an annotation explaining this component's behavior"**
-  - AI uses `manage_annotations` to create design notes for developers
+  - AI uses `figma_annotations` to create design notes for developers
 
 - **"Mark this button as ready for development"**
   - AI adds annotation with development specifications and requirements
@@ -808,7 +808,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Add measurements showing the spacing between these elements"**
-  - AI uses `manage_measurements` to create spacing indicators
+  - AI uses `figma_measurements` to create spacing indicators
 
 - **"Show the distance from this button to the edge"**
   - AI creates measurement from node to container edge
@@ -820,7 +820,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Generate CSS for this button component"**
-  - AI uses `manage_dev_resources` to extract CSS using Figma's native API
+  - AI uses `figma_dev_resources` to extract CSS using Figma's native API
 
 - **"Set this design as ready for development"**
   - AI marks development status and adds appropriate metadata
@@ -848,7 +848,7 @@ The AI can perform these operations:
 **User Instructions → AI Actions:**
 
 - **"Export this component as a PNG file"**
-  - AI uses `manage_exports` with `export_single` operation and PNG format
+  - AI uses `figma_exports` with `export_single` operation and PNG format
   - Saves to `~/Downloads/Figma Exports` by default
 
 - **"Export these icons as SVG files to my desktop"**
@@ -997,7 +997,7 @@ The AI can perform these operations:
 ### Error Handling & Debugging
 - **Error Messages**: All tools provide detailed error messages with actionable suggestions
 - **Validation**: Parameters are automatically validated with clear feedback on invalid inputs
-- **Plugin Status**: Use `get_plugin_status` and `get_connection_health` to check system status
+- **Plugin Status**: Use `figma_plugin_status` with various operations to check system status
 - **YAML Responses**: All responses are in structured YAML format for easy reading
 
 ### Design System Best Practices

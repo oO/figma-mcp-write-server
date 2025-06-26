@@ -11,27 +11,23 @@ export class SelectionHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'get_selection',
-        description: 'Get the currently selected nodes',
-        inputSchema: { type: 'object', properties: {} }
-      },
-      {
-        name: 'set_selection',
-        description: 'Set the selection to specific nodes',
+        name: 'figma_selection',
+        description: 'Get current selection, set selection to specific nodes, or get all page nodes with hierarchy',
         inputSchema: {
           type: 'object',
           properties: {
-            nodeIds: { type: 'array', items: { type: 'string' }, description: 'Array of node IDs to select' }
-          },
-          required: ['nodeIds']
-        }
-      },
-      {
-        name: 'get_page_nodes',
-        description: 'Get all nodes in the current page with hierarchy information',
-        inputSchema: {
-          type: 'object',
-          properties: {
+            operation: {
+              type: 'string',
+              enum: ['get_current', 'set_nodes', 'get_page_hierarchy'],
+              description: 'Selection operation to perform'
+            },
+            // For set_nodes operation
+            nodeIds: { 
+              type: 'array', 
+              items: { type: 'string' }, 
+              description: 'Array of node IDs to select (required for set_nodes operation)' 
+            },
+            // For get_page_hierarchy operation
             detail: {
               type: 'string',
               enum: ['simple', 'standard', 'detailed'],
@@ -57,22 +53,34 @@ export class SelectionHandlers implements ToolHandler {
               type: 'number',
               description: 'Maximum traversal depth (null for unlimited)'
             }
-          }
-        }
-      },
+          },
+          required: ['operation']
+        },
+        examples: [
+          '{"operation": "get_current"}',
+          '{"operation": "set_nodes", "nodeIds": ["123:456", "789:012"]}',
+          '{"operation": "get_page_hierarchy", "detail": "standard", "includeHidden": false}',
+          '{"operation": "get_page_hierarchy", "detail": "simple", "nodeTypes": ["FRAME", "TEXT"]}'
+        ]
+      }
     ];
   }
 
   async handle(toolName: string, args: any): Promise<any> {
-    switch (toolName) {
-      case 'get_selection':
+    if (toolName !== 'figma_selection') {
+      throw new Error(`Unknown tool: ${toolName}`);
+    }
+    
+    const operation = args.operation;
+    switch (operation) {
+      case 'get_current':
         return this.getSelection();
-      case 'set_selection':
+      case 'set_nodes':
         return this.setSelection(args);
-      case 'get_page_nodes':
+      case 'get_page_hierarchy':
         return this.getPageNodes(args);
       default:
-        throw new Error(`Unknown tool: ${toolName}`);
+        throw new Error(`Unknown operation: ${operation}`);
     }
   }
 

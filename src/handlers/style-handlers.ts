@@ -11,7 +11,7 @@ export class StyleHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_styles',
+        name: 'figma_styles',
         description: 'Create, update, list, apply, or delete Figma styles (paint, text, effect, grid)',
         inputSchema: {
           type: 'object',
@@ -34,7 +34,7 @@ export class StyleHandlers implements ToolHandler {
 
   async handle(toolName: string, args: any): Promise<any> {
     switch (toolName) {
-      case 'manage_styles':
+      case 'figma_styles':
         return this.manageStyles(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

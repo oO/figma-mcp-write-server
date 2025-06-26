@@ -46,7 +46,7 @@ graph LR
     C --> D
 ```
 
-1. **AI Agent** calls MCP tools (e.g., `create_node`)
+1. **AI Agent** calls MCP tools (e.g., `figma_nodes` with operation `create`)
 2. **MCP Server** validates parameters and routes to handlers
 3. **Figma Plugin** receives message and executes operation
 4. **Results** are sent back to the MCP server and AI agent
@@ -55,32 +55,32 @@ graph LR
 
 | Tool | Description | Parameters |
 |------|-------------|------------|
-| `create_node` | Create nodes with visual properties | nodeType (rectangle/ellipse/text/frame/star/polygon), position, size, corners, opacity, rotation, styling |
-| `create_text` | Create text with typography features | characters, fontFamily, fontSize, styleRanges, textAlign |
-| `manage_components` | Component management (create, create_set, add_variant, get) | operation, nodeId, componentIds, componentId, name, description, variantProperties |
-| `manage_instances` | Instance management (create, swap, detach, reset_overrides, set_override, get) | operation, componentId, instanceId, x, y, overrides, swapTarget |
-| `manage_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
-| `manage_collections` | Variable collection management (create, update, delete, get, list) | operation, collectionId, collectionName, modes, modeId, newModeName, description |
-| `manage_variables` | Variable management and binding (create, bind, unbind, get_bindings) | operation, variableId, collectionId, variableName, variableType, nodeId, property, modeValues |
-| `manage_boolean_operations` | Boolean operations on shapes (union, subtract, intersect, exclude) | operation, nodeIds, name, preserveOriginal |
-| `manage_vector_operations` | Vector creation and manipulation (create, flatten, outline_stroke, get_paths) | operation, nodeId, vectorPaths, name, strokeWidth, x, y |
-| `manage_annotations` | Design annotations for dev handoff (add, edit, remove, list) | operation, nodeId, annotationId, label, labelMarkdown, properties, categoryId |
-| `manage_measurements` | Spacing and sizing measurements (add, edit, remove, list) | operation, measurementId, fromNodeId, toNodeId, direction, label, customValue, pageId |
-| `manage_dev_resources` | CSS generation and dev status tracking (generate_css, set_dev_status, add_dev_link, remove_dev_link, get_dev_resources) | operation, nodeId, status, linkUrl, linkTitle, linkId, cssOptions |
-| `manage_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
-| `manage_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
-| `manage_alignment` | Node alignment and positioning with reference point control | nodeIds, horizontalOperation/Direction, verticalOperation/Direction, referenceMode, referencePoints, alignmentPoints, spacing |
-| `manage_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
-| `update_node` | Update node properties | nodeId, width, height, x, y, cornerRadius, fillColor, opacity, rotation, visible, locked |
-| `manage_nodes` | Move, delete, or duplicate nodes | operation, nodeId, x, y, offsetX, offsetY |
-| `get_selection` | Get currently selected nodes | - |
-| `set_selection` | Set node selection | nodeIds |
-| `get_page_nodes` | List all nodes on current page | detail, includeHidden, includePages, nodeTypes, maxDepth |
-| `manage_exports` | Export nodes as files or data with cross-platform output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
-| `manage_images` | Image management for design elements | operation, imageUrl/imageBytes, nodeId, createNode, scaleMode, filters, rotation, alignmentX/Y, fitStrategy |
-| `manage_fonts` | Font search and management with SQLite database | operation (search_fonts/get_project_fonts/get_font_count/check_availability/get_font_styles/validate_font/get_font_info/preload_fonts), query, source, hasStyle, minStyleCount, limit, sortBy |
-| `get_plugin_status` | Check plugin connection | - |
-| `get_connection_health` | Get detailed connection metrics | - |
+| `figma_nodes` | Create, update, move, delete, or duplicate nodes | operation (create/update/move/delete/duplicate), nodeType, nodeId, position, size, styling properties |
+| `figma_text` | Create and manage text with typography features | operation (create/update/character_styling/apply_text_style/create_text_style), characters, fontFamily, fontSize, styleRanges, textAlign |
+| `figma_components` | Component management (create, create_set, add_variant, get) | operation, nodeId, componentIds, componentId, name, description, variantProperties |
+| `figma_instances` | Instance management (create, swap, detach, reset_overrides, set_override, get) | operation, componentId, instanceId, x, y, overrides, swapTarget |
+| `figma_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
+| `figma_collections` | Variable collection management (create, update, delete, get, list) | operation, collectionId, collectionName, modes, modeId, newModeName, description |
+| `figma_variables` | Variable management and binding (create, bind, unbind, get_bindings) | operation, variableId, collectionId, variableName, variableType, nodeId, property, modeValues |
+| `figma_boolean_operations` | Boolean operations on shapes (union, subtract, intersect, exclude) | operation, nodeIds, name, preserveOriginal |
+| `figma_vector_operations` | Vector creation and manipulation (create, flatten, outline_stroke, get_paths) | operation, nodeId, vectorPaths, name, strokeWidth, x, y |
+| `figma_annotations` | Design annotations for dev handoff (add, edit, remove, list) | operation, nodeId, annotationId, label, labelMarkdown, properties, categoryId |
+| `figma_measurements` | Spacing and sizing measurements (add, edit, remove, list) | operation, measurementId, fromNodeId, toNodeId, direction, label, customValue, pageId |
+| `figma_dev_resources` | CSS generation and dev status tracking (generate_css, set_dev_status, add_dev_link, remove_dev_link, get_dev_resources) | operation, nodeId, status, linkUrl, linkTitle, linkId, cssOptions |
+| `figma_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
+| `figma_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
+| `figma_alignment` | Node alignment and positioning with reference point control | nodeIds, horizontalOperation/Direction, verticalOperation/Direction, referenceMode, referencePoints, alignmentPoints, spacing |
+| `figma_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
+| *Consolidated into `figma_nodes`* | Update node properties | Use `figma_nodes` with operation `update` |
+| *Consolidated into `figma_nodes`* | Move, delete, or duplicate nodes | Use `figma_nodes` with operations `move`, `delete`, `duplicate` |
+| `figma_selection` | Get/set selection or get page hierarchy | operation (get_current/set_nodes/get_page_hierarchy), nodeIds, detail, filters |
+| *Consolidated into `figma_selection`* | Set node selection | Use `figma_selection` with operation `set_nodes` |
+| *Consolidated into `figma_selection`* | List all nodes on current page | Use `figma_selection` with operation `get_page_hierarchy` |
+| `figma_exports` | Export nodes as files or data with cross-platform output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
+| `figma_images` | Image management for design elements | operation, imageUrl/imageBytes, nodeId, createNode, scaleMode, filters, rotation, alignmentX/Y, fitStrategy |
+| `figma_fonts` | Font search and management with SQLite database | operation (search_fonts/get_project_fonts/get_font_count/check_availability/get_font_styles/validate_font/get_font_info/preload_fonts), query, source, hasStyle, minStyleCount, limit, sortBy |
+| `figma_plugin_status` | Check plugin connection and health | operation (status/health/test), testType, timeout |
+| *Consolidated into `figma_plugin_status`* | Get detailed connection metrics | Use `figma_plugin_status` with operation `health` |
 
 ## 🎯 Usage Examples
 
@@ -222,4 +222,4 @@ Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) fo
 
 ---
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 24 MCP tools and runs a WebSocket server on port 8765 (configurable) for plugin communication.
+**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 21 MCP tools and runs a WebSocket server on port 3000 (configurable) for plugin communication.

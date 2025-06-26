@@ -13,7 +13,7 @@ export class BooleanHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_boolean_operations',
+        name: 'figma_boolean_operations',
         description: 'Perform boolean operations (union, subtract, intersect, exclude) on shapes',
         inputSchema: {
           type: 'object',
@@ -43,7 +43,7 @@ export class BooleanHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_vector_operations',
+        name: 'figma_vector_operations',
         description: 'Create and manipulate vector nodes and paths',
         inputSchema: {
           type: 'object',
@@ -86,9 +86,9 @@ export class BooleanHandlers implements ToolHandler {
 
   async handle(name: string, args: any): Promise<ToolResult> {
     switch (name) {
-      case 'manage_boolean_operations':
+      case 'figma_boolean_operations':
         return this.manageBooleanOperations(args);
-      case 'manage_vector_operations':
+      case 'figma_vector_operations':
         return this.manageVectorOperations(args);
       default:
         throw new Error(`Unknown tool: ${name}`);

@@ -11,7 +11,7 @@ export class LayoutHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_auto_layout',
+        name: 'figma_auto_layout',
         description: 'Enable, disable, update, or get auto layout properties for frames',
         inputSchema: {
           type: 'object',
@@ -35,7 +35,7 @@ export class LayoutHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_constraints',
+        name: 'figma_constraints',
         description: 'Set, get, or reset layout constraints for nodes',
         inputSchema: {
           type: 'object',
@@ -49,7 +49,7 @@ export class LayoutHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_hierarchy',
+        name: 'figma_hierarchy',
         description: 'Group, ungroup, move, or reorder nodes in the hierarchy',
         inputSchema: {
           type: 'object',
@@ -65,7 +65,7 @@ export class LayoutHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_alignment',
+        name: 'figma_alignment',
         description: 'Align, position, or distribute nodes with professional precision',
         inputSchema: {
           type: 'object',
@@ -93,13 +93,13 @@ export class LayoutHandlers implements ToolHandler {
 
   async handle(toolName: string, args: any): Promise<any> {
     switch (toolName) {
-      case 'manage_auto_layout':
+      case 'figma_auto_layout':
         return this.manageAutoLayout(args);
-      case 'manage_constraints':
+      case 'figma_constraints':
         return this.manageConstraints(args);
-      case 'manage_hierarchy':
+      case 'figma_hierarchy':
         return this.manageHierarchy(args);
-      case 'manage_alignment':
+      case 'figma_alignment':
         return this.manageAlignment(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

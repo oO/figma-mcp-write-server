@@ -12,7 +12,7 @@ export class FontHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_fonts',
+        name: 'figma_fonts',
         description: 'Manage Figma fonts: search fonts intelligently, check availability, find missing fonts, get project fonts, get font count, get font styles, validate fonts, get font info, and preload fonts',
         inputSchema: {
           type: 'object',
@@ -129,7 +129,7 @@ export class FontHandlers implements ToolHandler {
 
   async handle(toolName: string, args: any): Promise<any> {
     switch (toolName) {
-      case 'manage_fonts':
+      case 'figma_fonts':
         return this.manageFonts(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

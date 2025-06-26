@@ -25,6 +25,7 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 ### Code Standards
 - Follow existing patterns before creating new ones
 - Always validate the existence and proper syntax of Figma API calls
+- **Figma API Research**: If no working examples exist in codebase, always check the official Figma Plugin API documentation at https://www.figma.com/plugin-docs/ before implementing
 - Use descriptive names without hardcoded numbers in docs
 - Add tests for new features, run `npm test` before commits
 - Examine existing implementations first for consistency

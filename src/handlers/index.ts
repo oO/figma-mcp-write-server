@@ -69,7 +69,7 @@ export class HandlerRegistry {
 
   private addPluginStatusTool(): void {
     this.allTools.push({
-      name: "get_plugin_status",
+      name: "figma_plugin_status",
       description: "Get connection status, health metrics, or test plugin connectivity with unified diagnostics",
       inputSchema: {
         type: "object",
@@ -103,7 +103,7 @@ export class HandlerRegistry {
 
   async handleToolCall(name: string, args: any): Promise<any> {
     // Unified plugin status with operation modes
-    if (name === "get_plugin_status") {
+    if (name === "figma_plugin_status") {
       return this.getPluginStatus(args);
     }
 

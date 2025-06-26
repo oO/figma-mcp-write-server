@@ -11,7 +11,7 @@ export class ImageHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_images',
+        name: 'figma_images',
         description: 'Comprehensive image management for Figma - create, replace, filter, and transform images applied as ImagePaint fills to shapes',
         inputSchema: {
           type: 'object',
@@ -190,7 +190,7 @@ export class ImageHandlers implements ToolHandler {
   }
 
   async handle(name: string, args: any): Promise<ToolResult> {
-    if (name !== 'manage_images') {
+    if (name !== 'figma_images') {
       throw new Error(`Unknown tool: ${name}`);
     }
 

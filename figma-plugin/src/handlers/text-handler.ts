@@ -104,15 +104,15 @@ export class TextHandler extends BaseHandler {
     try {
       text = figma.createText();
       
-      // STEP 1: Create text node with minimal properties (following Figma's native pattern)
+      // CRITICAL FIX: Load font FIRST before setting any text properties
+      const fontResult = await this.loadFontWithFallback(params.fontFamily, params.fontStyle);
+      text.fontName = fontResult.fontName;
+      
+      // STEP 1: Create text node with minimal properties (font must be loaded first)
       text.characters = params.characters;
       text.x = params.x || 0;
       text.y = params.y || 0;
       text.name = params.name || 'Text';
-      
-      // Load font with fallback system (required for basic text creation)
-      const fontResult = await this.loadFontWithFallback(params.fontFamily, params.fontStyle);
-      text.fontName = fontResult.fontName;
       text.fontSize = params.fontSize || 16;
     
       // Apply basic text properties

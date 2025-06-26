@@ -19,7 +19,7 @@ export class VariableHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_collections',
+        name: 'figma_collections',
         description: 'Create and manage variable collections and modes',
         inputSchema: {
           type: 'object',
@@ -69,7 +69,7 @@ export class VariableHandlers implements ToolHandler {
         ]
       },
       {
-        name: 'manage_variables',
+        name: 'figma_variables',
         description: 'Create variables and bind them to properties',
         inputSchema: {
           type: 'object',
@@ -147,9 +147,9 @@ export class VariableHandlers implements ToolHandler {
 
   async handle(toolName: string, args: any): Promise<any> {
     switch (toolName) {
-      case 'manage_collections':
+      case 'figma_collections':
         return this.manageCollections(args);
-      case 'manage_variables':
+      case 'figma_variables':
         return this.manageVariables(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

@@ -19,7 +19,7 @@ export class ComponentHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_components',
+        name: 'figma_components',
         description: 'Create and manage components and component sets',
         inputSchema: {
           type: 'object',
@@ -68,7 +68,7 @@ export class ComponentHandlers implements ToolHandler {
         ]
       },
       {
-        name: 'manage_instances',
+        name: 'figma_instances',
         description: 'Create and manage component instances',
         inputSchema: {
           type: 'object',
@@ -118,9 +118,9 @@ export class ComponentHandlers implements ToolHandler {
 
   async handle(toolName: string, args: any): Promise<any> {
     switch (toolName) {
-      case 'manage_components':
+      case 'figma_components':
         return this.manageComponents(args);
-      case 'manage_instances':
+      case 'figma_instances':
         return this.manageInstances(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

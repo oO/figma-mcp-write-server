@@ -11,7 +11,7 @@ export class TextHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_text',
+        name: 'figma_text',
         description: 'Comprehensive text management tool for creating, updating, and styling text in Figma',
         inputSchema: {
           type: 'object',
@@ -240,7 +240,7 @@ export class TextHandlers implements ToolHandler {
 
   async handle(name: string, args: any): Promise<ToolResult> {
     switch (name) {
-      case 'manage_text':
+      case 'figma_text':
         return this.handleManageText(args);
       default:
         throw new Error(`Unknown tool: ${name}`);

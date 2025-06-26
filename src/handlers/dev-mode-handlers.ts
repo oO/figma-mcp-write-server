@@ -14,7 +14,7 @@ export class DevModeHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'manage_annotations',
+        name: 'figma_annotations',
         description: 'Create and manage design annotations for dev handoff',
         inputSchema: {
           type: 'object',
@@ -53,7 +53,7 @@ export class DevModeHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_measurements',
+        name: 'figma_measurements',
         description: 'Add and manage spacing/sizing measurements for design specs',
         inputSchema: {
           type: 'object',
@@ -97,7 +97,7 @@ export class DevModeHandlers implements ToolHandler {
         }
       },
       {
-        name: 'manage_dev_resources',
+        name: 'figma_dev_resources',
         description: 'Generate CSS code and manage development resources and status',
         inputSchema: {
           type: 'object',
@@ -158,11 +158,11 @@ export class DevModeHandlers implements ToolHandler {
 
   async handle(name: string, args: any): Promise<ToolResult> {
     switch (name) {
-      case 'manage_annotations':
+      case 'figma_annotations':
         return this.manageAnnotations(args);
-      case 'manage_measurements':
+      case 'figma_measurements':
         return this.manageMeasurements(args);
-      case 'manage_dev_resources':
+      case 'figma_dev_resources':
         return this.manageDevResources(args);
       default:
         throw new Error(`Unknown tool: ${name}`);

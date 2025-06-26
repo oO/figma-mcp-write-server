@@ -201,6 +201,103 @@ export class ComponentHandler extends BaseHandler {
           data: componentData
         };
 
+      case 'update':
+        if (!componentId) {
+          throw new Error('componentId is required for update operation');
+        }
+
+        const updateComponent = figma.getNodeById(componentId);
+        if (!updateComponent) {
+          throw new Error('Component not found');
+        }
+        if (updateComponent.type !== 'COMPONENT' && updateComponent.type !== 'COMPONENT_SET') {
+          throw new Error('Node is not a component or component set');
+        }
+
+        // Update name if provided
+        if (name !== undefined) {
+          updateComponent.name = name;
+        }
+
+        // Update description if provided
+        if (description !== undefined) {
+          updateComponent.description = description;
+        }
+
+        return {
+          success: true,
+          data: {
+            componentId: updateComponent.id,
+            name: updateComponent.name,
+            type: updateComponent.type,
+            description: updateComponent.description,
+            message: `Successfully updated component "${updateComponent.name}"`
+          }
+        };
+
+      case 'delete':
+        if (!componentId) {
+          throw new Error('componentId is required for delete operation');
+        }
+
+        const deleteComponent = figma.getNodeById(componentId);
+        if (!deleteComponent) {
+          throw new Error('Component not found');
+        }
+        if (deleteComponent.type !== 'COMPONENT' && deleteComponent.type !== 'COMPONENT_SET') {
+          throw new Error('Node is not a component or component set');
+        }
+
+        const deletedName = deleteComponent.name;
+        const deletedId = deleteComponent.id;
+        deleteComponent.remove();
+
+        return {
+          success: true,
+          data: {
+            deletedComponentId: deletedId,
+            deletedName: deletedName,
+            message: `Successfully deleted component "${deletedName}"`
+          }
+        };
+
+      case 'remove_variant':
+        if (!componentId) {
+          throw new Error('componentId is required for remove_variant operation');
+        }
+        if (!variantProperties) {
+          throw new Error('variantProperties is required for remove_variant operation');
+        }
+
+        const targetComponentForRemoval = figma.getNodeById(componentId);
+        if (!targetComponentForRemoval) {
+          throw new Error('Component not found');
+        }
+        if (targetComponentForRemoval.type !== 'COMPONENT_SET') {
+          throw new Error('Node is not a component set');
+        }
+
+        const componentSetForRemoval = targetComponentForRemoval as ComponentSetNode;
+        
+        // Remove variant properties
+        for (const propName of Object.keys(variantProperties)) {
+          try {
+            componentSetForRemoval.removeComponentProperty(propName);
+          } catch (error) {
+            console.warn(`Failed to remove variant property ${propName}:`, error);
+          }
+        }
+
+        return {
+          success: true,
+          data: {
+            componentSetId: componentSetForRemoval.id,
+            removedProperties: Object.keys(variantProperties),
+            remainingProperties: Object.keys(componentSetForRemoval.componentPropertyDefinitions || {}),
+            message: `Successfully removed variant properties: ${Object.keys(variantProperties).join(', ')}`
+          }
+        };
+
       default:
         throw new Error(`Unknown component operation: ${operation}`);
     }

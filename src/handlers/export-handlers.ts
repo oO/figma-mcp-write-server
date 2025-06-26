@@ -78,7 +78,7 @@ export class ExportHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: "manage_exports",
+        name: "figma_exports",
         description: `Export Figma nodes as files or base64 data.
 
 🔧 OUTPUT CONTROL:
@@ -254,7 +254,7 @@ Data: {nodeId: "123", format: "PNG", output: "data", dataFormat: "base64"}`,
 
   async handle(toolName: string, args: any): Promise<ToolResult> {
     switch (toolName) {
-      case "manage_exports":
+      case "figma_exports":
         return this.manageExports(args);
       default:
         throw new Error(`Unknown tool: ${toolName}`);

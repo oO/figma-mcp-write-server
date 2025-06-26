@@ -131,15 +131,28 @@ export async function performVectorOperation(payload: any): Promise<any> {
           return { success: false, error: `Node ${nodeId} not found` };
         }
         
+        // Check if node can be flattened
+        const validTypes = ['RECTANGLE', 'ELLIPSE', 'VECTOR', 'STAR', 'POLYGON', 'BOOLEAN_OPERATION', 'FRAME', 'GROUP'];
+        if (!validTypes.includes(nodeToFlatten.type)) {
+          return { 
+            success: false, 
+            error: `Node type ${nodeToFlatten.type} cannot be flattened. Only shapes and groups can be flattened.` 
+          };
+        }
+        
         const nodes = [nodeToFlatten];
-        const flattened = figma.flatten(nodes);
+        const parent = (nodeToFlatten.parent && 'appendChild' in nodeToFlatten.parent) 
+          ? nodeToFlatten.parent as BaseNode & ChildrenMixin
+          : figma.currentPage;
+        const flattened = figma.flatten(nodes, parent);
         
         return {
           success: true,
           data: { 
             nodeId: flattened.id, 
             operation: 'flatten',
-            name: flattened.name
+            name: flattened.name,
+            originalNodeId: nodeId
           }
         };
 
@@ -153,25 +166,55 @@ export async function performVectorOperation(payload: any): Promise<any> {
           return { success: false, error: `Node ${nodeId} not found` };
         }
         
-        // Check if node supports outline stroke
-        if (!('outlineStroke' in node)) {
+        // Check if node is a valid type for outline stroke
+        const outlineValidTypes = ['RECTANGLE', 'ELLIPSE', 'VECTOR', 'STAR', 'POLYGON'];
+        if (!outlineValidTypes.includes(node.type)) {
           return { 
             success: false, 
-            error: 'Node does not support outline stroke. Only vector-based nodes (rectangles, ellipses, vectors, etc.) support this operation.' 
+            error: `Node type ${node.type} does not support outline stroke. Only shapes with strokes (rectangles, ellipses, vectors, stars, polygons) support this operation.` 
           };
         }
         
-        // Perform outline stroke
-        const outlinedNode = (node as any).outlineStroke();
-        
-        return {
-          success: true,
-          data: { 
-            nodeId: outlinedNode.id, 
-            operation: 'outline_stroke',
-            name: outlinedNode.name
+        // Use the correct API: outlineStroke() is a node method, not figma global
+        try {
+          // Check if node has outlineStroke method
+          if (!('outlineStroke' in node) || typeof (node as any).outlineStroke !== 'function') {
+            return { 
+              success: false, 
+              error: `Node type ${node.type} does not support outline stroke method. Only LineNode and other stroke-capable nodes support this operation.` 
+            };
           }
-        };
+          
+          // Call the node's outlineStroke method
+          const outlinedNode = (node as any).outlineStroke();
+          
+          // API returns null if node has no strokes
+          if (!outlinedNode) {
+            return { 
+              success: false, 
+              error: 'Outline stroke operation returned null - node has no visible strokes to outline. Add a stroke to the node first.' 
+            };
+          }
+          
+          // Add the new node to the current page
+          figma.currentPage.appendChild(outlinedNode);
+          
+          return {
+            success: true,
+            data: { 
+              nodeId: outlinedNode.id, 
+              operation: 'outline_stroke',
+              name: outlinedNode.name,
+              originalNodeId: nodeId,
+              message: `Successfully outlined stroke for ${node.type.toLowerCase()}`
+            }
+          };
+        } catch (error) {
+          return { 
+            success: false, 
+            error: `Outline stroke failed: ${error.message}. Ensure the node has a visible stroke.` 
+          };
+        }
 
       case 'get_vector_paths':
         if (!nodeId) {

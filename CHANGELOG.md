@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.0] - 2025-06-26
+
+### Changed
+- **Major Tool Renaming and Consolidation**: Comprehensive refactoring for improved Agent Experience (AX)
+  - **Tool Prefix Migration**: All tools renamed from `manage_*` to `figma_*` for clear domain identification
+  - **Node Operations Consolidation**: `create_node`, `update_node`, `manage_nodes` → `figma_nodes` with operations: `create`, `update`, `move`, `delete`, `duplicate`
+  - **Selection Operations Consolidation**: `get_selection`, `set_selection`, `get_page_nodes` → `figma_selection` with operations: `get_current`, `set_nodes`, `get_page_hierarchy`
+  - **Tool Count Reduction**: 24 → 21 tools (12.5% reduction) while maintaining 100% functionality
+  - **Documentation Update**: Updated EXAMPLES.md and README.md with new tool names and operation syntax
+  - **Unified Tool Interface**: All tools now follow consistent `figma_*` naming for multi-server environment clarity
+
+### Fixed
+- **CRITICAL: Text Creation Font Loading Bug**: Fixed "Cannot write to node with unloaded font" error in `figma_text` tool
+  - **Root Cause**: Font loading occurred after setting text characters, violating Figma's API requirements
+  - **Solution**: Moved font loading to occur before any text property assignment in `handleCreateText`
+  - **Impact**: Text node creation now works reliably without manual font loading steps
+- **CRITICAL: Missing Component Operations**: Fixed "Unknown component operation" errors in `figma_components` tool
+  - **Root Cause**: `update`, `delete`, and `remove_variant` operations were documented but not implemented in plugin handler
+  - **Solution**: Added complete implementations for all missing component operations
+  - **Operations Added**: `update` (modify name/description), `delete` (remove component), `remove_variant` (remove variant properties)
+  - **Impact**: All documented component operations now work as expected
+- **CRITICAL: Vector Operations API Fixes**: Fixed incorrect Figma API usage in `figma_vector_operations` tool
+  - **Root Cause**: Wrong API signatures for `flatten` and `outlineStroke` methods causing "cannot read property 'id' of null" errors
+  - **Research**: Validated against official Figma Plugin API documentation at https://www.figma.com/plugin-docs/
+  - **API Corrections**: `figma.flatten(nodes, parent)` and `node.outlineStroke()` (not figma global methods)
+  - **Null Handling**: Added proper checks for `outlineStroke()` returning null when nodes have no strokes
+  - **Impact**: Vector editing operations now work correctly with proper error messages
+
 ## [0.29.3] - 2025-06-25
 
 ### Fixed

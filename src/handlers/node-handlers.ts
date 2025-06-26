@@ -12,89 +12,76 @@ export class NodeHandlers implements ToolHandler {
   getTools(): Tool[] {
     return [
       {
-        name: 'create_node',
-        description: 'Create a new node in Figma (rectangle, ellipse, frame, text, star, or polygon)',
+        name: 'figma_nodes',
+        description: 'Create, update, move, delete, or duplicate nodes in Figma',
         inputSchema: {
           type: 'object',
           properties: {
+            operation: {
+              type: 'string',
+              enum: ['create', 'update', 'move', 'delete', 'duplicate'],
+              description: 'Node operation to perform'
+            },
+            // Node creation properties
             nodeType: {
               type: 'string',
               enum: ['rectangle', 'ellipse', 'frame', 'text', 'star', 'polygon'],
-              description: 'Type of node to create'
+              description: 'Type of node to create (required for create operation)'
             },
-            name: { type: 'string', description: 'Node name' },
-            width: { type: 'number', description: 'Width (required for rectangle, ellipse, frame)' },
-            height: { type: 'number', description: 'Height (required for rectangle, ellipse, frame)' },
-            fillColor: { type: 'string', description: 'Fill color (hex)' },
-            strokeColor: { type: 'string', description: 'Stroke color (hex)' },
-            strokeWidth: { type: 'number', description: 'Stroke width' }
-          },
-          required: ['nodeType']
-        },
-        annotations: {
-          description_extra: "Supports all basic node types. For advanced text styling, consider using the manage_text tool."
-        },
-        examples: [
-          '{"nodeType": "rectangle", "width": 100, "height": 100, "fillColor": "#FF0000"}',
-          '{"nodeType": "frame", "width": 200, "height": 150, "name": "Container"}',
-          '{"nodeType": "text", "characters": "Hello World", "fontSize": 16}',
-          '{"nodeType": "star", "pointCount": 5, "innerRadius": 0.5}'
-        ]
-      },
-      {
-        name: 'update_node',
-        description: 'Update properties of an existing node',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            nodeId: { type: 'string', description: 'ID of the node to update' },
-            width: { type: 'number', description: 'Width of the node' },
-            height: { type: 'number', description: 'Height of the node' },
+            // Node identification
+            nodeId: { type: 'string', description: 'ID of the node (required for update, move, delete, duplicate operations)' },
+            // Positioning and sizing
             x: { type: 'number', description: 'X position' },
             y: { type: 'number', description: 'Y position' },
-            cornerRadius: { type: 'number', minimum: 0, description: 'Corner radius (applies to all corners)' },
+            width: { type: 'number', description: 'Width of the node' },
+            height: { type: 'number', description: 'Height of the node' },
+            // Visual properties
+            name: { type: 'string', description: 'Node name' },
             fillColor: { type: 'string', description: 'Fill color (hex)' },
+            strokeColor: { type: 'string', description: 'Stroke color (hex)' },
+            strokeWidth: { type: 'number', description: 'Stroke width' },
+            cornerRadius: { type: 'number', minimum: 0, description: 'Corner radius (applies to all corners)' },
             opacity: { type: 'number', minimum: 0, maximum: 1, description: 'Opacity (0-1)' },
             visible: { type: 'boolean', description: 'Visibility' },
             rotation: { type: 'number', description: 'Rotation in degrees' },
-            locked: { type: 'boolean', description: 'Lock state' }
-          },
-          required: ['nodeId']
-        }
-      },
-      {
-        name: 'manage_nodes',
-        description: 'Move, delete, or duplicate nodes',
-        inputSchema: {
-          type: 'object',
-          properties: {
-            operation: { 
-              type: 'string', 
-              enum: ['move', 'delete', 'duplicate'], 
-              description: 'Node operation to perform' 
-            },
-            nodeId: { type: 'string', description: 'ID of the node to operate on' },
-            x: { type: 'number', description: 'New X position (required for move operation)' },
-            y: { type: 'number', description: 'New Y position (required for move operation)' },
+            locked: { type: 'boolean', description: 'Lock state' },
+            // Duplicate operation properties
             offsetX: { type: 'number', default: 10, description: 'X offset for the duplicate (for duplicate operation)' },
             offsetY: { type: 'number', default: 10, description: 'Y offset for the duplicate (for duplicate operation)' }
           },
-          required: ['operation', 'nodeId']
-        }
+          required: ['operation']
+        },
+        annotations: {
+          description_extra: "Unified node operations tool. Supports all basic node types. For advanced text styling, consider using the figma_text tool."
+        },
+        examples: [
+          '{"operation": "create", "nodeType": "rectangle", "width": 100, "height": 100, "fillColor": "#FF0000"}',
+          '{"operation": "update", "nodeId": "123:456", "x": 100, "y": 200, "fillColor": "#00FF00"}',
+          '{"operation": "move", "nodeId": "123:456", "x": 300, "y": 400}',
+          '{"operation": "duplicate", "nodeId": "123:456", "offsetX": 50, "offsetY": 50}',
+          '{"operation": "delete", "nodeId": "123:456"}'
+        ]
       }
     ];
   }
 
   async handle(toolName: string, args: any): Promise<any> {
-    switch (toolName) {
-      case 'create_node':
+    if (toolName !== 'figma_nodes') {
+      throw new Error(`Unknown tool: ${toolName}`);
+    }
+    
+    const operation = args.operation;
+    switch (operation) {
+      case 'create':
         return this.createNode(args);
-      case 'update_node':
+      case 'update':
         return this.updateNode(args);
-      case 'manage_nodes':
+      case 'move':
+      case 'delete':
+      case 'duplicate':
         return this.manageNodes(args);
       default:
-        throw new Error(`Unknown tool: ${toolName}`);
+        throw new Error(`Unknown operation: ${operation}`);
     }
   }
 

@@ -491,26 +491,27 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools
 
-The server provides 24 consolidated tools organized by domain:
+The server provides 21 consolidated tools organized by domain:
 
-- **Node Operations**: `create_node`, `create_text`, `update_node`, `manage_nodes`
-- **Selection & Page Management**: `get_selection`, `set_selection`, `get_page_nodes`, `export_node`
-- **Style System**: `manage_styles`
-- **Typography & Fonts**: `manage_fonts`
-- **Layout Management**: `manage_auto_layout`, `manage_constraints`, `manage_hierarchy`
-- **Boolean & Vector Operations**: `manage_boolean_operations`, `manage_vector_operations`
-- **Dev Mode Integration**: `manage_annotations`, `manage_measurements`, `manage_dev_resources`
-- **Variables & Design Tokens**: `manage_variables`, `manage_collections`
-- **Component System**: `manage_components`, `manage_instances`
-- **Plugin Status**: `get_plugin_status`, `get_connection_health`
+- **Node Operations**: `figma_nodes` (create, update, move, delete, duplicate operations)
+- **Selection & Page Management**: `figma_selection` (get_current, set_nodes, get_page_hierarchy operations)
+- **Style System**: `figma_styles`
+- **Typography & Text**: `figma_text`, `figma_fonts`
+- **Layout Management**: `figma_auto_layout`, `figma_constraints`, `figma_hierarchy`, `figma_alignment`
+- **Boolean & Vector Operations**: `figma_boolean_operations`, `figma_vector_operations`
+- **Dev Mode Integration**: `figma_annotations`, `figma_measurements`, `figma_dev_resources`
+- **Variables & Design Tokens**: `figma_variables`, `figma_collections`
+- **Component System**: `figma_components`, `figma_instances`
+- **Asset Management**: `figma_images`, `figma_exports`
+- **Plugin Status**: `figma_plugin_status` (status, health, test operations)
 
 See README.md for complete tool documentation and parameter details.
 
 ### Handler Classes
 
 #### Node Handlers (`src/handlers/node-handlers.ts`)
-Core Figma node operations:
-- **Node Creation**: Rectangle, ellipse, frame, text creation with `create_node` and `create_text`
+Core Figma node operations through `figma_nodes` tool:
+- **Node Operations**: Unified create, update, move, delete, duplicate operations
 - **Property Updates**: Modify existing node properties with `update_node`
 - **Node Management**: Move, delete, duplicate operations with `manage_nodes`
 - **Advanced Typography**: Rich text with mixed styling and font management
