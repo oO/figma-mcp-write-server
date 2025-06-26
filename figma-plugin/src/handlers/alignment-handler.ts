@@ -27,6 +27,9 @@ export class AlignmentHandler extends BaseHandler {
       
       for (const nodeId of params.nodeIds) {
         const node = findNodeById(nodeId);
+        if (!node) {
+          throw new Error(`Node ${nodeId} not found`);
+        }
         if (!('x' in node) || !('y' in node) || !('width' in node) || !('height' in node)) {
           throw new Error(`Node ${nodeId} does not support positioning`);
         }
@@ -78,6 +81,9 @@ export class AlignmentHandler extends BaseHandler {
           throw new Error('Reference node ID required for key_object mode');
         }
         const keyNode = findNodeById(params.referenceNodeId);
+        if (!keyNode) {
+          throw new Error(`Reference node ${params.referenceNodeId} not found`);
+        }
         if (!('x' in keyNode) || !('y' in keyNode) || !('width' in keyNode) || !('height' in keyNode)) {
           throw new Error('Reference node does not support positioning');
         }
@@ -88,6 +94,9 @@ export class AlignmentHandler extends BaseHandler {
           throw new Error('Reference node ID required for relative mode');
         }
         const relativeNode = findNodeById(params.referenceNodeId);
+        if (!relativeNode) {
+          throw new Error(`Reference node ${params.referenceNodeId} not found`);
+        }
         if (!('x' in relativeNode) || !('y' in relativeNode) || !('width' in relativeNode) || !('height' in relativeNode)) {
           throw new Error('Reference node does not support positioning');
         }

@@ -163,6 +163,9 @@ export class SelectionHandler extends BaseHandler {
   private async getNodeDescendants(nodeId: string): Promise<OperationResult> {
     return this.executeOperation('getNodeDescendants', { nodeId }, async () => {
       const node = findNodeById(nodeId);
+      if (!node) {
+        throw new Error(`Node with ID ${nodeId} not found`);
+      }
       
       if (!('children' in node)) {
         return {

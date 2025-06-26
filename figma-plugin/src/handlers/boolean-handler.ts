@@ -15,18 +15,26 @@ export async function performBooleanOperation(payload: any): Promise<any> {
 
     // Verify nodes are valid for boolean operations
     const validNodes = nodes.filter((node: any) => {
-      return node.type === 'RECTANGLE' || 
-             node.type === 'ELLIPSE' || 
-             node.type === 'VECTOR' || 
-             node.type === 'STAR' ||
-             node.type === 'POLYGON' ||
-             node.type === 'BOOLEAN_OPERATION';
+      // Check if node has geometric shapes (can be used in boolean operations)
+      const validTypes = [
+        'RECTANGLE', 'ELLIPSE', 'VECTOR', 'STAR', 'POLYGON', 
+        'BOOLEAN_OPERATION', 'LINE', 'TEXT', 'FRAME', 'GROUP',
+        'COMPONENT', 'INSTANCE', 'SECTION'
+      ];
+      
+      // Additional check: ensure node can be used in boolean operations
+      // Frames and groups work if they contain shapes
+      if (node.type === 'FRAME' || node.type === 'GROUP' || node.type === 'COMPONENT' || node.type === 'INSTANCE') {
+        return true; // Let Figma API handle the validation
+      }
+      
+      return validTypes.includes(node.type);
     });
 
     if (validNodes.length < 2) {
       return {
         success: false,
-        error: 'Boolean operations require at least 2 valid shape nodes (rectangles, ellipses, vectors, stars, polygons, or boolean operations)'
+        error: 'Boolean operations require at least 2 valid nodes. Most node types are supported including shapes, frames, groups, components, and text.'
       };
     }
 

@@ -137,6 +137,9 @@ export class HierarchyHandler extends BaseHandler {
     this.validateParams(params, ['nodeId']);
     
     const group = findNodeById(params.nodeId!);
+    if (!group) {
+      throw new Error(`Node with ID ${params.nodeId} not found`);
+    }
     
     // Step 1: Validate target is a GROUP type node
     if (group.type !== 'GROUP') {

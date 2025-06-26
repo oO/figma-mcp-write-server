@@ -295,10 +295,21 @@ Data: {nodeId: "123", format: "PNG", output: "data", dataFormat: "base64"}`,
       throw new Error("nodeId is required for export_single operation");
     }
 
+    // Filter settings based on export format compatibility
+    const format = params.format || "PNG";
+    let settings = params.settings || {};
+    
+    // Remove incompatible settings for SVG format
+    if (format === "SVG" && settings.constraint) {
+      console.log("⚠️ Removing constraint setting for SVG export (not supported)");
+      settings = { ...settings };
+      delete settings.constraint;
+    }
+
     const payload: any = {
       nodeId: params.nodeId,
-      format: params.format || "PNG",
-      settings: params.settings || {},
+      format,
+      settings,
       organizationStrategy: params.organizationStrategy || "flat",
     };
 
@@ -350,9 +361,17 @@ Data: {nodeId: "123", format: "PNG", output: "data", dataFormat: "base64"}`,
       };
     }
 
+    // Filter settings based on export format compatibility
+    const format = params.format || "PNG";
+    if (format === "SVG" && exportSettings.constraint) {
+      console.log("⚠️ Removing constraint setting for SVG bulk export (not supported)");
+      exportSettings = { ...exportSettings };
+      delete exportSettings.constraint;
+    }
+
     const payload: any = {
       nodeIds: params.nodeIds,
-      format: params.format || "PNG",
+      format,
       settings: exportSettings,
       organizationStrategy: params.organizationStrategy || "flat",
       exportPreset: params.exportPreset,

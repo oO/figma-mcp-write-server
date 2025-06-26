@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.30.1] - 2025-06-26
+
+### Fixed
+- **CRITICAL: SVG Export Constraint Validation Error**: Fixed complete SVG export failure due to invalid constraint property injection
+  - **Root Cause**: `figma_exports` tool was automatically adding constraint properties to all export formats, but Figma API rejects constraints for SVG exports
+  - **Error**: `"Export failed: in exportAsync: Property 'settings' failed validation: Unrecognized key(s) in object: 'constraint'"`
+  - **Solution**: Implemented format-specific settings filtering to completely exclude constraint properties for SVG exports
+  - **Impact**: All SVG export operations now work correctly while preserving constraint functionality for raster formats (PNG/JPG/PDF)
+  - **Coverage**: Fixed for single exports, bulk exports, and preset exports
+- **Invalid Node ID Error Handling**: Fixed "invalid 'in' operand" JavaScript errors when providing invalid node IDs
+  - **Tools Affected**: `figma_constraints`, `figma_alignment`, `figma_selection`, `figma_hierarchy`, `figma_layout`
+  - **Root Cause**: Using JavaScript `in` operator on null/undefined values returned by `findNodeById()` before null-checking
+  - **Solution**: Added proper null checks before all property existence validations
+  - **Impact**: Tools now return clear "Node not found" errors instead of confusing JavaScript runtime errors
+- **Boolean Operations Validation**: Fixed overly strict node compatibility validation in `figma_boolean_operations`
+  - **Issue**: Tool rejected valid shape nodes including frames, groups, components, instances, and text
+  - **Solution**: Expanded valid node types to include all Figma-supported boolean operation targets
+  - **Impact**: Boolean operations now work with a broader range of node types as intended
+
 ## [0.30.0] - 2025-06-26
 
 ### Changed

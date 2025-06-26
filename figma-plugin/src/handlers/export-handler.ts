@@ -245,10 +245,14 @@ export class ExportHandler extends BaseHandler {
       for (const size of preset.sizes) {
         for (const node of nodes) {
           try {
-            const exportSettings = {
-              format: preset.formats[0] as any,
-              constraint: { type: 'WIDTH', value: size }
+            const exportSettings: any = {
+              format: preset.formats[0] as any
             };
+            
+            // Only add constraints for non-SVG formats
+            if (preset.formats[0] !== 'SVG') {
+              exportSettings.constraint = { type: 'WIDTH', value: size };
+            }
             
             // Validate node supports export
             if (!('exportAsync' in node) || typeof node.exportAsync !== 'function') {
@@ -302,10 +306,14 @@ export class ExportHandler extends BaseHandler {
       for (const density of preset.densities) {
         for (const node of nodes) {
           try {
-            const exportSettings = {
-              format: preset.formats[0] as any,
-              constraint: { type: 'SCALE', value: density.scale }
+            const exportSettings: any = {
+              format: preset.formats[0] as any
             };
+            
+            // Only add constraints for non-SVG formats
+            if (preset.formats[0] !== 'SVG') {
+              exportSettings.constraint = { type: 'SCALE', value: density.scale };
+            }
             
             // Validate node supports export
             if (!('exportAsync' in node) || typeof node.exportAsync !== 'function') {
@@ -361,10 +369,14 @@ export class ExportHandler extends BaseHandler {
         for (const format of preset.formats) {
           for (const node of nodes) {
             try {
-              const exportSettings = {
-                format: format as any,
-                constraint: { type: 'SCALE', value: scale }
+              const exportSettings: any = {
+                format: format as any
               };
+              
+              // Only add constraints for non-SVG formats
+              if (format !== 'SVG') {
+                exportSettings.constraint = { type: 'SCALE', value: scale };
+              }
               
               // Validate node supports export
             if (!('exportAsync' in node) || typeof node.exportAsync !== 'function') {
@@ -597,17 +609,27 @@ export class ExportHandler extends BaseHandler {
         format: format as any
       };
       
-      if (settings.constraint) {
-        exportSettings.constraint = settings.constraint;
-        console.log('✅ Using custom constraint:', settings.constraint);
+      // Format-specific settings handling
+      if (format === 'SVG') {
+        // SVG format only supports specific settings - exclude constraint completely
+        console.log('✅ SVG format: using SVG-compatible settings only');
+        // Only add SVG-compatible settings if needed in the future
+        // Currently, SVG exports work best with minimal settings
       } else {
-        exportSettings.constraint = { type: 'SCALE', value: scale };
-        console.log('✅ Using default scale constraint:', exportSettings.constraint);
-      }
-      
-      if (format === 'JPG' && settings.quality) {
-        exportSettings.contentsOnly = true;
-        console.log('✅ Applied JPG quality settings');
+        // Raster formats (PNG, JPG, PDF) support constraints
+        if (settings.constraint) {
+          exportSettings.constraint = settings.constraint;
+          console.log('✅ Using custom constraint:', settings.constraint);
+        } else {
+          exportSettings.constraint = { type: 'SCALE', value: scale };
+          console.log('✅ Using default scale constraint:', exportSettings.constraint);
+        }
+        
+        // JPG-specific settings
+        if (format === 'JPG' && settings.quality) {
+          exportSettings.contentsOnly = true;
+          console.log('✅ Applied JPG quality settings');
+        }
       }
       
       if (settings.padding) {

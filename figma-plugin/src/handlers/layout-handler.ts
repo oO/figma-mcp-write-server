@@ -25,6 +25,9 @@ export class LayoutHandler extends BaseHandler {
       );
 
       const node = findNodeById(params.nodeId);
+      if (!node) {
+        throw new Error(`Node ${params.nodeId} not found`);
+      }
       validateNodeType(node, ['FRAME', 'COMPONENT', 'INSTANCE']);
 
       switch (operation) {
@@ -215,6 +218,9 @@ export class LayoutHandler extends BaseHandler {
       );
 
       const node = findNodeById(params.nodeId);
+      if (!node) {
+        throw new Error(`Node ${params.nodeId} not found`);
+      }
 
       switch (operation) {
         case 'set':
