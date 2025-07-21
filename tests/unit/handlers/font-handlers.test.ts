@@ -1,20 +1,21 @@
-import { FontHandlers } from '../../../src/handlers/font-handlers.js';
-import { FontOperationsSchema } from '../../../src/types/font-operations.js';
+import { FontsHandler } from '@/handlers/fonts-handler';
+import { FontOperationsSchema } from '@/types/font-operations';
+import { vi } from 'vitest';
 
-describe('FontHandlers', () => {
-  let fontHandlers: FontHandlers;
-  let mockSendToPlugin: jest.Mock;
+describe('FontsHandler', () => {
+  let fontsHandler: FontsHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    fontHandlers = new FontHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    fontsHandler = new FontsHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
-    it('should return manage_fonts tool definition', () => {
-      const tools = fontHandlers.getTools();
+    it('should return figma_fonts tool definition', () => {
+      const tools = fontsHandler.getTools();
       expect(tools).toHaveLength(1);
-      expect(tools[0].name).toBe('manage_fonts');
+      expect(tools[0].name).toBe('figma_fonts');
       expect(tools[0].description).toContain('Manage Figma fonts');
       expect(tools[0].inputSchema.properties.operation.enum).toEqual([
         'search_fonts',
@@ -50,7 +51,7 @@ describe('FontHandlers', () => {
     describe('search_fonts operation', () => {
       it('should handle search_fonts with default parameters', async () => {
         const args = { operation: 'search_fonts', query: 'Inter' };
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -69,7 +70,7 @@ describe('FontHandlers', () => {
           query: 'Inter'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -89,7 +90,7 @@ describe('FontHandlers', () => {
           ]
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -105,7 +106,7 @@ describe('FontHandlers', () => {
           fallbackSuggestions: true
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -118,7 +119,7 @@ describe('FontHandlers', () => {
     describe('get_missing operation', () => {
       it('should handle get_missing operation', async () => {
         const args = { operation: 'get_missing' };
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -133,7 +134,7 @@ describe('FontHandlers', () => {
           fallbackSuggestions: true
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -146,7 +147,7 @@ describe('FontHandlers', () => {
     describe('get_project_fonts operation', () => {
       it('should handle get_project_fonts operation', async () => {
         const args = { operation: 'get_project_fonts' };
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -159,7 +160,7 @@ describe('FontHandlers', () => {
     describe('get_font_count operation', () => {
       it('should handle get_font_count operation', async () => {
         const args = { operation: 'get_font_count' };
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -175,7 +176,7 @@ describe('FontHandlers', () => {
           countHasStyle: 'Bold'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -192,7 +193,7 @@ describe('FontHandlers', () => {
           fontFamily: 'Inter'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -210,7 +211,7 @@ describe('FontHandlers', () => {
           fontStyle: 'Regular'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -227,7 +228,7 @@ describe('FontHandlers', () => {
           strict: true
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -245,7 +246,7 @@ describe('FontHandlers', () => {
           fontStyle: 'Bold'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -266,7 +267,7 @@ describe('FontHandlers', () => {
           priority: 'high'
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -286,7 +287,7 @@ describe('FontHandlers', () => {
           preloadCount: 2
         };
         
-        const result = await fontHandlers.manageFonts(args);
+        const result = await fontsHandler.handle('figma_fonts', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_FONTS',
@@ -303,13 +304,13 @@ describe('FontHandlers', () => {
 
         const args = { operation: 'search_fonts', query: 'test' };
         
-        await expect(fontHandlers.manageFonts(args)).rejects.toThrow('Font management failed: Plugin communication failed');
+        await expect(fontsHandler.handle('figma_fonts', args)).rejects.toThrow('Font management failed: Plugin communication failed');
       });
 
       it('should handle validation errors', async () => {
         const args = { operation: 'invalid_operation' };
         
-        await expect(fontHandlers.manageFonts(args)).rejects.toThrow();
+        await expect(fontsHandler.handle('figma_fonts', args)).rejects.toThrow();
       });
     });
   });
@@ -320,14 +321,14 @@ describe('FontHandlers', () => {
       mockSendToPlugin.mockResolvedValue(mockResult);
 
       const args = { operation: 'search_fonts', query: 'Inter' };
-      const result = await fontHandlers.handle('manage_fonts', args);
+      const result = await fontsHandler.handle('manage_fonts', args);
 
       expect(result.isError).toBe(false);
       expect(result.content[0].text).toContain('fonts:');
     });
 
     it('should throw error for unknown tool', async () => {
-      await expect(fontHandlers.handle('unknown_tool', {})).rejects.toThrow('Unknown tool: unknown_tool');
+      await expect(fontsHandler.handle('unknown_tool', {})).rejects.toThrow('Unknown tool: unknown_tool');
     });
   });
 

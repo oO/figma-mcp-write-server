@@ -149,7 +149,6 @@ export function saveConfig(config: ServerConfig, configPath?: string): void {
   // Convert to YAML and save
   const yamlContent = yaml.dump(config, {
     indent: 2,
-    lineWidth: 100,
     noRefs: true
   });
   

@@ -5,7 +5,7 @@
 # - Linux: ~/.config/figma-mcp-write-server/config.yaml
 
 # WebSocket server settings
-port: 3000
+port: 8765
 host: localhost
 
 # Font database configuration

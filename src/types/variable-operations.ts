@@ -4,78 +4,61 @@ import { z } from 'zod';
 // Variable System Operations
 // ================================================================================
 
-// Variable collection management schema
+// Variable collection management schema with bulk operations support
 export const ManageCollectionsSchema = z.object({
   operation: z.enum(['create', 'update', 'delete', 'get', 'list', 'add_mode', 'remove_mode', 'rename_mode']),
-  collectionId: z.string().optional(), // For modify operations
-  collectionName: z.string().optional(), // Collection name
-  modes: z.array(z.string()).optional(), // Mode names for creation
-  modeId: z.string().optional(), // Specific mode ID for operations
-  newModeName: z.string().optional(), // For rename operations
-  description: z.string().optional(), // Collection description
-  hiddenFromPublishing: z.boolean().optional(), // Publishing visibility
+  
+  // Bulk-enabled parameters - support both single values and arrays
+  collectionId: z.union([z.string(), z.array(z.string())]).optional(), // For modify operations
+  name: z.union([z.string(), z.array(z.string())]).optional(), // Collection name
+  modes: z.union([z.string(), z.array(z.string()), z.array(z.array(z.string()))]).optional(), // Mode names for creation
+  modeId: z.union([z.string(), z.array(z.string())]).optional(), // Specific mode ID for operations
+  modeName: z.union([z.string(), z.array(z.string())]).optional(), // For add mode operations
+  newModeName: z.union([z.string(), z.array(z.string())]).optional(), // For rename operations
+  description: z.union([z.string(), z.array(z.string())]).optional(), // Collection description
+  hiddenFromPublishing: z.union([z.boolean(), z.array(z.boolean())]).optional(), // Publishing visibility
+  
+  // Bulk operation control
+  failFast: z.boolean().optional(), // Stop on first error in bulk operations
 });
 
-// Variable management schema
+// Variable management schema with bulk operations support
 export const ManageVariablesSchema = z.object({
-  operation: z.enum(['create', 'update', 'delete', 'get', 'list', 'bind', 'unbind', 'get_bindings']),
-  variableId: z.string().optional(), // For variable-specific operations
-  collectionId: z.string().optional(), // Collection context for creation
-  variableName: z.string().optional(), // Variable name
-  variableType: z.enum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']).optional(), // Variable type
-  modeValues: z.record(z.unknown()).optional(), // Values per mode
+  operation: z.enum(['create_variable', 'update_variable', 'delete_variable', 'get_variable', 'list_variables', 'bind_variable', 'unbind_variable', 'create_collection', 'update_collection', 'delete_collection', 'duplicate_collection', 'get_collection', 'list_collections', 'add_mode', 'remove_mode', 'rename_mode']),
   
-  // Binding operations
-  nodeId: z.string().optional(), // Target node for binding
-  styleId: z.string().optional(), // Target style for binding
-  property: z.string().optional(), // Property to bind (e.g., "fills", "width")
+  // Bulk-enabled parameters - support both single values and arrays
+  variableId: z.union([z.string(), z.array(z.string())]).optional(), // For variable-specific operations
+  collectionId: z.union([z.string(), z.array(z.string())]).optional(), // Collection context for creation
+  variableName: z.union([z.string(), z.array(z.string())]).optional(), // Variable name
+  variableType: z.union([z.enum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']), z.array(z.enum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']))]).optional(), // Variable type
+  modeValues: z.union([z.record(z.unknown()), z.array(z.record(z.unknown()))]).optional(), // Values per mode
   
-  // Variable metadata
-  description: z.string().optional(), // Variable description
-  scopes: z.array(z.string()).optional(), // Property scopes
-  codeSyntax: z.record(z.string()).optional(), // Platform code syntax
-  hiddenFromPublishing: z.boolean().optional(), // Publishing visibility
+  // Binding operations (bulk-enabled)
+  id: z.union([z.string(), z.array(z.string())]).optional(), // Target node ID for binding
+  styleId: z.union([z.string(), z.array(z.string())]).optional(), // Target style for binding
+  property: z.union([z.string(), z.array(z.string())]).optional(), // Property to bind (e.g., "fills", "width")
+  effectField: z.string().optional(), // Effect field for binding (radius, color, spread, offsetX, offsetY)
+  gridField: z.string().optional(), // Grid field for binding (sectionSize, count, offset, gutterSize)
+  
+  // Variable metadata (bulk-enabled)
+  description: z.union([z.string(), z.array(z.string())]).optional(), // Variable description
+  scopes: z.union([z.array(z.string()), z.array(z.array(z.string()))]).optional(), // Property scopes
+  codeSyntax: z.union([z.record(z.string()), z.array(z.record(z.string()))]).optional(), // Platform code syntax
+  hiddenFromPublishing: z.union([z.boolean(), z.array(z.boolean())]).optional(), // Publishing visibility
+  
+  // Collection parameters (bulk-enabled)
+  name: z.union([z.string(), z.array(z.string())]).optional(), // Collection name
+  newName: z.string().optional(), // New name for duplicate_collection operation
+  modes: z.union([z.string(), z.array(z.string()), z.array(z.array(z.string()))]).optional(), // Mode names for creation
+  modeId: z.union([z.string(), z.array(z.string())]).optional(), // Specific mode ID for operations
+  modeName: z.union([z.string(), z.array(z.string())]).optional(), // For add mode operations
+  newModeName: z.union([z.string(), z.array(z.string())]).optional(), // For rename operations
+  
+  // Bulk operation control
+  failFast: z.boolean().optional(), // Stop on first error in bulk operations
 });
 
-// Variable collection data schema
-export const VariableCollectionDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  modes: z.array(z.object({
-    id: z.string(),
-    name: z.string()
-  })),
-  defaultModeId: z.string(),
-  hiddenFromPublishing: z.boolean().default(false),
-  variableIds: z.array(z.string()).optional(),
-});
-
-// Variable data schema
-export const VariableDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  description: z.string().optional(),
-  collectionId: z.string(),
-  type: z.enum(['COLOR', 'FLOAT', 'STRING', 'BOOLEAN']),
-  scopes: z.array(z.string()).default([]),
-  codeSyntax: z.record(z.string()).default({}),
-  hiddenFromPublishing: z.boolean().default(false),
-  valuesByMode: z.record(z.unknown()).default({}),
-});
-
-// Variable binding data schema
-export const VariableBindingDataSchema = z.object({
-  variableId: z.string(),
-  nodeId: z.string().optional(),
-  styleId: z.string().optional(),
-  property: z.string(),
-  boundValue: z.unknown().optional(),
-});
 
 // Export types
 export type ManageCollectionsParams = z.infer<typeof ManageCollectionsSchema>;
 export type ManageVariablesParams = z.infer<typeof ManageVariablesSchema>;
-export type VariableCollectionData = z.infer<typeof VariableCollectionDataSchema>;
-export type VariableData = z.infer<typeof VariableDataSchema>;
-export type VariableBindingData = z.infer<typeof VariableBindingDataSchema>;

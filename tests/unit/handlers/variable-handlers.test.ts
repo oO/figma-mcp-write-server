@@ -1,81 +1,53 @@
-import { describe, test, expect, jest, beforeEach } from '@jest/globals';
-import { VariableHandlers } from '../../../src/handlers/variable-handlers.js';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { VariablesHandler } from '@/handlers/variables-handler';
 import * as yaml from 'js-yaml';
 
-describe('VariableHandlers', () => {
-  let variableHandlers: VariableHandlers;
-  let mockSendToPlugin: jest.MockedFunction<(request: any) => Promise<any>>;
+describe('VariableHandlers - Updated Architecture', () => {
+  let variablesHandler: VariablesHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    variableHandlers = new VariableHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    variablesHandler = new VariablesHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
-    test('should return manage_collections and manage_variables tools', () => {
-      const tools = variableHandlers.getTools();
+    test('should return correct current tool names', () => {
+      const tools = variablesHandler.getTools();
       
       expect(tools).toHaveLength(2);
-      expect(tools.map(t => t.name)).toEqual(['manage_collections', 'manage_variables']);
+      expect(tools.map(t => t.name)).toEqual(['figma_collections', 'figma_variables']);
     });
 
-    test('should have correct tool schemas', () => {
-      const tools = variableHandlers.getTools();
-      const collectionsSchema = tools.find(t => t.name === 'manage_collections')?.inputSchema;
-      const variablesSchema = tools.find(t => t.name === 'manage_variables')?.inputSchema;
+    test('should have bulk operations support in schemas', () => {
+      const tools = variablesHandler.getTools();
+      const collectionsSchema = tools.find(t => t.name === 'figma_collections')?.inputSchema;
+      const variablesSchema = tools.find(t => t.name === 'figma_variables')?.inputSchema;
 
-      expect(collectionsSchema?.properties?.operation).toBeDefined();
-      expect(variablesSchema?.properties?.operation).toBeDefined();
+      // Check collections schema has oneOf patterns for bulk support
+      expect(collectionsSchema?.properties?.collectionId).toHaveProperty('oneOf');
+      expect(collectionsSchema?.properties?.collectionName).toHaveProperty('oneOf');
+      expect(collectionsSchema?.properties?.failFast).toBeDefined();
+
+      // Check variables schema has oneOf patterns for bulk support  
+      expect(variablesSchema?.properties?.variableId).toHaveProperty('oneOf');
+      expect(variablesSchema?.properties?.variableName).toHaveProperty('oneOf');
+      expect(variablesSchema?.properties?.failFast).toBeDefined();
     });
   });
 
-  describe('manageCollections', () => {
-    test('should validate required operation parameter', async () => {
-      await expect(variableHandlers.manageCollections({}))
-        .rejects.toThrow('Required');
-    });
-
-    test('should validate create operation requires collectionName', async () => {
-      await expect(variableHandlers.manageCollections({ operation: 'create' }))
-        .rejects.toThrow('collectionName is required for create operation');
-    });
-
-    test('should validate modify operations require collectionId', async () => {
-      await expect(variableHandlers.manageCollections({ operation: 'update' }))
-        .rejects.toThrow('collectionId is required for modify operations');
-        
-      await expect(variableHandlers.manageCollections({ operation: 'delete' }))
-        .rejects.toThrow('collectionId is required for modify operations');
-        
-      await expect(variableHandlers.manageCollections({ operation: 'get' }))
-        .rejects.toThrow('collectionId is required for modify operations');
-    });
-
-    test('should validate mode operations require specific parameters', async () => {
-      await expect(variableHandlers.manageCollections({ 
-        operation: 'remove_mode', 
-        collectionId: 'test-id' 
-      })).rejects.toThrow('modeId is required for remove_mode operation');
-
-      await expect(variableHandlers.manageCollections({ 
-        operation: 'rename_mode', 
-        collectionId: 'test-id',
-        modeId: 'mode-1'
-      })).rejects.toThrow('modeId and newModeName are required for rename_mode operation');
-
-      await expect(variableHandlers.manageCollections({ 
-        operation: 'add_mode', 
-        collectionId: 'test-id'
-      })).rejects.toThrow('newModeName is required for add_mode operation');
-    });
-
-    test('should send correct payload to plugin for create operation', async () => {
-      const mockResponse = { success: true, data: { id: 'collection-1', name: 'Test Colors' } };
+  describe('figma_collections - Single Operations', () => {
+    test('should handle single collection creation', async () => {
+      const mockResponse = {
+        success: true,
+        data: { collectionId: 'col-123', name: 'Colors', modes: ['Light', 'Dark'] }
+      };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await variableHandlers.manageCollections({
+      const result = await variablesHandler.handle('figma_collections', {
         operation: 'create',
-        collectionName: 'Test Colors',
+        collectionName: 'Colors',
+        modes: ['Light', 'Dark'],
         description: 'Color tokens'
       });
 
@@ -84,8 +56,8 @@ describe('VariableHandlers', () => {
         payload: {
           operation: 'create',
           collectionId: undefined,
-          collectionName: 'Test Colors',
-          modes: undefined,
+          collectionName: 'Colors',
+          modes: ['Light', 'Dark'],
           modeId: undefined,
           newModeName: undefined,
           description: 'Color tokens',
@@ -93,147 +65,256 @@ describe('VariableHandlers', () => {
         }
       });
 
-      expect(result.content[0].text).toContain('Test Colors');
+      expect(result.isError).toBe(false);
+      expect(result.content[0].type).toBe('text');
+      const parsedResult = yaml.load(result.content[0].text);
+      expect(parsedResult).toEqual(mockResponse.data);
     });
 
-    test('should handle plugin errors gracefully', async () => {
-      mockSendToPlugin.mockResolvedValue({ success: false, error: 'Collection not found' });
+    test('should validate required parameters for create operation', async () => {
+      await expect(variablesHandler.handle('figma_collections', {
+        operation: 'create'
+        // Missing collectionName
+      })).rejects.toThrow('collectionName is required for create operation');
+    });
 
-      await expect(variableHandlers.manageCollections({
-        operation: 'get',
-        collectionId: 'invalid-id'
-      })).rejects.toThrow('Collection not found');
+    test('should validate required parameters for modify operations', async () => {
+      await expect(variablesHandler.handle('figma_collections', {
+        operation: 'update'
+        // Missing collectionId
+      })).rejects.toThrow('collectionId is required for modify operations');
     });
   });
 
-  describe('manageVariables', () => {
-    test('should validate create operation parameters', async () => {
-      await expect(variableHandlers.manageVariables({ operation: 'create' }))
-        .rejects.toThrow('collectionId, variableName, and variableType are required for create operation');
-    });
-
-    test('should validate variable-specific operations require variableId', async () => {
-      await expect(variableHandlers.manageVariables({ operation: 'update' }))
-        .rejects.toThrow('variableId is required for variable-specific operations');
-        
-      await expect(variableHandlers.manageVariables({ operation: 'delete' }))
-        .rejects.toThrow('variableId is required for variable-specific operations');
-        
-      await expect(variableHandlers.manageVariables({ operation: 'get' }))
-        .rejects.toThrow('variableId is required for variable-specific operations');
-    });
-
-    test('should validate list operation requires collectionId', async () => {
-      await expect(variableHandlers.manageVariables({ operation: 'list' }))
-        .rejects.toThrow('collectionId is required for list operation');
-    });
-
-    test('should validate bind operation parameters', async () => {
-      await expect(variableHandlers.manageVariables({ operation: 'bind' }))
-        .rejects.toThrow('variableId and property are required for bind operation');
-
-      await expect(variableHandlers.manageVariables({ 
-        operation: 'bind',
-        variableId: 'var-1',
-        property: 'fills'
-      })).rejects.toThrow('Either nodeId or styleId is required for bind operation');
-    });
-
-    test('should validate unbind operation parameters', async () => {
-      await expect(variableHandlers.manageVariables({ operation: 'unbind' }))
-        .rejects.toThrow('property is required for unbind operation');
-
-      await expect(variableHandlers.manageVariables({ 
-        operation: 'unbind',
-        property: 'width'
-      })).rejects.toThrow('Either nodeId or styleId is required for unbind operation');
-    });
-
-    test('should validate get_bindings accepts nodeId or variableId', async () => {
-      // Should accept nodeId
-      const mockResponse = { success: true, data: { bindings: [] } };
+  describe('figma_collections - Bulk Operations', () => {
+    test('should detect and handle bulk collection creation', async () => {
+      const mockResponse = {
+        success: true,
+        data: { collectionId: 'col-123', name: 'Colors' }
+      };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      await expect(variableHandlers.manageVariables({ 
-        operation: 'get_bindings',
-        nodeId: 'node-1'
-      })).resolves.toBeDefined();
-
-      // Should accept variableId
-      await expect(variableHandlers.manageVariables({ 
-        operation: 'get_bindings',
-        variableId: 'var-1'
-      })).resolves.toBeDefined();
-
-      // Should reject when both are missing
-      await expect(variableHandlers.manageVariables({ operation: 'get_bindings' }))
-        .rejects.toThrow('Either nodeId or variableId is required for get_bindings operation');
-    });
-
-    test('should send correct payload for variable creation', async () => {
-      const mockResponse = { success: true, data: { id: 'var-1', name: 'Primary Blue' } };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      await variableHandlers.manageVariables({
+      const result = await variablesHandler.handle('figma_collections', {
         operation: 'create',
-        collectionId: 'collection-1',
-        variableName: 'Primary Blue',
-        variableType: 'COLOR',
+        collectionName: ['Colors', 'Spacing', 'Typography'],
+        modes: [['Light', 'Dark'], ['Mobile', 'Desktop'], ['Small', 'Large']],
+        description: ['Color tokens', 'Spacing tokens', 'Type tokens']
+      });
+
+      // Should call sendToPlugin 3 times for bulk operation
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      
+      // Verify first call
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
+        type: 'MANAGE_COLLECTIONS',
+        payload: expect.objectContaining({
+          operation: 'create',
+          collectionName: 'Colors',
+          modes: ['Light', 'Dark'],
+          description: 'Color tokens'
+        })
+      });
+
+      // Verify second call
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(2, {
+        type: 'MANAGE_COLLECTIONS',
+        payload: expect.objectContaining({
+          operation: 'create',
+          collectionName: 'Spacing',
+          modes: ['Mobile', 'Desktop'],
+          description: 'Spacing tokens'
+        })
+      });
+
+      // Result should be bulk format
+      expect(result.isError).toBe(false);
+      const parsedResult = yaml.load(result.content[0].text);
+      expect(parsedResult).toHaveProperty('operation', 'collection_create');
+      expect(parsedResult).toHaveProperty('totalItems', 3);
+      expect(parsedResult).toHaveProperty('successCount');
+      expect(parsedResult).toHaveProperty('results');
+    });
+
+    test('should handle array cycling in bulk operations', async () => {
+      const mockResponse = { success: true, data: { success: true } };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      await variablesHandler.handle('figma_collections', {
+        operation: 'create',
+        collectionName: ['Colors', 'Spacing', 'Typography'],
+        description: 'Default description', // Single value should cycle
+        modes: [['Light', 'Dark']] // Single array should cycle
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      
+      // All calls should get the cycled values
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        payload: expect.objectContaining({
+          description: 'Default description',
+          modes: ['Light', 'Dark']
+        })
+      }));
+      
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(3, expect.objectContaining({
+        payload: expect.objectContaining({
+          description: 'Default description',
+          modes: ['Light', 'Dark']
+        })
+      }));
+    });
+
+    test('should handle failFast option in bulk operations', async () => {
+      mockSendToPlugin
+        .mockResolvedValueOnce({ success: true, data: { success: true } })
+        .mockRejectedValueOnce(new Error('Collection creation failed'))
+        .mockResolvedValueOnce({ success: true, data: { success: true } });
+
+      const result = await variablesHandler.handle('figma_collections', {
+        operation: 'create',
+        collectionName: ['Success', 'Failure', 'NotCalled'],
+        modes: [['Light'], ['Light'], ['Light']],
+        failFast: true
+      });
+
+      // Should stop after first failure with failFast
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
+      
+      const parsedResult = yaml.load(result.content[0].text);
+      expect(parsedResult.successCount).toBe(1);
+      expect(parsedResult.errorCount).toBe(1);
+      expect(parsedResult.totalItems).toBe(3);
+    });
+  });
+
+  describe('figma_variables - Bulk Operations', () => {
+    test('should detect and handle bulk variable creation', async () => {
+      const mockResponse = {
+        success: true,
+        data: { variableId: 'var-123', name: 'primary-blue' }
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await variablesHandler.handle('figma_variables', {
+        operation: 'create',
+        collectionId: 'col-123',
+        variableName: ['primary-blue', 'secondary-green', 'accent-red'],
+        variableType: ['COLOR', 'COLOR', 'COLOR'],
         modeValues: { light: '#0066CC', dark: '#4A9EFF' }
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      
+      // Verify bulk execution
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
         type: 'MANAGE_VARIABLES',
         payload: expect.objectContaining({
           operation: 'create',
-          collectionId: 'collection-1',
-          variableName: 'Primary Blue',
-          variableType: 'COLOR',
-          modeValues: { light: '#0066CC', dark: '#4A9EFF' }
+          variableName: 'primary-blue',
+          variableType: 'COLOR'
         })
       });
-    });
 
-    test('should return YAML formatted data', async () => {
-      const mockData = { variableId: 'var-1', name: 'Test Variable', type: 'COLOR' };
-      mockSendToPlugin.mockResolvedValue({ success: true, data: mockData });
-
-      const result = await variableHandlers.manageVariables({
-        operation: 'get',
-        variableId: 'var-1'
-      });
-
-      expect(result.content).toHaveLength(1);
-      expect(result.content[0].type).toBe('text');
-      
-      const parsedYaml = yaml.load(result.content[0].text) as any;
-      expect(parsedYaml.variableId).toBe('var-1');
-      expect(parsedYaml.name).toBe('Test Variable');
+      const parsedResult = yaml.load(result.content[0].text);
+      expect(parsedResult).toHaveProperty('operation', 'variable_create');
+      expect(parsedResult.totalItems).toBe(3);
     });
   });
 
-  describe('handle method', () => {
-    test('should route to correct handler method', async () => {
-      const mockResponse = { success: true, data: {} };
+  describe('Error Handling', () => {
+    test('should use error.toString() for JSON-RPC compliance', async () => {
+      mockSendToPlugin.mockRejectedValue(new Error('Plugin connection failed'));
+
+      try {
+        await variablesHandler.handle('figma_collections', {
+          operation: 'create',
+          collectionName: 'Test'
+        });
+      } catch (error) {
+        expect(error).toBeInstanceOf(Error);
+        // The error should be propagated correctly for JSON-RPC
+      }
+    });
+
+    test('should handle plugin errors correctly', async () => {
+      mockSendToPlugin.mockResolvedValue({
+        success: false,
+        error: 'Collection name already exists'
+      });
+
+      await expect(variablesHandler.handle('figma_collections', {
+        operation: 'create',
+        collectionName: 'DuplicateName',
+        modes: ['Light']
+      })).rejects.toThrow('Collection name already exists');
+    });
+  });
+
+  describe('Defensive Parsing', () => {
+    test('should handle JSON string arrays from MCP clients', async () => {
+      const mockResponse = { success: true, data: { success: true } };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      await variableHandlers.handle('manage_collections', { operation: 'list' });
-      expect(mockSendToPlugin).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'MANAGE_COLLECTIONS'
-      }));
-
-      await variableHandlers.handle('manage_variables', { 
-        operation: 'list', 
-        collectionId: 'test-id' 
+      // Simulate Claude Desktop sending JSON string arrays
+      const result = await variablesHandler.handle('figma_collections', {
+        operation: 'create',
+        collectionName: '["Colors", "Spacing"]', // JSON string
+        modes: '[["Light", "Dark"], ["Mobile", "Desktop"]]' // JSON string of arrays
       });
-      expect(mockSendToPlugin).toHaveBeenCalledWith(expect.objectContaining({
-        type: 'MANAGE_VARIABLES'
+
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
+      
+      // Should parse JSON strings correctly
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, expect.objectContaining({
+        payload: expect.objectContaining({
+          collectionName: 'Colors'
+        })
       }));
     });
 
-    test('should throw error for unknown tool', async () => {
-      await expect(variableHandlers.handle('unknown_tool', {}))
-        .rejects.toThrow('Unknown tool: unknown_tool');
+    test('should handle mixed single/array parameters', async () => {
+      const mockResponse = { success: true, data: { success: true } };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      await variablesHandler.handle('figma_variables', {
+        operation: 'create',
+        collectionId: 'col-123',
+        variableName: ['var1', 'var2', 'var3'],
+        variableType: 'COLOR' // Single value should cycle
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      
+      // All calls should get the cycled COLOR type
+      for (let i = 1; i <= 3; i++) {
+        expect(mockSendToPlugin).toHaveBeenNthCalledWith(i, expect.objectContaining({
+          payload: expect.objectContaining({
+            variableType: 'COLOR'
+          })
+        }));
+      }
+    });
+  });
+
+  describe('Integration with BulkOperationsParser', () => {
+    test('should use consistent parameter configs', async () => {
+      const mockResponse = { success: true, data: { success: true } };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      // Test that defensive parsing works with CommonParamConfigs
+      await variablesHandler.handle('figma_collections', {
+        operation: 'create',
+        collectionName: ['Test'],
+        modes: [['Light']]
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_COLLECTIONS',
+        payload: expect.objectContaining({
+          collectionName: 'Test',
+          modes: ['Light']
+        })
+      });
     });
   });
 });

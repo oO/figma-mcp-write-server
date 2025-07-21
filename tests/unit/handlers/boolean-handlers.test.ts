@@ -1,26 +1,25 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import { BooleanHandlers } from '../../../src/handlers/boolean-handlers.js';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { BooleanOperationsHandler } from '@/handlers/boolean-operations-handler';
 
-describe('BooleanHandlers', () => {
-  let booleanHandlers: BooleanHandlers;
-  let mockSendToPlugin: jest.Mock;
+describe('BooleanOperationsHandler', () => {
+  let booleanOperationsHandler: BooleanOperationsHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    booleanHandlers = new BooleanHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    booleanOperationsHandler = new BooleanOperationsHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
     test('should return boolean and vector operation tools', () => {
-      const tools = booleanHandlers.getTools();
+      const tools = booleanOperationsHandler.getTools();
       
-      expect(tools).toHaveLength(2);
-      expect(tools[0].name).toBe('manage_boolean_operations');
-      expect(tools[1].name).toBe('manage_vector_operations');
+      expect(tools).toHaveLength(1);
+      expect(tools[0].name).toBe('figma_boolean_operations');
     });
 
     test('should include required properties in boolean operations tool', () => {
-      const tools = booleanHandlers.getTools();
+      const tools = booleanOperationsHandler.getTools();
       const booleanTool = tools[0];
       
       expect(booleanTool.description).toContain('boolean operations');
@@ -32,7 +31,7 @@ describe('BooleanHandlers', () => {
     });
 
     test('should include required properties in vector operations tool', () => {
-      const tools = booleanHandlers.getTools();
+      const tools = booleanOperationsHandler.getTools();
       const vectorTool = tools[1];
       
       expect(vectorTool.description).toContain('vector nodes');
@@ -55,7 +54,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_boolean_operations', {
+      const result = await booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'union',
         nodeIds: ['node-1', 'node-2'],
         name: 'Union Shape'
@@ -89,7 +88,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_boolean_operations', {
+      const result = await booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'subtract',
         nodeIds: ['node-1', 'node-2', 'node-3'],
         preserveOriginal: true
@@ -124,7 +123,7 @@ describe('BooleanHandlers', () => {
         };
         mockSendToPlugin.mockResolvedValue(mockResponse);
 
-        const result = await booleanHandlers.handle('manage_boolean_operations', {
+        const result = await booleanOperationsHandler.handle('manage_boolean_operations', {
           operation: operation,
           nodeIds: ['node-1', 'node-2']
         });
@@ -136,14 +135,14 @@ describe('BooleanHandlers', () => {
     });
 
     test('should validate minimum number of nodes', async () => {
-      await expect(booleanHandlers.handle('manage_boolean_operations', {
+      await expect(booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'union',
         nodeIds: ['single-node']
       })).rejects.toThrow('Validation failed');
     });
 
     test('should validate operation type', async () => {
-      await expect(booleanHandlers.handle('manage_boolean_operations', {
+      await expect(booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'invalid_operation',
         nodeIds: ['node-1', 'node-2']
       })).rejects.toThrow('Validation failed');
@@ -155,7 +154,7 @@ describe('BooleanHandlers', () => {
         error: 'Boolean operation failed: Invalid nodes'
       });
 
-      await expect(booleanHandlers.handle('manage_boolean_operations', {
+      await expect(booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'union',
         nodeIds: ['invalid-node-1', 'invalid-node-2']
       })).rejects.toThrow('Boolean operation failed: Invalid nodes');
@@ -176,7 +175,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_vector_operations', {
+      const result = await booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'create_vector',
         name: 'Custom Vector',
         x: 100,
@@ -216,7 +215,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_vector_operations', {
+      const result = await booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'flatten',
         nodeId: 'complex-node-123'
       });
@@ -245,7 +244,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_vector_operations', {
+      const result = await booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'outline_stroke',
         nodeId: 'stroked-node-456',
         strokeWidth: 4
@@ -280,7 +279,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await booleanHandlers.handle('manage_vector_operations', {
+      const result = await booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'get_vector_paths',
         nodeId: 'vector-node-123'
       });
@@ -300,7 +299,7 @@ describe('BooleanHandlers', () => {
     });
 
     test('should validate operation type', async () => {
-      await expect(booleanHandlers.handle('manage_vector_operations', {
+      await expect(booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'invalid_vector_operation'
       })).rejects.toThrow('Validation failed');
     });
@@ -311,7 +310,7 @@ describe('BooleanHandlers', () => {
         error: 'Vector operation failed: Node not found'
       });
 
-      await expect(booleanHandlers.handle('manage_vector_operations', {
+      await expect(booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'flatten',
         nodeId: 'non-existent-node'
       })).rejects.toThrow('Vector operation failed: Node not found');
@@ -320,25 +319,25 @@ describe('BooleanHandlers', () => {
 
   describe('handle', () => {
     test('should throw error for unknown tool', async () => {
-      await expect(booleanHandlers.handle('unknown_tool', {}))
+      await expect(booleanOperationsHandler.handle('unknown_tool', {}))
         .rejects.toThrow('Unknown tool: unknown_tool');
     });
   });
 
   describe('edge cases and validation', () => {
     test('should handle empty nodeIds array for boolean operations', async () => {
-      await expect(booleanHandlers.handle('manage_boolean_operations', {
+      await expect(booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'union',
         nodeIds: []
       })).rejects.toThrow('Validation failed');
     });
 
     test('should handle missing required operation parameter', async () => {
-      await expect(booleanHandlers.handle('manage_boolean_operations', {
+      await expect(booleanOperationsHandler.handle('manage_boolean_operations', {
         nodeIds: ['node-1', 'node-2']
       })).rejects.toThrow('Validation failed');
 
-      await expect(booleanHandlers.handle('manage_vector_operations', {
+      await expect(booleanOperationsHandler.handle('manage_vector_operations', {
         nodeId: 'some-node'
       })).rejects.toThrow('Validation failed');
     });
@@ -350,7 +349,7 @@ describe('BooleanHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      await booleanHandlers.handle('manage_boolean_operations', {
+      await booleanOperationsHandler.handle('manage_boolean_operations', {
         operation: 'union',
         nodeIds: ['node-1', 'node-2']
       });
@@ -373,7 +372,7 @@ describe('BooleanHandlers', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       // Negative stroke width should fail validation
-      await expect(booleanHandlers.handle('manage_vector_operations', {
+      await expect(booleanOperationsHandler.handle('manage_vector_operations', {
         operation: 'outline_stroke',
         nodeId: 'some-node',
         strokeWidth: -5

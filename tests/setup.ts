@@ -1,22 +1,22 @@
-// Global test setup
-import { jest } from '@jest/globals';
+// Global test setup  
+import { vi } from 'vitest';
 
 // Mock console to reduce noise in tests
 global.console = {
   ...console,
-  log: jest.fn(),
-  debug: jest.fn(),
-  info: jest.fn(),
-  warn: jest.fn(),
-  error: jest.fn()
+  log: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn()
 };
 
 // Mock WebSocket for tests
-global.WebSocket = jest.fn().mockImplementation(() => ({
-  send: jest.fn(),
-  close: jest.fn(),
-  addEventListener: jest.fn(),
-  removeEventListener: jest.fn(),
+global.WebSocket = vi.fn().mockImplementation(() => ({
+  send: vi.fn(),
+  close: vi.fn(),
+  addEventListener: vi.fn(),
+  removeEventListener: vi.fn(),
   readyState: 1,
   CONNECTING: 0,
   OPEN: 1,
@@ -27,21 +27,21 @@ global.WebSocket = jest.fn().mockImplementation(() => ({
 // Mock Figma API for plugin tests
 global.figma = {
   variables: {
-    createVariableCollection: jest.fn(),
-    createVariable: jest.fn(),
-    getVariableById: jest.fn(),
-    getVariableCollectionById: jest.fn(),
-    getLocalVariableCollections: jest.fn(),
-    setBoundVariableForPaint: jest.fn()
+    createVariableCollection: vi.fn(),
+    createVariable: vi.fn(),
+    getVariableById: vi.fn(),
+    getVariableCollectionById: vi.fn(),
+    getLocalVariableCollections: vi.fn(),
+    setBoundVariableForPaint: vi.fn()
   },
-  getNodeById: jest.fn(),
-  getStyleById: jest.fn(),
-  getStyleByIdAsync: jest.fn(),
-  getLocalPaintStyles: jest.fn(),
-  getLocalTextStyles: jest.fn(),
-  getLocalEffectStyles: jest.fn(),
+  getNodeById: vi.fn(),
+  getStyleById: vi.fn(),
+  getStyleByIdAsync: vi.fn(),
+  getLocalPaintStyles: vi.fn(),
+  getLocalTextStyles: vi.fn(),
+  getLocalEffectStyles: vi.fn(),
   currentPage: {
-    findAll: jest.fn(),
+    findAll: vi.fn(),
     selection: []
   }
 } as any;

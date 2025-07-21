@@ -1,4 +1,4 @@
-import { describe, expect, test } from '@jest/globals';
+import { describe, expect, test } from 'vitest';
 
 // We need to test the actual calculation logic, so let's extract and test the core functions
 // This simulates the NodeBounds interface and calculation logic

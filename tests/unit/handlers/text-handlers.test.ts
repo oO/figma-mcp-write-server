@@ -1,29 +1,29 @@
-import { describe, test, expect, beforeEach, jest } from '@jest/globals';
-import { TextHandlers } from '../../../src/handlers/text-handlers.js';
-import { ManageTextSchema } from '../../../src/types/text-operations.js';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { TextHandler } from '@/handlers/text-handler';
+import { ManageTextSchema } from '@/types/text-operations';
 
-describe('TextHandlers', () => {
-  let textHandlers: TextHandlers;
-  let mockSendToPlugin: jest.Mock;
+describe('TextHandler', () => {
+  let textHandler: TextHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    textHandlers = new TextHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    textHandler = new TextHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
-    test('should return manage_text tool definition', () => {
-      const tools = textHandlers.getTools();
+    test('should return figma_text tool definition', () => {
+      const tools = textHandler.getTools();
       
       expect(tools).toHaveLength(1);
-      expect(tools[0].name).toBe('manage_text');
+      expect(tools[0].name).toBe('figma_text');
       expect(tools[0].description).toContain('Comprehensive text management');
       expect(tools[0].inputSchema.properties).toHaveProperty('operation');
       expect(tools[0].inputSchema.required).toContain('operation');
     });
 
     test('should include all required operations in enum', () => {
-      const tools = textHandlers.getTools();
+      const tools = textHandler.getTools();
       const operationEnum = tools[0].inputSchema.properties.operation.enum;
       
       expect(operationEnum).toContain('create');
@@ -35,7 +35,7 @@ describe('TextHandlers', () => {
     });
 
     test('should have comprehensive property definitions', () => {
-      const tools = textHandlers.getTools();
+      const tools = textHandler.getTools();
       const properties = tools[0].inputSchema.properties;
       
       expect(properties).toHaveProperty('characters');
@@ -52,7 +52,7 @@ describe('TextHandlers', () => {
     });
 
     test('should include usage examples', () => {
-      const tools = textHandlers.getTools();
+      const tools = textHandler.getTools();
       
       expect(tools[0].examples).toBeDefined();
       expect(tools[0].examples.length).toBeGreaterThan(0);
@@ -93,7 +93,7 @@ describe('TextHandlers', () => {
           y: 100
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -115,7 +115,7 @@ describe('TextHandlers', () => {
         };
         mockSendToPlugin.mockResolvedValue(mockResponse);
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Missing required parameter: characters');
       });
 
@@ -125,7 +125,7 @@ describe('TextHandlers', () => {
           characters: ''
         };
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Text content cannot be empty');
       });
 
@@ -141,7 +141,7 @@ describe('TextHandlers', () => {
         };
         mockSendToPlugin.mockResolvedValue(mockResponse);
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Text nodes must have non-empty characters content');
       });
 
@@ -158,7 +158,7 @@ describe('TextHandlers', () => {
           fontFamily: 'NonExistentFont'
         };
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Font loading failed');
       });
 
@@ -190,7 +190,7 @@ describe('TextHandlers', () => {
           }]
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -219,7 +219,7 @@ describe('TextHandlers', () => {
           fontSize: 32
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -235,7 +235,7 @@ describe('TextHandlers', () => {
           characters: ''
         };
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Text content cannot be empty');
       });
 
@@ -252,7 +252,7 @@ describe('TextHandlers', () => {
           characters: '   \t\n  '
         };
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Text nodes cannot be updated to have empty characters content');
       });
     });
@@ -287,7 +287,7 @@ describe('TextHandlers', () => {
           }]
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -318,7 +318,7 @@ describe('TextHandlers', () => {
           }
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -345,7 +345,7 @@ describe('TextHandlers', () => {
           textStyleId: 'heading_style_456'
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -374,7 +374,7 @@ describe('TextHandlers', () => {
           styleDescription: 'Large body text for emphasis'
         };
 
-        const result = await textHandlers.handle('manage_text', args);
+        const result = await textHandler.handle('manage_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -398,7 +398,7 @@ describe('TextHandlers', () => {
           characters: 'test'
         };
 
-        await expect(textHandlers.handle('manage_text', args))
+        await expect(textHandler.handle('manage_text', args))
           .rejects.toThrow('Node not found');
       });
 
@@ -408,12 +408,12 @@ describe('TextHandlers', () => {
           nodeId: 'test'
         };
 
-        await expect(textHandlers.handle('manage_text', invalidArgs))
+        await expect(textHandler.handle('manage_text', invalidArgs))
           .rejects.toThrow();
       });
 
       test('should handle unknown tool names', async () => {
-        await expect(textHandlers.handle('unknown_tool', {}))
+        await expect(textHandler.handle('unknown_tool', {}))
           .rejects.toThrow('Unknown tool: unknown_tool');
       });
     });
@@ -442,7 +442,7 @@ describe('TextHandlers', () => {
         fontStyle: 'Bold'
       };
 
-      const result = await textHandlers.handle('manage_text', args);
+      const result = await textHandler.handle('manage_text', args);
 
       expect(result.content[0].text).toContain('substituted: true');
       expect(result.content[0].text).toContain('Custom font not available');
@@ -477,7 +477,7 @@ describe('TextHandlers', () => {
         }]
       };
 
-      const result = await textHandlers.handle('manage_text', args);
+      const result = await textHandler.handle('manage_text', args);
 
       expect(result.content[0].text).toContain('characterRanges');
     });
@@ -497,7 +497,7 @@ describe('TextHandlers', () => {
       };
 
       const startTime = Date.now();
-      await textHandlers.handle('manage_text', args);
+      await textHandler.handle('manage_text', args);
       const endTime = Date.now();
 
       // Should complete in reasonable time (allowing for test overhead)
@@ -522,7 +522,7 @@ describe('TextHandlers', () => {
         characters: 'Text with effects'
       };
 
-      const result = await textHandlers.handle('manage_text', args);
+      const result = await textHandler.handle('manage_text', args);
 
       expect(result.content[0].text).toContain('manage_effects tool');
       expect(result.content[0].text).toContain('manage_strokes tool');

@@ -106,7 +106,6 @@ Port Management:
 Available MCP Tools:
   - create_node         Create nodes (rectangle, ellipse, text, frame)
   - update_node         Update node properties
-  - move_node           Move nodes to new positions
   - delete_node         Delete nodes
   - duplicate_node      Duplicate nodes
   - set_selection       Set node selection

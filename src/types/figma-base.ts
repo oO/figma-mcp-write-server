@@ -88,7 +88,26 @@ export const BlurEffectSchema = z.object({
   visible: z.boolean().default(true)
 });
 
-export const FigmaEffectSchema = z.union([DropShadowEffectSchema, InnerShadowEffectSchema, BlurEffectSchema]);
+export const NoiseEffectSchema = z.object({
+  type: z.literal('NOISE'),
+  noiseSize: z.number().min(0),
+  density: z.number().min(0).max(1),
+  noiseType: z.enum(['MONOTONE', 'DUOTONE', 'MULTITONE']),
+  color: ColorSchema,
+  secondaryColor: ColorSchema.optional(),
+  opacity: z.number().min(0).max(1).optional(),
+  visible: z.boolean().default(true)
+});
+
+export const TextureEffectSchema = z.object({
+  type: z.literal('TEXTURE'),
+  noiseSize: z.number().min(0),
+  radius: z.number().min(0),
+  clipToShape: z.boolean().default(true),
+  visible: z.boolean().default(true)
+});
+
+export const FigmaEffectSchema = z.union([DropShadowEffectSchema, InnerShadowEffectSchema, BlurEffectSchema, NoiseEffectSchema, TextureEffectSchema]);
 
 // Font and typography
 export const FontNameSchema = z.object({

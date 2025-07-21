@@ -60,8 +60,8 @@ export class FontService {
         operation: 'get_project_fonts'
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
   
   /**
@@ -98,8 +98,8 @@ export class FontService {
         ...options
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
 
@@ -117,8 +117,8 @@ export class FontService {
         ...options
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
   /**
@@ -137,8 +137,8 @@ export class FontService {
         ...options
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
   /**
@@ -153,8 +153,8 @@ export class FontService {
         fontStyle
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
   /**
@@ -172,8 +172,8 @@ export class FontService {
         ...options
       }
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
   /**
@@ -184,8 +184,8 @@ export class FontService {
       type: 'MANAGE_FONTS',
       payload
     });
-    // Unwrap plugin response format: { success: true, data: [...] }
-    return result?.success ? result.data : result;
+    // KISS: Direct data response (no success wrapper)
+    return result;
   }
 
   // Database initialization and management
@@ -205,10 +205,13 @@ export class FontService {
       
       // Trigger initial sync if database is empty or stale
       if (this.syncService.isSyncNeeded()) {
+        console.error('🔄 Database is empty or stale, triggering background sync...');
         // Don't await - let it run in background
         this.syncService.syncFonts().catch(error => {
-          console.warn('Background font sync failed:', error);
+          console.error('❌ Background font sync failed:', error);
         });
+      } else {
+        console.error('✅ Font database is up to date, no sync needed');
       }
     } catch (error) {
       console.warn('Failed to initialize font database:', error);
@@ -307,7 +310,7 @@ export class FontService {
         ...options
       }
     });
-    return result?.success ? result.data : result;
+    return result;
   }
 
   /**
@@ -346,7 +349,7 @@ export class FontService {
         ...options
       }
     });
-    return result?.success ? result.data : result;
+    return result;
   }
 
   /**
@@ -370,7 +373,7 @@ export class FontService {
         fontFamily
       }
     });
-    return result?.success ? result.data : result;
+    return result;
   }
 
   /**

@@ -1,101 +1,80 @@
 // Figma MCP Write Plugin - Main Entry Point
-console.log('🎨 Figma MCP Write Plugin starting...');
+console.log('Figma MCP Write Plugin starting...');
 
-import { NodeHandler } from './handlers/node-handler.js';
-import { TextHandler } from './handlers/text-handler.js';
-import { SelectionHandler } from './handlers/selection-handler.js';
-import { StyleHandler } from './handlers/style-handler.js';
-import { HierarchyHandler } from './handlers/hierarchy-handler.js';
-import { LayoutHandler } from './handlers/layout-handler.js';
-import { ComponentHandler } from './handlers/component-handler.js';
-import { VariableHandler } from './handlers/variable-handler.js';
-import { ExportHandler } from './handlers/export-handler.js';
-import { ImageHandler } from './handlers/image-handler.js';
-import { FontHandler } from './handlers/font-handler.js';
-import { AlignmentHandler } from './handlers/alignment-handler.js';
-import { performBooleanOperation, performVectorOperation } from './handlers/boolean-handler.js';
-import { 
-  performAnnotationOperation, 
-  performMeasurementOperation, 
-  performDevResourceOperation 
-} from './handlers/dev-mode-handler.js';
+import { operationRouter } from './router/operation-router.js';
 import { HandlerRegistry } from './types.js';
 
 class FigmaPlugin {
   private handlers: HandlerRegistry = {};
+  private initialized = false;
 
   constructor() {
-    this.initializeHandlers();
+    this.initializePlugin();
     this.setupUIMessageHandler();
   }
 
-  private initializeHandlers(): void {
-    // Create handler instances
-    const nodeHandler = new NodeHandler();
-    const textHandler = new TextHandler();
-    const selectionHandler = new SelectionHandler();
-    const styleHandler = new StyleHandler();
-    const hierarchyHandler = new HierarchyHandler();
-    const layoutHandler = new LayoutHandler();
-    const componentHandler = new ComponentHandler();
-    const variableHandler = new VariableHandler();
-    const exportHandler = new ExportHandler();
-    const imageHandler = new ImageHandler();
-    const fontHandler = new FontHandler();
-    const alignmentHandler = new AlignmentHandler();
+  private async initializePlugin(): Promise<void> {
+    try {
+      console.log('Initializing plugin with auto-discovery router...');
+      
+      // Initialize the operation router
+      await operationRouter.initialize();
+      
+      // Get all discovered operations
+      this.handlers = operationRouter.getOperations();
+      
+      console.log(`Plugin initialized with ${Object.keys(this.handlers).length} operations`);
+      this.initialized = true;
+      
+      // Debug: Log discovered operations
+      this.logDiscoveredOperations();
+    } catch (error) {
+      console.error('❌ Failed to initialize plugin:', error);
+      // Fallback to legacy initialization
+      this.initializeLegacyHandlers();
+    }
+  }
 
-    // Register all operations
-    Object.assign(this.handlers, 
-      nodeHandler.getOperations(),
-      textHandler.getOperations(),
-      selectionHandler.getOperations(),
-      styleHandler.getOperations(),
-      hierarchyHandler.getOperations(),
-      layoutHandler.getOperations(),
-      componentHandler.getOperations(),
-      variableHandler.getOperations(),
-      exportHandler.getOperations(),
-      imageHandler.getOperations(),
-      fontHandler.getOperations(),
-      alignmentHandler.getOperations(),
-      // Boolean and vector operations
-      {
-        'BOOLEAN_OPERATION': performBooleanOperation,
-        'VECTOR_OPERATION': performVectorOperation
-      },
-      // Dev mode operations
-      {
-        'ANNOTATION_OPERATION': performAnnotationOperation,
-        'MEASUREMENT_OPERATION': performMeasurementOperation,
-        'DEV_RESOURCE_OPERATION': performDevResourceOperation
-      },
-      // Font sync operation
-      {
-        'SYNC_FONTS': this.syncFonts.bind(this)
-      },
-      // Connection test operations
-      {
-        'PING_TEST': this.handlePingTest.bind(this)
-      }
-    );
-
-    console.log(`✅ Registered ${Object.keys(this.handlers).length} operations:`, Object.keys(this.handlers).sort());
+  private initializeLegacyHandlers(): void {
+    console.log('Legacy handler initialization disabled - using auto-discovery only');
+    console.log('Legacy handlers moved to /legacy-handlers-deprecated/ for reference');
+    console.log('Current operations located in /src/operations/ with auto-discovery');
+    this.initialized = false;
+  }
+  
+  private logDiscoveredOperations(): void {
+    const operations = Object.keys(this.handlers).sort();
     
-    // Debug: Specifically check for component, variable, and boolean operations
-    console.log('🔍 MANAGE_COMPONENTS handler exists:', !!this.handlers['MANAGE_COMPONENTS']);
-    console.log('🔍 MANAGE_INSTANCES handler exists:', !!this.handlers['MANAGE_INSTANCES']);
-    console.log('🔍 MANAGE_COLLECTIONS handler exists:', !!this.handlers['MANAGE_COLLECTIONS']);
-    console.log('🔍 MANAGE_VARIABLES handler exists:', !!this.handlers['MANAGE_VARIABLES']);
-    console.log('🔍 MANAGE_ALIGNMENT handler exists:', !!this.handlers['MANAGE_ALIGNMENT']);
-    console.log('🔍 BOOLEAN_OPERATION handler exists:', !!this.handlers['BOOLEAN_OPERATION']);
-    console.log('🔍 VECTOR_OPERATION handler exists:', !!this.handlers['VECTOR_OPERATION']);
-    console.log('🔍 ANNOTATION_OPERATION handler exists:', !!this.handlers['ANNOTATION_OPERATION']);
-    console.log('🔍 MEASUREMENT_OPERATION handler exists:', !!this.handlers['MEASUREMENT_OPERATION']);
-    console.log('🔍 DEV_RESOURCE_OPERATION handler exists:', !!this.handlers['DEV_RESOURCE_OPERATION']);
-    console.log('🔍 MANAGE_FONTS handler exists:', !!this.handlers['MANAGE_FONTS']);
-    console.log('🔍 MANAGE_TEXT handler exists:', !!this.handlers['MANAGE_TEXT']);
-    console.log('🔍 SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
-    console.log('🔍 PING_TEST handler exists:', !!this.handlers['PING_TEST']);
+    console.log('Discovered operations by category:');
+    
+    const categories = {
+      'Node Operations': operations.filter(op => op.includes('NODE') || op.includes('CREATE_') || op.includes('UPDATE_') || op.includes('DELETE_') || op.includes('DUPLICATE_') || op.includes('MOVE_')),
+      'Text Operations': operations.filter(op => op.includes('TEXT')),
+      'Style Operations': operations.filter(op => op.includes('STYLE')),
+      'Layout Operations': operations.filter(op => op.includes('LAYOUT') || op.includes('CONSTRAINT') || op.includes('ALIGNMENT') || op.includes('HIERARCHY')),
+      'Component Operations': operations.filter(op => op.includes('COMPONENT') || op.includes('INSTANCE')),
+      'Variable Operations': operations.filter(op => op.includes('VARIABLE') || op.includes('COLLECTION')),
+      'Dev Mode Operations': operations.filter(op => op.includes('ANNOTATION') || op.includes('MEASUREMENT') || op.includes('DEV_RESOURCE')),
+      'Selection Operations': operations.filter(op => op.includes('SELECTION')),
+      'Export Operations': operations.filter(op => op.includes('EXPORT')),
+      'System Operations': operations.filter(op => op.includes('PING') || op.includes('SYNC') || op.includes('FONTS'))
+    };
+    
+    for (const [category, ops] of Object.entries(categories)) {
+      if (ops.length > 0) {
+        console.log(`  ${category}: ${ops.length} operations`);
+        ops.forEach(op => console.log(`    - ${op}`));
+      }
+    }
+    
+    const uncategorized = operations.filter(op => !Object.values(categories).flat().includes(op));
+    if (uncategorized.length > 0) {
+      console.log(`  Other Operations: ${uncategorized.length} operations`);
+      uncategorized.forEach(op => console.log(`    - ${op}`));
+    }
+    // Debug logging handled by logDiscoveredOperations()
+    console.log('SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
+    console.log('PING_TEST handler exists:', !!this.handlers['PING_TEST']);
   }
 
   private setupUIMessageHandler(): void {
@@ -139,71 +118,41 @@ class FigmaPlugin {
         throw new Error(`Unknown operation: ${operation}`);
       }
 
-      const result = await handler(payload);
+      // Comprehensive null-safe payload handling
+      let safePayload = payload;
+      if (!payload || typeof payload !== 'object') {
+        safePayload = {};
+      } else {
+        // Deep null-safe payload processing
+        safePayload = this.sanitizePayload(payload);
+      }
+
+      const result = await handler(safePayload);
       
       // Send success response back to UI thread
+      // KISS: handlers return data directly or throw errors
       figma.ui.postMessage({
         type: 'OPERATION_RESPONSE',
         id,
         operation,
-        success: result.success,
-        data: result.success ? result.data : result,
-        error: result.success ? undefined : result.error
+        result
       });
       
-      console.log(`✅ ${operation} completed successfully`);
+      console.log(`${operation} completed successfully`);
       
     } catch (error) {
-      console.error(`❌ ${operation} failed:`, error);
+      console.error(`${operation} failed:`, error.toString());
       
       // Send error response back to UI thread
       figma.ui.postMessage({
         type: 'OPERATION_RESPONSE',
         id,
         operation,
-        success: false,
         error: error instanceof Error ? error.toString() : 'Unknown error'
       });
     }
   }
 
-  // Font sync operation for database synchronization
-  private async syncFonts(payload: any): Promise<any> {
-    try {
-      // Get all available fonts using Figma API
-      const availableFonts = await figma.listAvailableFontsAsync();
-      
-      // Return raw font data for sync service processing
-      return availableFonts;
-    } catch (error) {
-      console.error('❌ Font sync failed:', error);
-      throw new Error(`Font sync failed: ${error instanceof Error ? error.toString() : 'Unknown error'}`);
-    }
-  }
-
-  // Connection test operation
-  private async handlePingTest(payload: any): Promise<any> {
-    try {
-      const startTime = payload.timestamp || Date.now();
-      const responseTime = Date.now() - startTime;
-      
-      return {
-        success: true,
-        data: {
-          pong: true,
-          roundTripTime: responseTime,
-          pluginVersion: '0.29.0',
-          timestamp: Date.now()
-        }
-      };
-    } catch (error) {
-      console.error('❌ Ping test failed:', error);
-      return {
-        success: false,
-        error: error instanceof Error ? error.toString() : 'Unknown error'
-      };
-    }
-  }
 
   async start(): Promise<void> {
     try {
@@ -229,7 +178,7 @@ class FigmaPlugin {
     // Handle selection changes (optional - for debugging)
     figma.on('selectionchange', () => {
       const selection = figma.currentPage.selection;
-      console.log(`🎯 Selection changed: ${selection.length} nodes selected`);
+      console.log(`Selection changed: ${selection.length} nodes selected`);
     });
   }
 
@@ -238,6 +187,33 @@ class FigmaPlugin {
       handlers: Object.keys(this.handlers),
       timestamp: Date.now()
     };
+  }
+
+  /**
+   * Recursively sanitize payload to handle null values
+   */
+  private sanitizePayload(obj: any): any {
+    if (obj === null || obj === undefined) {
+      return undefined; // Convert null to undefined for safer destructuring
+    }
+    
+    if (Array.isArray(obj)) {
+      return obj.map(item => this.sanitizePayload(item));
+    }
+    
+    if (typeof obj === 'object') {
+      const sanitized: any = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value === null) {
+          // Skip null values entirely to prevent destructuring issues
+          continue;
+        }
+        sanitized[key] = this.sanitizePayload(value);
+      }
+      return sanitized;
+    }
+    
+    return obj;
   }
 }
 

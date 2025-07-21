@@ -1,4 +1,4 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 
 describe('Basic Integration', () => {
   test('should pass basic test', () => {

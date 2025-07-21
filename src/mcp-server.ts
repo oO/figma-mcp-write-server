@@ -12,6 +12,7 @@ import * as yaml from 'js-yaml';
 import { ServerConfig, LegacyServerConfig, DEFAULT_WS_CONFIG, loadConfig } from './types/index.js';
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
 import { HandlerRegistry } from './handlers/index.js';
+import { FontService } from './services/font-service.js';
 
 // Get package version dynamically
 const __filename = fileURLToPath(import.meta.url);
@@ -24,6 +25,7 @@ export class FigmaMCPServer {
   private wsServer: FigmaWebSocketServer;
   private handlerRegistry: HandlerRegistry;
   private config: ServerConfig;
+  private fontService: FontService | null = null;
 
   constructor(configOverrides: Partial<ServerConfig> = {}) {
     // Load config from file system with overrides
@@ -55,7 +57,16 @@ export class FigmaMCPServer {
       this.wsServer
     );
 
-    this.setupHandlers();
+    // Listen for plugin connection to initialize font database
+    this.wsServer.on('pluginConnected', () => {
+      console.error('🔌 Plugin connected, initializing font database...');
+      this.initializeFontDatabase();
+    });
+
+    // Wait for handler registration before setting up request handlers
+    this.handlerRegistry.waitForHandlerRegistration().then(() => {
+      this.setupHandlers();
+    });
   }
 
   private setupHandlers() {
@@ -66,6 +77,7 @@ export class FigmaMCPServer {
       };
     });
 
+
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
@@ -73,7 +85,7 @@ export class FigmaMCPServer {
       try {
         return await this.handlerRegistry.handleToolCall(name, args || {});
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
+        const errorMessage = error instanceof Error ? error.toString() : String(error);
         
         const errorData = {
           error: errorMessage,
@@ -85,7 +97,11 @@ export class FigmaMCPServer {
           content: [
             {
               type: "text",
-              text: yaml.dump(errorData, { indent: 2, lineWidth: 100 })
+              text: yaml.dump(errorData, { 
+                indent: 2,
+                quotingType: '"',
+                forceQuotes: false
+              })
             }
           ],
           isError: true
@@ -103,10 +119,42 @@ export class FigmaMCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     
+    // Font database will be initialized when plugin connects
+    console.error('🚀 MCP server started, waiting for plugin connection...');
+    
     // Reset health metrics after MCP server starts
     await this.resetHealthMetrics();
   }
   
+  private async initializeFontDatabase(): Promise<void> {
+    // Prevent multiple initializations
+    if (this.fontService) {
+      console.error('⚠️  Font database already initialized');
+      return;
+    }
+
+    try {
+      if (this.config.fontDatabase?.enabled !== false) {
+        console.error('🔤 Initializing font database...');
+        
+        // Create FontService which will handle database initialization and sync
+        this.fontService = new FontService(
+          (request: any) => this.wsServer.sendToPlugin(request),
+          {
+            databasePath: this.config.fontDatabase?.databasePath,
+            enableDatabase: true
+          }
+        );
+        
+        console.error('✅ Font database initialization started');
+      } else {
+        console.error('⚠️  Font database disabled in configuration');
+      }
+    } catch (error) {
+      console.error('❌ Failed to initialize font database:', error);
+    }
+  }
+
   private async resetHealthMetrics(): Promise<void> {
     try {
       // Wait a moment for potential plugin connection, then reset metrics
@@ -114,7 +162,7 @@ export class FigmaMCPServer {
         this.wsServer.resetHealthMetrics();
       }, 500); // Short delay to allow any pending operations to complete
     } catch (error) {
-      console.warn('Failed to reset health metrics:', error);
+      console.error('❌ Failed to reset health metrics:', error);
     }
   }
 

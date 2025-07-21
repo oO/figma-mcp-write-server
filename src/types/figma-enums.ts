@@ -71,7 +71,7 @@ export const FigmaNodeTypes = caseInsensitiveEnum([
  * Note: Will normalize to lowercase for API compatibility
  */
 export const FigmaCreateNodeTypes = caseInsensitiveEnum([
-  'rectangle', 'ellipse', 'frame', 'text', 'star', 'polygon'
+  'rectangle', 'ellipse', 'frame', 'star', 'polygon', 'line'
 ]);
 
 /**
@@ -84,7 +84,16 @@ export const FigmaPaintTypes = caseInsensitiveEnum(['SOLID', 'GRADIENT_LINEAR', 
  * Effect types for styling
  * Case-insensitive: accepts 'drop_shadow', 'DROP_SHADOW', 'dropShadow', etc.
  */
-export const FigmaEffectTypes = caseInsensitiveEnum(['DROP_SHADOW', 'INNER_SHADOW', 'LAYER_BLUR', 'BACKGROUND_BLUR']);
+export const FigmaEffectTypes = caseInsensitiveEnum(['DROP_SHADOW', 'INNER_SHADOW', 'LAYER_BLUR', 'BACKGROUND_BLUR', 'NOISE', 'TEXTURE']);
+
+/**
+ * Stroke cap types for line endings and arrows
+ * Case-insensitive: accepts 'arrow_lines', 'ARROW_LINES', 'ArrowLines', etc.
+ */
+export const FigmaStrokeCapTypes = caseInsensitiveEnum([
+  'NONE', 'ROUND', 'SQUARE', 'ARROW_LINES', 'ARROW_EQUILATERAL', 
+  'DIAMOND_FILLED', 'TRIANGLE_FILLED', 'CIRCLE_FILLED'
+]);
 
 /**
  * Boolean operation types for vector operations

@@ -1,20 +1,20 @@
-import { LayoutHandlers } from '../../../src/handlers/layout-handlers.js';
-import { ManageAlignmentSchema } from '../../../src/types/layout-operations.js';
-import { describe, expect, test, beforeEach, jest } from '@jest/globals';
+import { AlignmentHandler } from '@/handlers/alignment-handler';
+import { ManageAlignmentSchema } from '@/types/layout-operations';
+import { describe, expect, test, beforeEach, vi } from 'vitest';
 
-describe('LayoutHandlers - Alignment', () => {
-  let handler: LayoutHandlers;
-  let mockSendToPlugin: jest.MockedFunction<(request: any) => Promise<any>>;
+describe('AlignmentHandler', () => {
+  let handler: AlignmentHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    handler = new LayoutHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    handler = new AlignmentHandler(mockSendToPlugin);
   });
 
   describe('Tool Registration', () => {
-    test('should register manage_alignment tool', () => {
+    test('should register figma_alignment tool', () => {
       const tools = handler.getTools();
-      const alignmentTool = tools.find(tool => tool.name === 'manage_alignment');
+      const alignmentTool = tools.find(tool => tool.name === 'figma_alignment');
       
       expect(alignmentTool).toBeDefined();
       expect(alignmentTool?.description).toContain('Align, position, or distribute nodes');
@@ -22,7 +22,7 @@ describe('LayoutHandlers - Alignment', () => {
 
     test('should have correct tool schema', () => {
       const tools = handler.getTools();
-      const alignmentTool = tools.find(tool => tool.name === 'manage_alignment');
+      const alignmentTool = tools.find(tool => tool.name === 'figma_alignment');
       
       expect(alignmentTool?.inputSchema.required).toEqual(['nodeIds']);
       expect(alignmentTool?.inputSchema.properties.nodeIds.type).toBe('array');
@@ -183,7 +183,7 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
+      const result = await handler.handle('figma_alignment', params);
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_ALIGNMENT',
@@ -205,7 +205,8 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      expect(result.isError).toBe(false);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle position operation with spacing', async () => {
@@ -236,7 +237,7 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
+      const result = await handler.handle('figma_alignment', params);
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_ALIGNMENT',
@@ -258,7 +259,8 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      expect(result.isError).toBe(false);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle distribute operation', async () => {
@@ -301,9 +303,10 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
+      const result = await handler.handle('figma_alignment', params);
 
-      expect(result.isError).toBe(false);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_ALIGNMENT',
         payload: {
@@ -337,7 +340,7 @@ describe('LayoutHandlers - Alignment', () => {
         error: 'Node invalid-node not found'
       });
 
-      await expect(handler.handle('manage_alignment', params))
+      await expect(handler.handle('figma_alignment', params))
         .rejects.toThrow('Node invalid-node not found');
     });
 
@@ -350,7 +353,7 @@ describe('LayoutHandlers - Alignment', () => {
 
       mockSendToPlugin.mockRejectedValue(new Error('Connection failed'));
 
-      await expect(handler.handle('manage_alignment', params))
+      await expect(handler.handle('figma_alignment', params))
         .rejects.toThrow('Connection failed');
     });
   });
@@ -405,7 +408,7 @@ describe('LayoutHandlers - Alignment', () => {
         error: 'All nodes must share the same parent for alignment operations. Node node-in-frame-b has a different parent.'
       });
 
-      await expect(handler.handle('manage_alignment', params))
+      await expect(handler.handle('figma_alignment', params))
         .rejects.toThrow('All nodes must share the same parent for alignment operations');
     });
   });
@@ -442,8 +445,9 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
-      expect(result.isError).toBe(false);
+      const result = await handler.handle('figma_alignment', params);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle single node alignment to parent frame', async () => {
@@ -477,8 +481,9 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
-      expect(result.isError).toBe(false);
+      const result = await handler.handle('figma_alignment', params);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle reference point and alignment point alignment', async () => {
@@ -510,7 +515,7 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
+      const result = await handler.handle('figma_alignment', params);
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_ALIGNMENT',
@@ -532,7 +537,8 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      expect(result.isError).toBe(false);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle single-node parent alignment', async () => {
@@ -566,7 +572,7 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      const result = await handler.handle('manage_alignment', params);
+      const result = await handler.handle('figma_alignment', params);
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_ALIGNMENT',
@@ -588,7 +594,8 @@ describe('LayoutHandlers - Alignment', () => {
         }
       });
 
-      expect(result.isError).toBe(false);
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
     });
 
     test('should handle all alignment directions', async () => {
@@ -623,8 +630,9 @@ describe('LayoutHandlers - Alignment', () => {
           }
         });
 
-        const result = await handler.handle('manage_alignment', params);
-        expect(result.isError).toBe(false);
+        const result = await handler.handle('figma_alignment', params);
+        expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
       }
     });
   });

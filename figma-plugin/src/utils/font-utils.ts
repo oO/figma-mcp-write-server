@@ -3,10 +3,8 @@ import { FontName } from '../types.js';
 export async function loadFont(fontName: FontName): Promise<void> {
   try {
     await figma.loadFontAsync(fontName);
-    console.log(`✅ Loaded font: ${fontName.family} ${fontName.style}`);
   } catch (error) {
-    console.warn(`⚠️ Failed to load font ${fontName.family} ${fontName.style}, falling back to Inter Regular`);
-    await figma.loadFontAsync({ family: 'Inter', style: 'Regular' });
+    throw new Error(`Font '${fontName.family} ${fontName.style}' is not available in this Figma file. Check the Figma font menu for available fonts.`);
   }
 }
 
@@ -80,10 +78,7 @@ export async function loadFontSafely(fontName: FontName): Promise<FontName> {
     await figma.loadFontAsync(fontName);
     return fontName;
   } catch (error) {
-    console.warn(`Failed to load ${fontName.family} ${fontName.style}, using Inter Regular`);
-    const fallback = createFontName('Inter', 'Regular');
-    await figma.loadFontAsync(fallback);
-    return fallback;
+    throw new Error(`Font '${fontName.family} ${fontName.style}' is not available in this Figma file. Check the Figma font menu for available fonts.`);
   }
 }
 

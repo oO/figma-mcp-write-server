@@ -1,4 +1,5 @@
 import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
+import { imageMatrixToFlattened, extractFlattenedImageParams } from './color-utils.js';
 
 export function findNodeById(nodeId: string): SceneNode | null {
   try {
@@ -9,8 +10,8 @@ export function findNodeById(nodeId: string): SceneNode | null {
     
     // Check if this is a scene node (can be rendered/exported)
     const exportableTypes = [
-      'FRAME', 'GROUP', 'COMPONENT', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
-      'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION'
+      'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
+      'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION', 'SLICE', 'SECTION'
     ];
     
     if (!exportableTypes.includes(node.type)) {
@@ -24,8 +25,32 @@ export function findNodeById(nodeId: string): SceneNode | null {
   }
 }
 
+/**
+ * Find a node or page by ID - supports both scene nodes and pages
+ * This is the unified function for export operations that can work with both nodes and pages
+ */
+export function findNodeOrPageById(id: string): (SceneNode | PageNode) | null {
+  try {
+    // First try to find as scene node
+    const node = findNodeById(id);
+    if (node) {
+      return node;
+    }
+    
+    // Then try to find as page
+    const page = Array.from(figma.root.children).find(child => child.id === id);
+    if (page && page.type === 'PAGE') {
+      return page as PageNode;
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
 export function formatNodeResponse(node: SceneNode): NodeInfo {
-  return {
+  const response: NodeInfo = {
     id: node.id,
     name: node.name,
     type: node.type,
@@ -34,6 +59,65 @@ export function formatNodeResponse(node: SceneNode): NodeInfo {
     width: 'width' in node ? node.width : 0,
     height: 'height' in node ? node.height : 0
   };
+
+  // Include visual properties that are commonly set during creation
+  if ('visible' in node) response.visible = (node as any).visible;
+  if ('locked' in node) response.locked = (node as any).locked;
+  if ('opacity' in node) response.opacity = (node as any).opacity;
+  
+  // Include fill and stroke information
+  if ('fills' in node) response.fills = (node as any).fills;
+  
+  // Only include stroke information if there are actual strokes applied
+  if ('strokes' in node) {
+    const strokes = (node as any).strokes;
+    if (strokes && strokes.length > 0) {
+      response.strokes = strokes;
+      if ('strokeWeight' in node) response.strokeWeight = (node as any).strokeWeight;
+      if ('strokeAlign' in node) response.strokeAlign = (node as any).strokeAlign;
+    }
+  }
+  
+  // Include corner properties for relevant node types
+  if ('cornerRadius' in node) response.cornerRadius = (node as any).cornerRadius;
+  
+  // CRITICAL: Include variable binding information for ALL properties
+  if ('boundVariables' in node) {
+    const boundVars = (node as any).boundVariables;
+    if (boundVars && Object.keys(boundVars).length > 0) {
+      response.boundVariables = boundVars;
+    }
+  }
+  
+  // Add additional properties that can be variable-bound
+  if ('rotation' in node) response.rotation = (node as any).rotation * 180 / Math.PI; // Convert radians to degrees
+  if ('strokeWeight' in node && !response.strokeWeight) response.strokeWeight = (node as any).strokeWeight;
+  
+  // Typography properties for text nodes
+  if (node.type === 'TEXT') {
+    if ('characters' in node) response.characters = (node as any).characters;
+    if ('fontSize' in node) response.fontSize = (node as any).fontSize;
+    if ('fontName' in node) response.fontName = (node as any).fontName;
+    if ('textCase' in node) response.textCase = (node as any).textCase;
+    if ('textDecoration' in node) response.textDecoration = (node as any).textDecoration;
+    if ('letterSpacing' in node) response.letterSpacing = (node as any).letterSpacing;
+    if ('lineHeight' in node) response.lineHeight = (node as any).lineHeight;
+  }
+  
+  // Additional corner radius properties for rectangles/frames
+  if ('topLeftRadius' in node) response.topLeftRadius = (node as any).topLeftRadius;
+  if ('topRightRadius' in node) response.topRightRadius = (node as any).topRightRadius;
+  if ('bottomLeftRadius' in node) response.bottomLeftRadius = (node as any).bottomLeftRadius;
+  if ('bottomRightRadius' in node) response.bottomRightRadius = (node as any).bottomRightRadius;
+  
+  // Layout properties for frames
+  if ('spacing' in node) response.spacing = (node as any).spacing;
+  if ('paddingTop' in node) response.paddingTop = (node as any).paddingTop;
+  if ('paddingRight' in node) response.paddingRight = (node as any).paddingRight;
+  if ('paddingBottom' in node) response.paddingBottom = (node as any).paddingBottom;
+  if ('paddingLeft' in node) response.paddingLeft = (node as any).paddingLeft;
+  
+  return response;
 }
 
 export function validateNodeType(node: SceneNode, expectedTypes: string[]): void {
@@ -72,16 +156,19 @@ export function getAllNodes(
   return result;
 }
 
-function createNodeData(node: BaseNode, detail: string, depth: number, parentId: string | null): any {
+export function createNodeData(node: BaseNode, detail: string, depth: number, parentId: string | null): any {
+  if (detail === 'minimal') {
+    return {
+      id: node.id,
+      name: node.name
+    };
+  }
+
   const baseData = {
     id: node.id,
     name: node.name,
     type: node.type
   };
-
-  if (detail === 'simple') {
-    return baseData;
-  }
 
   const standardData = {
     ...baseData,
@@ -109,7 +196,7 @@ function createNodeData(node: BaseNode, detail: string, depth: number, parentId:
 
   // Add optional properties if they exist
   if ('opacity' in node) detailedData.opacity = (node as any).opacity;
-  if ('rotation' in node) detailedData.rotation = (node as any).rotation;
+  if ('rotation' in node) detailedData.rotation = (node as any).rotation * 180 / Math.PI; // Convert radians to degrees
   if ('cornerRadius' in node) detailedData.cornerRadius = (node as any).cornerRadius;
   if ('fills' in node) detailedData.fills = (node as any).fills;
   if ('strokes' in node) detailedData.strokes = (node as any).strokes;
@@ -134,7 +221,8 @@ function createNodeData(node: BaseNode, detail: string, depth: number, parentId:
   if ('textAlignHorizontal' in node) detailedData.textAlignHorizontal = (node as any).textAlignHorizontal;
   if ('textAlignVertical' in node) detailedData.textAlignVertical = (node as any).textAlignVertical;
 
-  return detailedData;
+  // Clean empty properties before returning (removes empty {} and [] objects)
+  return cleanEmptyProperties(detailedData) || detailedData;
 }
 
 export function selectAndFocus(nodes: SceneNode[]): void {
@@ -226,5 +314,561 @@ export function resizeNode(node: SceneNode, width: number, height: number): void
     (node as any).resize(width, height);
   } else {
     throw new Error(`Node type ${node.type} does not support resizing`);
+  }
+}
+
+/**
+ * Enhance image fills with metadata from imageHash
+ */
+async function enhanceImageMetadata(imageHash: string): Promise<{
+  imageSizeX?: number;
+  imageSizeY?: number;
+  imageFileSize?: number;
+}> {
+  try {
+    console.log('🖼️ Processing imageHash:', imageHash);
+    const image = figma.getImageByHash(imageHash);
+    if (image) {
+      // Get image dimensions
+      const size = await image.getSizeAsync();
+      console.log('📏 Image dimensions:', size);
+      
+      // Get file size from bytes
+      const bytes = await image.getBytesAsync();
+      console.log('📦 Image file size:', bytes.length, 'bytes');
+      
+      return {
+        imageSizeX: size.width,
+        imageSizeY: size.height,
+        imageFileSize: bytes.length
+      };
+    }
+  } catch (error) {
+    console.log('❌ Failed to get image metadata:', error);
+  }
+  
+  return {};
+}
+
+/**
+ * Remove empty objects and arrays from response data
+ * 
+ * GENERAL RULE: Don't return empty branches like {} or []
+ * 
+ * This function recursively cleans response objects to remove:
+ * - Empty objects: {} 
+ * - Empty arrays: []
+ * - Objects that become empty after cleaning nested content
+ * 
+ * Common use cases:
+ * - Remove empty boundVariables: {} 
+ * - Remove empty effects: []
+ * - Remove empty filters: {}
+ * - Remove any other empty nested structures
+ * 
+ * Usage: Always apply to response data before returning to Agent
+ * Example: return cleanEmptyProperties(responseData) || responseData;
+ */
+/**
+ * Convert RGBA color to CSS-style notation for compact YAML output
+ */
+export function formatColorCompact(color: RGBA): string {
+  const r = Math.round(color.r * 255);
+  const g = Math.round(color.g * 255);
+  const b = Math.round(color.b * 255);
+  const a = Math.round(color.a * 100) / 100; // Round to 2 decimal places
+  
+  if (a === 1) {
+    return `rgb(${r},${g},${b})`;
+  } else {
+    return `rgba(${r},${g},${b},${a})`;
+  }
+}
+
+/**
+ * Round number to 3 decimal places for cleaner output
+ */
+function roundTo3(num: number): number {
+  return Math.round(num * 1000) / 1000;
+}
+
+/**
+ * Check if number is approximately zero
+ */
+function isApproxZero(num: number, tolerance: number = 0.001): boolean {
+  return Math.abs(num) < tolerance;
+}
+
+/**
+ * Check if numbers are approximately equal
+ */
+function isApproxEqual(a: number, b: number, tolerance: number = 0.001): boolean {
+  return Math.abs(a - b) < tolerance;
+}
+
+/**
+ * Convert Transform matrix to standard CSS transform notation
+ */
+export function formatTransformCompact(transform: Transform): string {
+  const [[a, b, c], [d, e, f]] = transform;
+  
+  // Round values for cleaner output
+  const ra = roundTo3(a);
+  const rb = roundTo3(b);
+  const rc = roundTo3(c);
+  const rd = roundTo3(d);
+  const re = roundTo3(e);
+  const rf = roundTo3(f);
+  
+  // Check for identity transform
+  if (isApproxEqual(ra, 1) && isApproxZero(rb) && isApproxZero(rc) && 
+      isApproxZero(rd) && isApproxEqual(re, 1) && isApproxZero(rf)) {
+    return 'none';
+  }
+  
+  // Check for simple translate
+  if (isApproxEqual(ra, 1) && isApproxZero(rb) && isApproxZero(rd) && isApproxEqual(re, 1)) {
+    if (isApproxZero(rc) && isApproxZero(rf)) {
+      return 'none';
+    }
+    if (isApproxZero(rf)) {
+      return `translateX(${rc})`;
+    }
+    if (isApproxZero(rc)) {
+      return `translateY(${rf})`;
+    }
+    return `translate(${rc}, ${rf})`;
+  }
+  
+  // Check for simple scale
+  if (isApproxZero(rb) && isApproxZero(rc) && isApproxZero(rd) && isApproxZero(rf)) {
+    if (isApproxEqual(ra, re)) {
+      return `scale(${ra})`;
+    }
+    return `scale(${ra}, ${re})`;
+  }
+  
+  // Check for scale + translate
+  if (isApproxZero(rb) && isApproxZero(rd)) {
+    const transforms = [];
+    if (!isApproxEqual(ra, 1) || !isApproxEqual(re, 1)) {
+      if (isApproxEqual(ra, re)) {
+        transforms.push(`scale(${ra})`);
+      } else {
+        transforms.push(`scale(${ra}, ${re})`);
+      }
+    }
+    if (!isApproxZero(rc) || !isApproxZero(rf)) {
+      if (isApproxZero(rf)) {
+        transforms.push(`translateX(${rc})`);
+      } else if (isApproxZero(rc)) {
+        transforms.push(`translateY(${rf})`);
+      } else {
+        transforms.push(`translate(${rc}, ${rf})`);
+      }
+    }
+    return transforms.join(' ');
+  }
+  
+  // Default to standard CSS matrix notation: matrix(a, b, c, d, e, f)
+  return `matrix(${ra}, ${rb}, ${rc}, ${rd}, ${re}, ${rf})`;
+}
+
+/**
+ * Format gradient stops with compact color notation
+ */
+export function formatGradientStopsCompact(gradientStops: ColorStop[]): string {
+  return gradientStops.map(stop => {
+    const colorStr = formatColorCompact(stop.color);
+    return `${colorStr} ${Math.round(stop.position * 100)}%`;
+  }).join(', ');
+}
+
+/**
+ * Check if object is an RGBA color
+ */
+function isRGBAColor(obj: any): obj is RGBA {
+  return obj && typeof obj === 'object' && 
+         typeof obj.r === 'number' && typeof obj.g === 'number' && 
+         typeof obj.b === 'number' && typeof obj.a === 'number';
+}
+
+/**
+ * Check if object is a Transform matrix
+ */
+function isTransformMatrix(obj: any): obj is Transform {
+  // Check basic structure: array of 2 arrays, each with 3 numbers
+  if (!Array.isArray(obj) || obj.length !== 2) {
+    return false;
+  }
+  
+  // Check first row
+  if (!Array.isArray(obj[0]) || obj[0].length !== 3) {
+    return false;
+  }
+  
+  // Check second row
+  if (!Array.isArray(obj[1]) || obj[1].length !== 3) {
+    return false;
+  }
+  
+  // Check all elements are finite numbers
+  for (let i = 0; i < 2; i++) {
+    for (let j = 0; j < 3; j++) {
+      const val = obj[i][j];
+      if (typeof val !== 'number' || !isFinite(val)) {
+        return false;
+      }
+    }
+  }
+  
+  return true;
+}
+
+/**
+ * Check if object is a ColorStop array
+ */
+function isColorStopArray(obj: any): obj is ColorStop[] {
+  return Array.isArray(obj) && obj.length > 0 &&
+         obj.every((stop: any) => 
+           stop && typeof stop === 'object' &&
+           typeof stop.position === 'number' &&
+           isRGBAColor(stop.color)
+         );
+}
+
+/**
+ * Async version of cleanEmptyProperties that can enhance image fills with metadata
+ */
+export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  // Special handling for RGBA colors (must come before array check)
+  if (isRGBAColor(obj)) {
+    return formatColorCompact(obj);
+  }
+  
+  if (Array.isArray(obj)) {
+    // Special handling for ColorStop arrays
+    if (isColorStopArray(obj)) {
+      return formatGradientStopsCompact(obj);
+    }
+    
+    const cleaned = [];
+    for (const item of obj) {
+      const cleanedItem = await cleanEmptyPropertiesAsync(item);
+      if (cleanedItem !== undefined) {
+        cleaned.push(cleanedItem);
+      }
+    }
+    return cleaned.length > 0 ? cleaned : undefined;
+  }
+  
+  const cleaned: any = {};
+  let hasProperties = false;
+  
+  // Special handling for IMAGE fills - enhance with metadata
+  let enhancedObj = obj;
+  if (obj.type === 'IMAGE' && obj.imageHash) {
+    try {
+      const imageMetadata = await enhanceImageMetadata(obj.imageHash);
+      // Deep clone the object to avoid "object is not extensible" errors
+      enhancedObj = JSON.parse(JSON.stringify(obj));
+      Object.assign(enhancedObj, imageMetadata);
+    } catch (error) {
+      // If metadata enhancement fails, use original object
+      enhancedObj = obj;
+    }
+  }
+  
+  // Special handling for IMAGE fills - extract unified flat parameters
+  if (enhancedObj.type === 'IMAGE') {
+    try {
+      const flatParams = extractFlattenedImageParams(enhancedObj as ImagePaint);
+      Object.assign(cleaned, flatParams);
+      hasProperties = true;
+    } catch (error) {
+      // If extraction fails, continue with normal processing
+    }
+  }
+
+  for (const [key, value] of Object.entries(enhancedObj)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    
+    // Hide gradientTransform matrix but add flattened parameters for gradient fills
+    if (key === 'gradientTransform') {
+      // Check if this is part of a gradient fill (parent object has gradient type)
+      if (enhancedObj.type && enhancedObj.type.startsWith('GRADIENT_')) {
+        // Skip the matrix - MCP client only sees flat parameters
+        // Try to add flattened parameters instead
+        try {
+          const { matrixToFlattened } = require('../utils/color-utils.js');
+          const flattened = matrixToFlattened(value);
+          cleaned['gradientStartX'] = Number(flattened.gradientStartX.toFixed(3));
+          cleaned['gradientStartY'] = Number(flattened.gradientStartY.toFixed(3));
+          cleaned['gradientEndX'] = Number(flattened.gradientEndX.toFixed(3));
+          cleaned['gradientEndY'] = Number(flattened.gradientEndY.toFixed(3));
+          cleaned['gradientScale'] = Number(flattened.gradientScale.toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // Flattening failed, but we still skip the matrix for cleaner output
+        }
+      }
+      continue;
+    }
+    
+    // Hide spacing object but add flattened parameters for pattern fills
+    if (key === 'spacing') {
+      // Check if this is part of a pattern fill (parent object has PATTERN type)
+      if (enhancedObj.type && enhancedObj.type === 'PATTERN') {
+        // Skip the spacing object - MCP client only sees flat parameters
+        try {
+          cleaned['patternSpacingX'] = Number((value.x || 0).toFixed(3));
+          cleaned['patternSpacingY'] = Number((value.y || 0).toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // Flattening failed, skip spacing
+        }
+      }
+      continue;
+    }
+    
+    // Hide filters from output, but convert to flattened parameters for image fills
+    if (key === 'filters') {
+      // Check if this is part of an image fill (parent object has IMAGE type)
+      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+        try {
+          // Add flattened filter parameters to the cleaned object
+          if (value.exposure !== undefined) cleaned['filterExposure'] = Number(value.exposure.toFixed(3));
+          if (value.contrast !== undefined) cleaned['filterContrast'] = Number(value.contrast.toFixed(3));
+          if (value.saturation !== undefined) cleaned['filterSaturation'] = Number(value.saturation.toFixed(3));
+          if (value.temperature !== undefined) cleaned['filterTemperature'] = Number(value.temperature.toFixed(3));
+          if (value.tint !== undefined) cleaned['filterTint'] = Number(value.tint.toFixed(3));
+          if (value.highlights !== undefined) cleaned['filterHighlights'] = Number(value.highlights.toFixed(3));
+          if (value.shadows !== undefined) cleaned['filterShadows'] = Number(value.shadows.toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // If conversion fails, skip the filters entirely
+        }
+      }
+      continue;
+    }
+    
+    // Include imageHash (metadata will be added separately in async processing)
+    if (key === 'imageHash') {
+      // Always preserve the imageHash
+      cleaned[key] = value;
+      hasProperties = true;
+      continue;
+    }
+
+    // Hide Figma API implementation details for image fills - flat parameters already extracted above
+    if (key === 'imageTransform' || key === 'rotation' || key === 'scalingFactor' || key === 'scaleMode') {
+      // Check if this is part of an image fill (parent object has IMAGE type)
+      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+        // Skip these implementation details - MCP client only sees flat parameters
+        continue;
+      }
+    }
+    
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        const cleanedArray = await cleanEmptyPropertiesAsync(value);
+        if (cleanedArray !== undefined) {
+          cleaned[key] = cleanedArray;
+          hasProperties = true;
+        }
+      }
+    } else if (typeof value === 'object') {
+      // Check if object is empty
+      if (Object.keys(value).length > 0) {
+        const cleanedObj = await cleanEmptyPropertiesAsync(value);
+        if (cleanedObj !== undefined && Object.keys(cleanedObj).length > 0) {
+          cleaned[key] = cleanedObj;
+          hasProperties = true;
+        }
+      }
+    } else {
+      cleaned[key] = value;
+      hasProperties = true;
+    }
+  }
+  
+  
+  return hasProperties ? cleaned : undefined;
+}
+
+export function cleanEmptyProperties(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  // Special handling for RGBA colors (must come before array check)
+  if (isRGBAColor(obj)) {
+    return formatColorCompact(obj);
+  }
+  
+  // Special handling for Transform matrices (must come before array check)
+  // Note: Transform matrices are now hidden from output
+  
+  if (Array.isArray(obj)) {
+    // Special handling for ColorStop arrays
+    if (isColorStopArray(obj)) {
+      return formatGradientStopsCompact(obj);
+    }
+    
+    const cleaned = obj.map(cleanEmptyProperties).filter(item => item !== undefined);
+    return cleaned.length > 0 ? cleaned : undefined;
+  }
+  
+  const cleaned: any = {};
+  let hasProperties = false;
+  
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === null || value === undefined) {
+      continue;
+    }
+    
+    // Hide gradientTransform matrix but add flattened parameters for gradient fills
+    if (key === 'gradientTransform') {
+      // Check if this is part of a gradient fill (parent object has gradient type)
+      if (enhancedObj.type && enhancedObj.type.startsWith('GRADIENT_')) {
+        // Skip the matrix - MCP client only sees flat parameters
+        // Try to add flattened parameters instead
+        try {
+          const { matrixToFlattened } = require('../utils/color-utils.js');
+          const flattened = matrixToFlattened(value);
+          cleaned['gradientStartX'] = Number(flattened.gradientStartX.toFixed(3));
+          cleaned['gradientStartY'] = Number(flattened.gradientStartY.toFixed(3));
+          cleaned['gradientEndX'] = Number(flattened.gradientEndX.toFixed(3));
+          cleaned['gradientEndY'] = Number(flattened.gradientEndY.toFixed(3));
+          cleaned['gradientScale'] = Number(flattened.gradientScale.toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // Flattening failed, but we still skip the matrix for cleaner output
+        }
+      }
+      continue;
+    }
+    
+    // Hide spacing object but add flattened parameters for pattern fills
+    if (key === 'spacing') {
+      // Check if this is part of a pattern fill (parent object has PATTERN type)
+      if (enhancedObj.type && enhancedObj.type === 'PATTERN') {
+        // Skip the spacing object - MCP client only sees flat parameters
+        try {
+          cleaned['patternSpacingX'] = Number((value.x || 0).toFixed(3));
+          cleaned['patternSpacingY'] = Number((value.y || 0).toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // Flattening failed, skip spacing
+        }
+      }
+      continue;
+    }
+    
+    // Hide filters from output, but convert to flattened parameters for image fills
+    if (key === 'filters') {
+      // Check if this is part of an image fill (parent object has IMAGE type)
+      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+        try {
+          // Add flattened filter parameters to the cleaned object
+          if (value.exposure !== undefined) cleaned['filterExposure'] = Number(value.exposure.toFixed(3));
+          if (value.contrast !== undefined) cleaned['filterContrast'] = Number(value.contrast.toFixed(3));
+          if (value.saturation !== undefined) cleaned['filterSaturation'] = Number(value.saturation.toFixed(3));
+          if (value.temperature !== undefined) cleaned['filterTemperature'] = Number(value.temperature.toFixed(3));
+          if (value.tint !== undefined) cleaned['filterTint'] = Number(value.tint.toFixed(3));
+          if (value.highlights !== undefined) cleaned['filterHighlights'] = Number(value.highlights.toFixed(3));
+          if (value.shadows !== undefined) cleaned['filterShadows'] = Number(value.shadows.toFixed(3));
+          hasProperties = true;
+        } catch (error) {
+          // If conversion fails, skip the filters entirely
+        }
+      }
+      continue;
+    }
+    
+    // Include imageHash (metadata will be added separately in async processing)
+    if (key === 'imageHash') {
+      // Always preserve the imageHash
+      cleaned[key] = value;
+      hasProperties = true;
+      continue;
+    }
+
+    // Hide Figma API implementation details for image fills - flat parameters already extracted above
+    if (key === 'imageTransform' || key === 'rotation' || key === 'scalingFactor' || key === 'scaleMode') {
+      // Check if this is part of an image fill (parent object has IMAGE type)
+      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+        // Skip these implementation details - MCP client only sees flat parameters
+        continue;
+      }
+    }
+    
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        const cleanedArray = cleanEmptyProperties(value);
+        if (cleanedArray !== undefined) {
+          cleaned[key] = cleanedArray;
+          hasProperties = true;
+        }
+      }
+    } else if (typeof value === 'object') {
+      // Check if object is empty
+      if (Object.keys(value).length > 0) {
+        const cleanedObj = cleanEmptyProperties(value);
+        if (cleanedObj !== undefined && Object.keys(cleanedObj).length > 0) {
+          cleaned[key] = cleanedObj;
+          hasProperties = true;
+        }
+      }
+    } else {
+      cleaned[key] = value;
+      hasProperties = true;
+    }
+  }
+  
+  
+  return hasProperties ? cleaned : undefined;
+}
+
+/**
+ * Format Paint objects for compact YAML output
+ */
+export function formatPaintCompact(paint: Paint): any {
+  const compactPaint: any = { ...paint };
+  
+  if (paint.type === 'SOLID' && 'color' in paint) {
+    compactPaint.color = formatColorCompact(paint.color);
+  }
+  
+  if (paint.type.startsWith('GRADIENT_') && 'gradientStops' in paint && 'gradientTransform' in paint) {
+    compactPaint.gradientStops = formatGradientStopsCompact(paint.gradientStops);
+    compactPaint.gradientTransform = formatTransformCompact(paint.gradientTransform);
+  }
+  
+  if (paint.type === 'PATTERN' && 'spacing' in paint) {
+    compactPaint.patternSpacingX = paint.spacing.x || 0;
+    compactPaint.patternSpacingY = paint.spacing.y || 0;
+    delete compactPaint.spacing;
+  }
+  
+  return compactPaint;
+}
+
+/**
+ * Convert Transform matrix to flattened gradient parameters for debugging
+ */
+export function debugMatrixToFlattened(matrix: Transform): string {
+  try {
+    const { matrixToFlattened } = require('../utils/color-utils.js');
+    const flattened = matrixToFlattened(matrix);
+    return `startX:${flattened.gradientStartX.toFixed(2)}, startY:${flattened.gradientStartY.toFixed(2)}, endX:${flattened.gradientEndX.toFixed(2)}, endY:${flattened.gradientEndY.toFixed(2)}, scale:${flattened.gradientScale.toFixed(2)}`;
+  } catch (error) {
+    return formatTransformCompact(matrix);
   }
 }

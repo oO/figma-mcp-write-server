@@ -1,215 +1,181 @@
 # Figma MCP Write Server
 
-A Model Context Protocol (MCP) server that provides **write access** to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically.
+A Model Context Protocol (MCP) server that provides write access to Figma through the Plugin API, enabling AI agents to create, modify, and manage Figma designs programmatically.
 
-Designed with ❤️ by a human. Coded with ✨ by an AI agent.
+Designed with ❤️ by a human. Coded with ✨ by AI agents (Claude and Gemini)
 
 > [!WARNING]
-> This project in in pre-release development mode (Semantic Versioning < 1.0.0) this means that all tools, interfaces and definitions are subject to change.
-
+> This project is in pre-release development mode (Semantic Versioning < 1.0.0). All tools, interfaces and definitions are subject to change.
 
 ## 🚀 Overview
 
-Because the Figma REST API is mostly read-only, this project uses the Plugin API to enable full write operations. This allows AI agents to:
+This MCP server bridges the gap between AI agents and Figma's design capabilities. While Figma's REST API is mostly read-only, this server uses the Plugin API to enable full write operations, allowing AI agents to act as autonomous graphic designers.
 
-- ✅ **Create** design elements (rectangles, ellipses, text, frames)
-- ✅ **Typography** with mixed styling and text formatting
-- ✅ **Style Management** for paint, text, effect, and grid styles
-- ✅ **Auto Layout & Constraints** for responsive design
-- ✅ **Layer & Hierarchy** management (grouping, reordering)
-- ✅ **Component System** for design systems and reusable components
-- ✅ **Variables & Design Tokens** for design system consistency
-- ✅ **Boolean Operations** for advanced shape creation (union, subtract, intersect, exclude)
-- ✅ **Vector Operations** for custom path creation and manipulation
-- ✅ **Dev Mode Integration** for design-to-development handoff workflows
-- ✅ **Design Annotations** for developer communication and specifications
-- ✅ **Measurements** for spacing and sizing specifications
-- ✅ **CSS Generation** and development status tracking
-- ✅ **Modify** existing nodes (properties, position, styling)
-- ✅ **Delete** and duplicate design elements
-- ✅ **Manage** selections and page content
-- ✅ **Export** designs programmatically with flexible file/data output options
-- ✅ **Image Management** for loading, filtering, and transforming images applied to design elements
-- ✅ **Font Management** with SQLite database for fast search across 37K+ fonts
+**Key Capabilities:**
+- **Full Design Creation** - Generate complete designs from scratch, not just modifications
+- **Design System Integration** - Create and manage components, styles, and design tokens
+- **Boolean Operations** - Union, subtract, intersect, and exclude operations on shapes
+- **Vector Manipulation** - Create custom SVG paths and flatten complex shapes
+- **Developer Handoff** - Generate CSS and manage development resources and status
+- **Asset Management** - Handle images, fonts, and exports with professional-grade control
 
-## 🏗️ Architecture
+## 📋 Prerequisites
 
-```mermaid
-graph LR
-    subgraph Agent
-        A[AI Agent/Claude] --> B[MCP Client]
-    end
-    subgraph Figma
-        D[Figma Plugin] --> E[Figma Design]
-    end
-    B --> C[MCP Server]
-    C --> D
-```
+### Required Software
+- **Node.js 22.x** - Download from [nodejs.org](https://nodejs.org/) (v22.x required for better-sqlite3 pre-built binaries)
+- **npm** - Comes with Node.js (verify with `npm --version`)
+- **Figma Desktop** - Required for Plugin API access (browser version has limitations)
+  - Download: [figma.com/downloads](https://www.figma.com/downloads/) (Windows 10+ or macOS 11+)
+- **Git** - For cloning the repository
 
-1. **AI Agent** calls MCP tools (e.g., `figma_nodes` with operation `create`)
-2. **MCP Server** validates parameters and routes to handlers
-3. **Figma Plugin** receives message and executes operation
-4. **Results** are sent back to the MCP server and AI agent
+### System Requirements
+- **Operating System** - Windows 10+ or macOS 10.14+
+- **Active Figma Session** - Server requires an open Figma file to operate
+- **Network Connection** - For font database sync and plugin communication
 
-## 📋 Available MCP Tools
-
-| Tool | Description | Parameters |
-|------|-------------|------------|
-| `figma_nodes` | Create, update, move, delete, or duplicate nodes | operation (create/update/move/delete/duplicate), nodeType, nodeId, position, size, styling properties |
-| `figma_text` | Create and manage text with typography features | operation (create/update/character_styling/apply_text_style/create_text_style), characters, fontFamily, fontSize, styleRanges, textAlign |
-| `figma_components` | Component management (create, create_set, add_variant, get) | operation, nodeId, componentIds, componentId, name, description, variantProperties |
-| `figma_instances` | Instance management (create, swap, detach, reset_overrides, set_override, get) | operation, componentId, instanceId, x, y, overrides, swapTarget |
-| `figma_styles` | Style management (paint, text, effect, grid) | operation, styleType, styleName, color, fontSize, effects |
-| `figma_collections` | Variable collection management (create, update, delete, get, list) | operation, collectionId, collectionName, modes, modeId, newModeName, description |
-| `figma_variables` | Variable management and binding (create, bind, unbind, get_bindings) | operation, variableId, collectionId, variableName, variableType, nodeId, property, modeValues |
-| `figma_boolean_operations` | Boolean operations on shapes (union, subtract, intersect, exclude) | operation, nodeIds, name, preserveOriginal |
-| `figma_vector_operations` | Vector creation and manipulation (create, flatten, outline_stroke, get_paths) | operation, nodeId, vectorPaths, name, strokeWidth, x, y |
-| `figma_annotations` | Design annotations for dev handoff (add, edit, remove, list) | operation, nodeId, annotationId, label, labelMarkdown, properties, categoryId |
-| `figma_measurements` | Spacing and sizing measurements (add, edit, remove, list) | operation, measurementId, fromNodeId, toNodeId, direction, label, customValue, pageId |
-| `figma_dev_resources` | CSS generation and dev status tracking (generate_css, set_dev_status, add_dev_link, remove_dev_link, get_dev_resources) | operation, nodeId, status, linkUrl, linkTitle, linkId, cssOptions |
-| `figma_auto_layout` | Auto layout configuration | operation, nodeId, direction, spacing, padding, alignment, resizing |
-| `figma_constraints` | Constraints management | operation, nodeId, horizontal, vertical |
-| `figma_alignment` | Node alignment and positioning with reference point control | nodeIds, horizontalOperation/Direction, verticalOperation/Direction, referenceMode, referencePoints, alignmentPoints, spacing |
-| `figma_hierarchy` | Layer & hierarchy management with grouping | operation, nodeId, nodeIds, name, groupType |
-| *Consolidated into `figma_nodes`* | Update node properties | Use `figma_nodes` with operation `update` |
-| *Consolidated into `figma_nodes`* | Move, delete, or duplicate nodes | Use `figma_nodes` with operations `move`, `delete`, `duplicate` |
-| `figma_selection` | Get/set selection or get page hierarchy | operation (get_current/set_nodes/get_page_hierarchy), nodeIds, detail, filters |
-| *Consolidated into `figma_selection`* | Set node selection | Use `figma_selection` with operation `set_nodes` |
-| *Consolidated into `figma_selection`* | List all nodes on current page | Use `figma_selection` with operation `get_page_hierarchy` |
-| `figma_exports` | Export nodes as files or data with cross-platform output control | operation, nodeId/nodeIds, format, output (file/data), outputDirectory, dataFormat |
-| `figma_images` | Image management for design elements | operation, imageUrl/imageBytes, nodeId, createNode, scaleMode, filters, rotation, alignmentX/Y, fitStrategy |
-| `figma_fonts` | Font search and management with SQLite database | operation (search_fonts/get_project_fonts/get_font_count/check_availability/get_font_styles/validate_font/get_font_info/preload_fonts), query, source, hasStyle, minStyleCount, limit, sortBy |
-| `figma_plugin_status` | Check plugin connection and health | operation (status/health/test), testType, timeout |
-| *Consolidated into `figma_plugin_status`* | Get detailed connection metrics | Use `figma_plugin_status` with operation `health` |
-
-## 🎯 Usage Examples
-
-Common use cases:
-- **Create Layout**: "Create a header frame with title and subtitle"
-- **Auto Layout**: "Make this frame arrange its children vertically with 16px spacing"
-- **Alignment**: "Center text within frame" or "Align circle's center to rectangle's left edge"
-- **Constraints**: "Pin this sidebar to the left and stretch to full height"
-- **Typography**: "Make a styled heading with mixed formatting"
-- **Design System**: "Create color palette and apply styles consistently"
-- **Variables**: "Create design tokens for colors and spacing, bind to components"
-- **Components**: "Build button variants with different colors and styles"
-- **Boolean Operations**: "Combine shapes with union, create cutouts with subtract"
-- **Vector Creation**: "Create custom icons with SVG paths and flatten complex shapes"
-- **Dev Handoff**: "Add annotations and measurements, generate CSS for developers"
-- **Image Operations**: "Load hero image from URL and apply filters" or "Replace product images with smart cropping"
-- **Font Search**: "Find Google fonts with Bold style" or "Search fonts matching 'Inter'"
-- **Batch Operations**: "Select all text elements and update font size"
-- **Export Operations**: "Export selected components as PNG files to default export folder" or "Return design data as base64 for processing"
-
-📚 **[Examples & Usage Guide →](EXAMPLES.md)**
-
-## 🛠️ Installation & Setup
-
-### Command Line Options
-- `--port <number>` - WebSocket server port (default: 3000)
-- `--help, -h` - Show help message
-
-### Plugin Build System
-The Figma plugin uses a configurable build system that automatically matches the server port:
-
+### Verify Installation
 ```bash
-# Build plugin with default port (3000)
-cd figma-plugin && node build.js
-
-# Build plugin with custom port
-cd figma-plugin && node build.js --port=8765
-
-# Watch mode for development
-cd figma-plugin && node build.js --watch --port=3000
+node --version  # Should show v22.x.x
+npm --version   # Should show 8.0.0 or higher
+git --version   # Should show 2.0.0 or higher
 ```
 
-The build system automatically injects the correct WebSocket port and version into the plugin UI, ensuring the plugin always connects to the right server port.
+> **Note**: Node.js v22.x is specifically required due to better-sqlite3 pre-built binary compatibility. Other Node versions may require manual compilation which can fail on some systems.
 
-### Configuration
-The server uses YAML configuration files with platform-specific defaults:
 
-- **Windows**: `%APPDATA%\figma-mcp-write-server\config.yaml`
-- **macOS**: `~/Library/Application Support/figma-mcp-write-server/config.yaml`
-- **Linux**: `~/.config/figma-mcp-write-server/config.yaml`
+## 📋 Available Tools
 
-Configuration files are automatically created on first run. See `config.example.yaml` for all available options.
+### Core Design Tools
+- **`figma_nodes`** - Create, update, move, delete, and duplicate design elements (rectangles, ellipses, text, frames, stars, polygons)
+- **`figma_text`** - Create and style text with typography controls, character-level formatting, and text properties
+- **`figma_fills`** - Manage fill properties including solid colors, gradients, image fills, and pattern fills for design elements
+- **`figma_effects`** - Apply shadows, blurs, and other visual effects to design elements
 
-### Font Database
-SQLite database for fast font search is automatically configured:
+### Layout & Positioning
+- **`figma_auto_layout`** - Configure responsive auto layout properties for frames and containers
+- **`figma_constraints`** - Set layout constraints to control how elements resize and reposition
+- **`figma_alignment`** - Align, position, and distribute multiple elements with various reference points
+- **`figma_hierarchy`** - Group, ungroup, and reorder nodes in the layer structure
+- **`figma_selection`** - Get or set the current selection and navigate page nodes
 
-- **Windows**: `%LOCALAPPDATA%\figma-mcp-write-server\fonts.db`
-- **macOS**: `~/Library/Caches/figma-mcp-write-server/fonts.db`
-- **Linux**: `~/.cache/figma-mcp-write-server/fonts.db`
+### Design System
+- **`figma_styles`** - Create and manage design system styles for colors, text, effects, and layout grids
+- **`figma_components`** - Create and manage reusable components and component sets with variant properties
+- **`figma_instances`** - Create component instances, swap components, and manage property overrides
+- **`figma_variables`** - Create, bind, and manage design variables across your design system
+- **`figma_fonts`** - Search, validate, and manage fonts with font database integration
 
-Database synchronizes automatically with Figma's available fonts.
+### Advanced Operations
+- **`figma_boolean_operations`** - Perform union, subtract, intersect, and exclude operations on shapes
+- **`figma_vector_operations`** - Create and manipulate vector paths, flatten shapes, and outline strokes
 
-### Platform Support
-The export system supports Windows and macOS with automatic platform detection:
-- **Windows**: `~/Documents/Figma Exports`
-- **macOS**: `~/Downloads/Figma Exports`
+### Developer Tools
+- **`figma_dev_resources`** - Generate CSS code and manage development resources and status
+- **`figma_annotations`** - Add design annotations and documentation for developer handoff
+- **`figma_measurements`** - Create spacing and sizing measurements for design specifications
+- **`figma_exports`** - Export design elements as images, SVGs, or other formats with customizable settings
 
-**Note**: Linux and other Unix-like systems are not currently supported for export operations.
+### System Tools
+- **`figma_plugin_status`** - Check plugin connection status, run diagnostics, and monitor system health
 
-## 🚦 Connection Status
+## ⚡ Quick Start
 
-The system provides real-time connection monitoring:
+### 1. Clone and Build from Source
+```bash
+git clone git@github.com:oO/figma-mcp-write-server.git
+cd figma-mcp-write-server
+npm install
+npm run build
+```
 
-- **MCP Server**: Logs all client connections and tool calls
-- **Figma Plugin UI**: Shows WebSocket connection status
-- **Status Tool**: Use `get_plugin_status` to check connectivity
+### 2. Configure Claude Desktop
+Add this configuration to your Claude Desktop MCP settings file:
 
-## 🔍 Troubleshooting
+**Location:**
+- **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 
-### Plugin Won't Connect
-1. Check WebSocket port (default: 3000) - ensure plugin was built with matching port
-2. Verify MCP server is running
-3. Verify Figma plugin is running
-4. Check plugin console for connection logs
-5. Plugin automatically reconnects on connection loss
+**Configuration:**
+```json
+{
+  "mcpServers": {
+    "figma-mcp-write-server": {
+      "command": "node",
+      "args": ["/path/to/figma-mcp-write-server/dist/index.js"],
+      "env": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
+```
 
-### Write Operations Fail
-1. Ensure plugin is connected (`get_plugin_status`)
-2. Check node IDs are valid
-3. Verify Figma file is not in Dev Mode
-4. Check plugin permissions
+**Note:** Replace `/path/to/figma-mcp-write-server` with the actual path to your cloned repository.
 
-### Performance Issues
-1. Reduce heartbeat interval
-2. Limit concurrent operations
-3. Use batch operations when possible
-4. Monitor WebSocket message size
+### 3. Install the Figma Plugin
+1. Open Figma Desktop
+2. Go to **Plugins** → **Development** → **Import plugin from manifest**
+3. Select `figma-plugin/manifest.json` from the project directory
+4. Run the plugin from **Plugins** → **Development** → **Figma MCP Write Server**
 
-## 🆚 Comparison with REST API MCP Servers
+### 4. Start Creating
+Open Claude Desktop and use any of the 21 available tools to design programmatically
+
+**Optional**: Customize server settings by copying `config.example.yaml` to your platform-specific config directory and editing as needed. See [Configuration Guide](docs/configuration.md) for details.
+
+## 🎯 Example Use Cases
+
+### Layout & Structure
+- "Create a header frame with title and subtitle"
+- "Make this frame arrange its children vertically with 16px spacing"
+- "Center text within frame" or "Align circle's center to rectangle's left edge"
+
+### Design Systems
+- "Create color palette and apply styles consistently"
+- "Build button variants with different colors and styles"
+- "Create design tokens for colors and spacing, bind to components"
+
+### Boolean Operations
+- "Combine shapes with union, create cutouts with subtract"
+- "Create complex logos by intersecting and excluding shapes"
+- "Build icon libraries with consistent stroke-to-fill conversion"
+
+### Vector Operations
+- "Create custom icons with SVG paths and flatten complex shapes"
+- "Convert stroke outlines to filled paths for better scaling"
+- "Extract vector paths from existing shapes for modification"
+
+### Developer Handoff
+- "Add annotations and measurements, generate CSS for developers"
+- "Export selected components as PNG files"
+- "Create design specifications with spacing measurements"
+
+## 🆚 Why Choose This Over REST API?
 
 | Feature | REST API MCP | Plugin API MCP (This Project) |
 |---------|--------------|-------------------------------|
 | **Read Operations** | ✅ Full access | ✅ Full access |
 | **Write Operations** | ❌ Not supported | ✅ Full support |
 | **Real-time Updates** | ❌ Polling only | ✅ Live connection |
-| **Authentication** | API Token | Plugin permissions |
-| **Setup Complexity** | Simple | Moderate (requires plugin) |
 | **Rate Limits** | Yes (REST API limits) | No (direct plugin access) |
+| **Setup Complexity** | Simple | Moderate (requires plugin) |
 | **Offline Usage** | ✅ Works offline | ❌ Requires active Figma session |
 
-## 🛡️ Security Considerations
+## 🚧 Current Limitations
 
-- WebSocket connections are local-only by default
-- Plugin runs in Figma's sandbox environment
-- No sensitive data stored in plugin code
-- Message validation using Zod schemas
-- Connection authentication via plugin ID
+- **Active Session Required** - Requires open Figma Desktop application with active file
+- **Manual Plugin Setup** - Plugin must be manually installed and run for each session
+- **Single File Scope** - Operations limited to currently open file and selected page
+- **Network Dependency** - WebSocket connection can be unstable on poor networks
+- **Pattern Fill Creation** - Pattern fills can be read but not created due to a known Figma Plugin API validation bug
+- **Desktop Only** - Figma browser version has limited Plugin API access
 
-## 🚧 Limitations
-
-- Requires active Figma session (desktop/browser)
-- Plugin must be manually installed and run
-- WebSocket connection can be unstable on poor networks
-- Some Figma features may not be supported
-- Limited to single file operations (current page)
 
 ## 📚 Documentation
 
-- **[Development Guide](DEVELOPMENT.md)** - Setup, architecture, and contribution guidelines
+- **[Usage Examples](docs/examples.md)** - Practical usage examples and AI instructions
+- **[Configuration Guide](docs/configuration.md)** - Server configuration and setup options
+- **[Development Guide](docs/development.md)** - Contributing and architecture guidelines
 - **[Changelog](CHANGELOG.md)** - Version history and updates
 
 ## 📄 License
@@ -218,8 +184,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please see the [Development Guide](DEVELOPMENT.md) for guidelines.
+Contributions are welcome! See the [Contributing Guide](docs/contributing.md) for:
+- Local development setup
+- Code contribution guidelines
+- Testing procedures
+- Architecture documentation
 
----
+## 🔗 Next Steps
 
-**Note**: This project provides write access to Figma designs through MCP by using Figma's Plugin API, which enables creation and modification operations not available through the REST API. The server includes 21 MCP tools and runs a WebSocket server on port 3000 (configurable) for plugin communication.
+- **New Users**: Start with the [Usage Examples](docs/examples.md)
+- **Configuration**: See [Configuration Guide](docs/configuration.md) for setup options
+- **Developers**: Read the [Development Guide](docs/development.md)
+- **Troubleshooting**: Check plugin status and review server logs
+- **Issues**: Report problems on the project repository

@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.0] - 2025-07-21
+
+### Added
+- **Line Support for figma_nodes**: Complete line node creation with flexible parameter styles
+  - **Start/End Points**: Intuitive `startX`, `startY`, `endX`, `endY` parameters for UI-style positioning
+  - **Length/Rotation**: Mathematical `x`, `y`, `length`, `rotation` (degrees) for geometric constructions
+  - **Advanced Arrow Caps**: Separate `startCap` and `endCap` with 8 cap types (NONE, ROUND, SQUARE, ARROW_LINES, ARROW_EQUILATERAL, DIAMOND_FILLED, TRIANGLE_FILLED, CIRCLE_FILLED)
+  - **Smart Node Selection**: Automatic LineNode vs ConnectorNode selection based on cap requirements
+  - **Bulk Operations**: Full array support for all line parameters
+- **Pattern Fill Operations**: figma_fills now supports pattern (texture) fills with Figma API limitation handling
+  - **Pattern Creation**: Create pattern fills from images with proper scaling and positioning
+  - **Transform Support**: Pattern-specific transform parameters with appropriate constraints
+  - **Error Handling**: Graceful handling of Figma API pattern limitations
+
+### Enhanced
+- **figma_fills Architecture**: Complete DRY (Don't Repeat Yourself) refactor with gradient transform improvements
+  - **Unified Fill Management**: Single coherent system for all fill types (solid, gradient, image, pattern)
+  - **Enhanced Gradient Transforms**: Improved gradient positioning and rotation with proper matrix calculations
+  - **Streamlined API**: Consistent parameter patterns across all fill operations
+- **Rotation API Consistency**: All rotation values now use degrees throughout the entire API
+  - **Input Standardization**: All tools accept rotation in degrees (converted internally to radians)
+  - **Output Standardization**: All node responses return rotation in degrees
+  - **Cross-Tool Consistency**: figma_nodes, figma_components, figma_instances all use degree-based rotation
+
+### Refactored
+- **Major Architecture Overhaul**: Complete transition to UnifiedHandler pattern across all tools
+  - **Server-Side Unification**: All handlers now extend UnifiedHandler for consistent bulk operation support
+  - **Plugin-Side Modernization**: All operations use BaseOperation pattern with standardized error handling
+  - **Type System Enhancement**: Comprehensive Zod schema validation with proper case-insensitive enum handling
+  - **Bulk Operations Framework**: Centralized bulk operation logic with intelligent parameter cycling
+- **Enhanced Testing Framework**: Comprehensive test coverage with bug-driven testing approach
+  - **Unit Test Expansion**: Extensive handler and operation test coverage
+  - **Integration Testing**: Real-world scenario validation
+  - **Regression Prevention**: Tests added for all discovered bugs to prevent future regressions
+
+### Fixed
+- **JSON-RPC Error Handling**: Consistent use of `error.toString()` instead of `error.message` across all operations
+- **Schema Validation Improvements**: Enhanced parameter validation with better error messages
+- **Color Alpha Channel**: Proper handling of 8-digit hex colors (#RRGGBBAA) in all color-related operations
+
+## [0.30.42] - 2025-07-03
+
+### Refactored
+- **Major Refactoring**: Consolidated all plugin-side logic into a unified, auto-discovering operation router.
+  - **Single Entry Point**: All plugin operations are now routed through `figma-plugin/src/router/operation-router.ts`.
+  - **Auto-Discovery**: The router automatically discovers and registers all operation files located in `figma-plugin/src/operations/`.
+  - **Simplified Architecture**: Removed all legacy `*-handler.ts` files and the `BaseHandler` class from the plugin, resulting in a cleaner, more maintainable structure.
+  - **Server-Side Unification**: The server-side `handler-registry` now dynamically discovers and registers all `*-handler.ts` files from `src/handlers/`, mirroring the plugin's architecture.
+  - **Bulk Operations Utility**: Introduced a new `BulkOperationsParser` utility at `src/utils/bulk-operations.ts` to centralize bulk operation logic, now used by all relevant handlers.
+
+### Added
+- **Bulk Operations Support**: Comprehensive bulk operation capabilities for major Figma MCP tools.
+  - **Supported Tools**: `figma_nodes`, `figma_text`, `figma_styles`, `figma_variables`, `figma_collections`, `figma_auto_layout`, `figma_constraints`, `figma_images`, `figma_components`, `figma_instances`, `figma_fonts`, `figma_alignment`, `figma_exports`, `figma_annotations`, `figma_measurements`, `figma_dev_resources`.
+  - **Intelligent Cycling**: Arrays of different lengths automatically cycle to match the longest array.
+  - **Partial Success**: Operations continue even if individual items fail (controlled by `failFast` parameter).
+
+### Fixed
+- **Color Alpha Channel Support**: The `ColorFields` schema and `color-utils` now correctly handle 8-digit hex colors with alpha channels (#RRGGBBAA).
+
 ## [0.30.1] - 2025-06-26
 
 ### Fixed
@@ -92,7 +151,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Text Management Tool**: New `manage_text` tool for text operations in Figma
   - Create text nodes with font loading and fallback system
-  - Update existing text content and formatting  
+  - Update existing text content and formatting
   - Character-level styling with mixed formatting support
   - Apply and create text styles for design system consistency
   - Hyperlink support for interactive text elements
@@ -163,7 +222,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Cross-Platform Configuration System**: YAML configuration files with platform-specific defaults
   - Windows: `%APPDATA%\figma-mcp-write-server\config.yaml`
   - macOS: `~/Library/Application Support/figma-mcp-write-server/config.yaml`
-  - Linux: `~/.config/figma-mcp-write-server/config.yaml`
   - Automatic directory creation and config generation
   - Database path configuration with platform-specific cache directories
   - Font sync settings and logging configuration
@@ -188,7 +246,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Clear error message when nodes have different parents
   - Eliminates coordinate system conversion complexity
 
-### Enhanced  
+### Enhanced
 - **Simplified Alignment Logic**: No coordinate system conversions needed since all nodes share same coordinate space
 - **Test Coverage**: Additional validation tests for multi-node parent requirements
 
@@ -289,11 +347,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.25.1] - 2025-06-14
 
 ### Changed
-- **Platform Support**: Removed Linux support to focus on Windows and macOS
-  - Export operations now only support Windows (win32) and macOS (darwin)
+- **Platform Support**: Focused on Windows and macOS platforms
+  - Export operations support Windows (win32) and macOS (darwin)
   - Simplified cross-platform logic and error handling
   - Updated default export paths: Windows uses `~/Documents/Figma Exports`, macOS uses `~/Downloads/Figma Exports`
-  - Linux and other Unix systems will receive clear error messages for export operations
 
 ### Updated
 - **Documentation**: Updated README.md and DEVELOPMENT.md to reflect Windows/macOS only support

@@ -67,12 +67,14 @@ export const VisualFields = {
 } as const;
 
 /**
- * Color fields with hex validation
+ * Color fields with hex validation (supports 6-digit #RRGGBB and 8-digit #RRGGBBAA)
  */
 export const ColorFields = {
-  fillColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  strokeColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
-  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional(),
+  fillColor: z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/).optional(),
+  fillOpacity: z.number().min(0).max(1).optional(),
+  strokeColor: z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/).optional(),
+  strokeOpacity: z.number().min(0).max(1).optional(),
+  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/).optional(),
 } as const;
 
 /**
@@ -96,7 +98,7 @@ export const TypographyFields = {
  * Stroke and border fields
  */
 export const StrokeFields = {
-  strokeWidth: z.number().min(0).optional(),
+  strokeWeight: z.number().min(0).optional(),
   strokeAlign: z.enum(['INSIDE', 'OUTSIDE', 'CENTER']).optional(),
   strokeCap: z.enum(['NONE', 'ROUND', 'SQUARE', 'ARROW_LINES', 'ARROW_EQUILATERAL']).optional(),
   strokeJoin: z.enum(['MITER', 'BEVEL', 'ROUND']).optional(),
@@ -289,5 +291,97 @@ export const createBulkSchema = <T extends z.ZodRawShape>(fields: T) =>
     ...fields,
   });
 
+// ================================================================================
+// Bulk Operations Support - Field Definitions with Array Support
+// ================================================================================
+
+/**
+ * Creates bulk-enabled field definitions that support both single values and arrays
+ */
+const createBulkField = <T extends z.ZodType>(schema: T) => 
+  z.union([schema, z.array(schema)]);
+
+/**
+ * Creates bulk-enabled optional field definitions
+ */
+const createOptionalBulkField = <T extends z.ZodType>(schema: T) =>
+  z.union([schema, z.array(schema)]).optional();
+
+/**
+ * Bulk-enabled identification fields
+ */
+export const BulkIdentificationFields = {
+  nodeId: createOptionalBulkField(z.string()),
+  nodeIds: z.array(z.string()).optional(),
+  styleId: createOptionalBulkField(z.string()),
+  componentId: createOptionalBulkField(z.string()),
+  instanceId: createOptionalBulkField(z.string()),
+  variableId: createOptionalBulkField(z.string()),
+  collectionId: createOptionalBulkField(z.string()),
+} as const;
+
+/**
+ * Bulk-enabled position fields
+ */
+export const BulkPositionFields = {
+  x: createOptionalBulkField(z.number()),
+  y: createOptionalBulkField(z.number()),
+  offsetX: createOptionalBulkField(z.number()),
+  offsetY: createOptionalBulkField(z.number()),
+} as const;
+
+/**
+ * Bulk-enabled dimension fields
+ */
+export const BulkDimensionFields = {
+  width: createOptionalBulkField(z.number()),
+  height: createOptionalBulkField(z.number()),
+  minWidth: createOptionalBulkField(z.number()),
+  maxWidth: createOptionalBulkField(z.number()),
+  minHeight: createOptionalBulkField(z.number()),
+  maxHeight: createOptionalBulkField(z.number()),
+} as const;
+
+/**
+ * Bulk-enabled visual fields
+ */
+export const BulkVisualFields = {
+  opacity: createOptionalBulkField(z.number().min(0).max(1)),
+  rotation: createOptionalBulkField(z.number()),
+  visible: createOptionalBulkField(z.boolean()),
+  locked: createOptionalBulkField(z.boolean()),
+  cornerRadius: createOptionalBulkField(z.number().min(0)),
+} as const;
+
+/**
+ * Bulk-enabled color fields (supports 6-digit #RRGGBB and 8-digit #RRGGBBAA)
+ */
+export const BulkColorFields = {
+  fillColor: createOptionalBulkField(z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/)),
+  fillOpacity: createOptionalBulkField(z.number().min(0).max(1)),
+  strokeColor: createOptionalBulkField(z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/)),
+  strokeOpacity: createOptionalBulkField(z.number().min(0).max(1)),
+  strokeWeight: createOptionalBulkField(z.number().min(0)),
+  strokeAlign: createOptionalBulkField(z.enum(['INSIDE', 'OUTSIDE', 'CENTER'])),
+  backgroundColor: createOptionalBulkField(z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/)),
+} as const;
+
+/**
+ * Bulk-enabled metadata fields
+ */
+export const BulkMetadataFields = {
+  name: createOptionalBulkField(z.string()),
+  description: createOptionalBulkField(z.string()),
+  tags: createOptionalBulkField(z.array(z.string())),
+} as const;
+
+/**
+ * Bulk operation control fields
+ */
+export const BulkControlFields = {
+  failFast: z.boolean().optional(), // Stop on first error in bulk operations
+  count: z.number().min(1).optional(), // Number of items to create (alternative to arrays)
+} as const;
+
 // Note: Individual field groups are already exported above with their definitions
-// No need to re-export them here
+// Bulk field groups provide array support for bulk operations

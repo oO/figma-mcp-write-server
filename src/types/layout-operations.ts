@@ -1,58 +1,59 @@
 import { z } from 'zod';
+import { caseInsensitiveEnum } from './enum-utils.js';
 
 // ================================================================================
 // Auto Layout & Constraints Operations
 // ================================================================================
 
-// Auto layout related schemas
-export const PaddingSchema = z.object({
-  top: z.number().optional(),
-  right: z.number().optional(),
-  bottom: z.number().optional(),
-  left: z.number().optional(),
-});
-
-export const ResizingSchema = z.object({
-  width: z.enum(['hug', 'fill', 'fixed']).optional(),
-  height: z.enum(['hug', 'fill', 'fixed']).optional(),
-});
 
 export const ManageAutoLayoutSchema = z.object({
-  operation: z.enum(['enable', 'disable', 'update', 'get_properties']),
-  nodeId: z.string(),
+  operation: caseInsensitiveEnum(['enable', 'disable', 'update', 'get_properties']),
+  nodeId: z.union([z.string(), z.array(z.string())]),
   
   // Layout Direction
-  direction: z.enum(['horizontal', 'vertical']).optional(),
+  direction: z.union([
+    caseInsensitiveEnum(['horizontal', 'vertical']),
+    z.array(caseInsensitiveEnum(['horizontal', 'vertical']))
+  ]).optional(),
   
   // Spacing
-  spacing: z.number().optional(),
+  spacing: z.union([z.number(), z.array(z.number())]).optional(),
   
   // Flattened Padding Properties
-  paddingTop: z.number().optional(),
-  paddingRight: z.number().optional(),
-  paddingBottom: z.number().optional(),
-  paddingLeft: z.number().optional(),
+  paddingTop: z.union([z.number(), z.array(z.number())]).optional(),
+  paddingRight: z.union([z.number(), z.array(z.number())]).optional(),
+  paddingBottom: z.union([z.number(), z.array(z.number())]).optional(),
+  paddingLeft: z.union([z.number(), z.array(z.number())]).optional(),
   
   // Alignment
-  primaryAlignment: z.enum(['min', 'center', 'max', 'space_between']).optional(),
-  counterAlignment: z.enum(['min', 'center', 'max']).optional(),
+  primaryAlignment: caseInsensitiveEnum(['min', 'center', 'max', 'space_between']).optional(),
+  counterAlignment: caseInsensitiveEnum(['min', 'center', 'max']).optional(),
   
   // Flattened Resizing Properties
-  resizingWidth: z.enum(['hug', 'fill', 'fixed']).optional(),
-  resizingHeight: z.enum(['hug', 'fill', 'fixed']).optional(),
+  resizingWidth: caseInsensitiveEnum(['hug', 'fill', 'fixed']).optional(),
+  resizingHeight: caseInsensitiveEnum(['hug', 'fill', 'fixed']).optional(),
   
   // Advanced Properties
   strokesIncludedInLayout: z.boolean().optional(),
-  layoutWrap: z.enum(['no_wrap', 'wrap']).optional(),
+  layoutWrap: caseInsensitiveEnum(['no_wrap', 'wrap']).optional(),
+  
+  // Bulk operation control
+  failFast: z.boolean().optional(),
 });
 
 export const ManageConstraintsSchema = z.object({
-  operation: z.enum(['set', 'get', 'reset', 'get_info']),
-  nodeId: z.string(),
+  operation: caseInsensitiveEnum(['get', 'set', 'reset']),
+  nodeId: z.union([z.string(), z.array(z.string())]),
   
   // Constraint Settings
-  horizontal: z.enum(['left', 'right', 'left_right', 'center', 'scale']).optional(),
-  vertical: z.enum(['top', 'bottom', 'top_bottom', 'center', 'scale']).optional(),
+  horizontalConstraint: z.union([
+    caseInsensitiveEnum(['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE']),
+    z.array(caseInsensitiveEnum(['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE']))
+  ]).optional(),
+  verticalConstraint: z.union([
+    caseInsensitiveEnum(['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE']),
+    z.array(caseInsensitiveEnum(['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE']))
+  ]).optional(),
 });
 
 // ================================================================================
@@ -61,13 +62,13 @@ export const ManageConstraintsSchema = z.object({
 
 export const ManageAlignmentSchema = z.object({
   // Operations
-  horizontalOperation: z.enum(['position', 'align', 'distribute']).optional(),
+  horizontalOperation: z.enum(['position', 'align', 'distribute', 'spread']).optional(),
   horizontalDirection: z.enum(['left', 'center', 'right']).optional(),
   horizontalReferencePoint: z.enum(['left', 'center', 'right']).optional(),
   horizontalAlignmentPoint: z.enum(['left', 'center', 'right']).optional(),
   horizontalSpacing: z.number().optional(),
   
-  verticalOperation: z.enum(['position', 'align', 'distribute']).optional(),
+  verticalOperation: z.enum(['position', 'align', 'distribute', 'spread']).optional(),
   verticalDirection: z.enum(['top', 'middle', 'bottom']).optional(),
   verticalReferencePoint: z.enum(['top', 'middle', 'bottom']).optional(),
   verticalAlignmentPoint: z.enum(['top', 'middle', 'bottom']).optional(),
@@ -80,6 +81,10 @@ export const ManageAlignmentSchema = z.object({
   referenceMode: z.enum(['bounds', 'key_object', 'relative']).optional().default('bounds'),
   referenceNodeId: z.string().optional(),
   
+  // Spread operation parameters
+  spreadDirection: z.enum(['horizontal', 'vertical']).optional(),
+  spacing: z.number().optional(),
+  
   // Additional options
   margin: z.number().optional()
 });
@@ -88,5 +93,3 @@ export const ManageAlignmentSchema = z.object({
 export type ManageAutoLayoutParams = z.infer<typeof ManageAutoLayoutSchema>;
 export type ManageConstraintsParams = z.infer<typeof ManageConstraintsSchema>;
 export type ManageAlignmentParams = z.infer<typeof ManageAlignmentSchema>;
-export type Padding = z.infer<typeof PaddingSchema>;
-export type Resizing = z.infer<typeof ResizingSchema>;

@@ -5,7 +5,9 @@
   "main": "code.js",
   "ui": "ui.html",
   "capabilities": [],
-  "enableProposedApi": false,
+  "enableProposedApi": true,
+  "enablePrivatePluginApi": true,
+  "permissions": ["currentuser", "activeusers"],
   "editorType": ["figma"],
   "networkAccess": {
     "allowedDomains": ["*"],

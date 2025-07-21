@@ -1,11 +1,11 @@
-import { FontService } from '../../../src/services/font-service.js';
+import { FontService } from '@/services/font-service';
 
 describe('FontService', () => {
   let fontService: FontService;
   let mockSendToPlugin: jest.Mock;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
+    mockSendToPlugin = vi.fn();
     fontService = new FontService(mockSendToPlugin);
   });
 

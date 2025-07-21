@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { Tool } from '@modelcontextprotocol/sdk/types';
 import { ManageImagesSchema } from './image-operations.js';
 
 // ================================================================================
@@ -50,7 +50,6 @@ export const PluginMessageSchema = z.object({
     'CREATE_POLYGON',
     'UPDATE_NODE',
     'DELETE_NODE',
-    'MOVE_NODE',
     'DUPLICATE_NODE',
     'GET_PAGE_NODES',
     'SET_SELECTION',
@@ -118,11 +117,12 @@ export interface TypedPluginMessage<TPayload = unknown> {
   payload?: TPayload;
 }
 
+/**
+ * KISS: TypedPluginResponse returns data directly, errors are thrown
+ */
 export interface TypedPluginResponse<TData = unknown> {
   id: string;
-  success: boolean;
-  data?: TData;
-  error?: string;
+  data: TData;
 }
 
 // Export schema types
@@ -134,4 +134,4 @@ export type SelectionPayload = z.infer<typeof SelectionPayloadSchema>;
 export type ExportPayload = z.infer<typeof ExportPayloadSchema>;
 
 // Re-export Tool interface from MCP SDK for convenience
-export type { Tool } from '@modelcontextprotocol/sdk/types.js';
+export type { Tool } from '@modelcontextprotocol/sdk/types';

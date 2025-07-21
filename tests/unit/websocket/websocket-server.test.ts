@@ -1,20 +1,20 @@
-import { describe, test, expect, jest, beforeEach, afterEach } from '@jest/globals';
-import { FigmaWebSocketServer } from '../../../src/websocket/websocket-server.js';
-import { DEFAULT_WS_CONFIG } from '../../../src/types/index.js';
+import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
+import { FigmaWebSocketServer } from '../../../src/websocket/websocket-server';
+import { DEFAULT_WS_CONFIG } from '../../../src/types/index';
 
 // Mock the port utils to avoid actual port operations in tests
-jest.mock('../../../src/utils/port-utils.js', () => ({
-  checkPortAvailable: jest.fn().mockResolvedValue(true),
-  findZombieProcesses: jest.fn().mockResolvedValue([]),
-  killZombieProcesses: jest.fn().mockResolvedValue(),
-  findAvailablePort: jest.fn().mockResolvedValue(8765)
+vi.mock('@/utils/port-utils', () => ({
+  checkPortAvailable: vi.fn().mockResolvedValue(true),
+  findZombieProcesses: vi.fn().mockResolvedValue([]),
+  killZombieProcesses: vi.fn().mockResolvedValue(),
+  findAvailablePort: vi.fn().mockResolvedValue(8765)
 }));
 
 // Mock WebSocket
 const mockWebSocket = {
-  on: jest.fn(),
-  send: jest.fn(),
-  close: jest.fn(),
+  on: vi.fn(),
+  send: vi.fn(),
+  close: vi.fn(),
   readyState: 1,
   CONNECTING: 0,
   OPEN: 1,
@@ -23,14 +23,14 @@ const mockWebSocket = {
 };
 
 const mockWebSocketServer = {
-  on: jest.fn(),
-  close: jest.fn(),
+  on: vi.fn(),
+  close: vi.fn(),
   clients: new Set()
 };
 
-jest.mock('ws', () => ({
-  WebSocketServer: jest.fn(() => mockWebSocketServer),
-  default: jest.fn(() => mockWebSocket)
+vi.mock('ws', () => ({
+  WebSocketServer: vi.fn(() => mockWebSocketServer),
+  default: vi.fn(() => mockWebSocket)
 }));
 
 describe('FigmaWebSocketServer', () => {
@@ -46,7 +46,7 @@ describe('FigmaWebSocketServer', () => {
     wsServer = new FigmaWebSocketServer(testConfig);
     
     // Clear mock calls
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(async () => {

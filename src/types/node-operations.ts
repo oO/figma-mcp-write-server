@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { FigmaNodeTypes, FigmaCreateNodeTypes, FigmaTextAlign, FigmaExportFormats } from './figma-enums.js';
+import { caseInsensitiveEnum } from './enum-utils.js';
 import { 
   BasicNodeFields,
   BasicCreateFields,
@@ -10,7 +11,14 @@ import {
   DimensionFields,
   IdentificationFields,
   OptionalIdentificationFields,
-  ExportFields
+  ExportFields,
+  BulkIdentificationFields,
+  BulkPositionFields,
+  BulkDimensionFields,
+  BulkVisualFields,
+  BulkColorFields,
+  BulkMetadataFields,
+  BulkControlFields
 } from './common-fields.js';
 import { 
   createActionSchema,
@@ -30,105 +38,199 @@ export const TextStyleRangeSchema = z.object({
   fillColor: z.string().optional(),
 });
 
-// Node creation schema using shared components
-export const CreateNodeSchema = z.object({
-  nodeType: FigmaCreateNodeTypes,
-  ...BasicCreateFields, // Use creation fields without ID requirements
-  ...ColorFields,
+
+
+
+
+// ================================================================================
+// Bulk-Enabled Node Operation Schemas - Support for Array Parameters
+// ================================================================================
+
+// Bulk-enabled node creation schema (uses CreateNodeSchema validation)
+export const BulkCreateNodeSchema = z.object({
+  operation: z.enum(['create']),
+  nodeType: z.union([FigmaCreateNodeTypes, z.array(FigmaCreateNodeTypes)]),
+  ...BulkPositionFields,
+  ...BulkDimensionFields,
+  ...BulkVisualFields,
+  ...BulkColorFields,
+  ...BulkMetadataFields,
+  ...BulkControlFields,
   
-  // Node-specific properties
-  strokeWidth: z.number().min(0).optional(),
-  characters: z.string().optional(), // For text nodes
-  content: z.string().optional(), // Legacy text content field
+  // Bulk-enabled node-specific properties  
+  strokeWidth: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  // Note: characters/content removed - use figma_text for text creation
   
-  // Frame-specific properties
-  clipsContent: z.boolean().optional(),
+  // Frame-specific properties (bulk-enabled)
+  clipsContent: z.union([z.boolean(), z.array(z.boolean())]).optional(),
   
-  // Shape-specific properties
-  pointCount: z.number().min(3).optional(), // star nodes
-  innerRadius: z.number().min(0).max(1).optional(), // star nodes
-  
-  // Text properties using shared typography fields
-  ...TypographyFields,
-  
-  // Advanced styling
-  styleRanges: z.array(TextStyleRangeSchema).optional(),
-  createStyle: z.boolean().optional(),
-  styleName: z.string().optional(),
+  // Shape-specific properties (bulk-enabled)
+  pointCount: z.union([z.number().min(3), z.array(z.number().min(3))]).optional(),
+  innerRadius: z.union([z.number().min(0).max(1), z.array(z.number().min(0).max(1))]).optional(),
 }).refine((data) => {
-  // Text nodes must have content
-  if (data.nodeType === 'text') {
-    return (data.characters && data.characters.trim().length > 0) || 
-           (data.content && data.content.trim().length > 0);
-  }
-  return true;
+  // Apply CreateNodeSchema validation for text nodes
+  const nodeTypes = Array.isArray(data.nodeType) ? data.nodeType : [data.nodeType];
+  const hasTextNode = nodeTypes.some(type => type?.toLowerCase() === 'text');
+  return !hasTextNode;
 }, {
-  message: "Text nodes must have non-empty content (characters or content field)"
+  message: "Text nodes should be created using the figma_text tool, not figma_nodes. Use figma_text for text node creation and management."
 });
 
-// Node update schema using shared components
-export const UpdateNodeSchema = z.object({
-  ...BasicUpdateFields, // Includes required nodeId field
-  ...ColorFields,
-  ...TypographyFields,
+// Bulk-enabled node update schema
+export const BulkUpdateNodeSchema = z.object({
+  operation: z.enum(['update']),
+  nodeId: z.union([
+    z.string(),
+    z.array(z.string())
+  ]),
+  ...BulkPositionFields,
+  ...BulkDimensionFields,
+  ...BulkVisualFields,
+  ...BulkColorFields,
+  ...BulkMetadataFields,
+  ...BulkControlFields,
   
-  // Node-specific update properties
-  strokeWidth: z.number().min(0).optional(),
-  characters: z.string().optional(),
-  content: z.string().optional(), // Legacy support
+  // Bulk-enabled node-specific update properties
+  strokeWidth: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  characters: z.union([z.string(), z.array(z.string())]).optional(),
+  content: z.union([z.string(), z.array(z.string())]).optional(),
   
-  // Frame-specific properties
-  clipsContent: z.boolean().optional(),
+  // Frame-specific properties (bulk-enabled)
+  clipsContent: z.union([z.boolean(), z.array(z.boolean())]).optional(),
   
-  // Shape-specific properties
-  pointCount: z.number().min(3).optional(),
-  innerRadius: z.number().min(0).max(1).optional(),
-  
-  // Legacy support for arbitrary properties
-  properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
-}); // nodeId is now required by BasicUpdateFields, no need for refine
-
-// Node management operations using operation factory
-export const ManageNodesSchema = createActionSchema(
-  ['move', 'delete', 'duplicate'],
-  {
-    nodeId: z.string(), // Required for all operations
-    ...PositionFields,
-  },
-  {
-    // Operation-specific validation
-    move: (data) => data.x !== undefined || data.y !== undefined,
-  }
-);
-
-// Selection operations using shared fields
-export const SetSelectionSchema = z.object({
-  nodeIds: z.array(z.string()).min(1),
+  // Shape-specific properties (bulk-enabled)
+  pointCount: z.union([z.number().min(3), z.array(z.number().min(3))]).optional(),
+  innerRadius: z.union([z.number().min(0).max(1), z.array(z.number().min(0).max(1))]).optional(),
 });
 
-export const GetPageNodesSchema = z.object({
-  detail: z.enum(['simple', 'standard', 'detailed']).default('standard'),
-  includeHidden: z.boolean().default(false),
-  includePages: z.boolean().default(false),
-  nodeTypes: z.array(z.string()).optional(),
-  maxDepth: z.number().optional(),
+// Bulk-enabled node delete schema
+export const BulkDeleteNodeSchema = z.object({
+  operation: z.enum(['delete']),
+  nodeId: z.union([
+    z.string(),
+    z.array(z.string())
+  ]),
+  ...BulkControlFields,
 });
 
-// Export operations using shared export fields
-export const ExportNodeSchema = z.object({
-  ...IdentificationFields,
-  ...ExportFields,
+// Bulk-enabled node duplicate schema
+export const BulkDuplicateNodeSchema = z.object({
+  operation: z.enum(['duplicate']),
+  nodeId: z.union([
+    z.string(),
+    z.array(z.string())
+  ]),
+  offsetX: z.union([z.number(), z.array(z.number())]).optional(),
+  offsetY: z.union([z.number(), z.array(z.number())]).optional(),
+  ...BulkControlFields,
+});
+
+// Bulk-enabled node get schema
+export const BulkGetNodeSchema = z.object({
+  operation: z.enum(['get']),
+  nodeId: z.union([
+    z.string(),
+    z.array(z.string())
+  ]),
+  ...BulkControlFields,
+});
+
+// Bulk-enabled node export schema
+export const BulkExportNodesSchema = z.object({
+  operation: z.enum(['export']),
+  nodeId: z.union([
+    z.string(),
+    z.array(z.string())
+  ]),
+  
+  // Export format parameters (bulk-aware)
+  format: z.union([
+    caseInsensitiveEnum(['PNG', 'SVG', 'JPG', 'PDF']),
+    z.array(caseInsensitiveEnum(['PNG', 'SVG', 'JPG', 'PDF']))
+  ]).optional(),
+  
+  // Export scale parameters (bulk-aware)
+  scale: z.union([
+    z.number().min(0.5).max(4),
+    z.array(z.number().min(0.5).max(4))
+  ]).optional(),
+  
+  // Output type parameters (bulk-aware)
+  output: z.union([
+    caseInsensitiveEnum(['file', 'data']),
+    z.array(caseInsensitiveEnum(['file', 'data']))
+  ]).optional(),
+  
+  // Output directory parameters (bulk-aware)
+  outputDirectory: z.union([
+    z.string(),
+    z.array(z.string())
+  ]).optional(),
+  
+  // Data format parameters (bulk-aware)
+  dataFormat: z.union([
+    caseInsensitiveEnum(['base64', 'hex']),
+    z.array(caseInsensitiveEnum(['base64', 'hex']))
+  ]).optional(),
+  
+  ...BulkControlFields,
+});
+
+// Simple single schema like ManageTextSchema
+export const UnifiedNodeOperationsSchema = z.object({
+  operation: caseInsensitiveEnum(['create', 'get', 'update', 'delete', 'duplicate']),
+  
+  // Core identification
+  nodeId: z.union([z.string(), z.array(z.string())]).optional(),
+  
+  // Create-specific
+  nodeType: z.union([FigmaCreateNodeTypes, z.array(FigmaCreateNodeTypes)]).optional(),
+  
+  // Basic properties
+  ...BulkPositionFields,
+  ...BulkDimensionFields,
+  ...BulkVisualFields,
+  ...BulkColorFields,
+  ...BulkMetadataFields,
+  ...BulkControlFields,
 }).refine((data) => {
-  return !!data.nodeId;
-}, {
-  message: "Node ID is required for export operations"
-});
+  // Validate required fields based on operation
+  switch (data.operation) {
+    case 'create':
+      // Must have nodeType for create
+      if (!data.nodeType) return false;
+      if (Array.isArray(data.nodeType)) {
+        return data.nodeType.length > 0;
+      }
+      return true;
+    case 'get':
+    case 'update':
+    case 'delete':
+    case 'duplicate':
+      // Must have nodeId for these operations
+      if (!data.nodeId) return false;
+      if (Array.isArray(data.nodeId)) {
+        return data.nodeId.length > 0 && data.nodeId.every(id => id && id.trim().length > 0);
+      }
+      return typeof data.nodeId === 'string' && data.nodeId.trim().length > 0;
+    default:
+      return true;
+  }
+}, (val) => ({
+  message: `Missing required parameters for operation '${val.operation}': ${
+    val.operation === 'create' ? "'nodeType' is required" :
+    ['get', 'update', 'delete', 'duplicate'].includes(val.operation) ? "'nodeId' is required" :
+    "Missing required parameters"
+  }`
+}));
 
 // Export types
 export type TextStyleRange = z.infer<typeof TextStyleRangeSchema>;
-export type CreateNodeParams = z.infer<typeof CreateNodeSchema>;
-export type UpdateNodeParams = z.infer<typeof UpdateNodeSchema>;
-export type ManageNodesParams = z.infer<typeof ManageNodesSchema>;
-export type SetSelectionParams = z.infer<typeof SetSelectionSchema>;
-export type GetPageNodesParams = z.infer<typeof GetPageNodesSchema>;
-export type ExportNodeParams = z.infer<typeof ExportNodeSchema>;
+
+// Bulk operation types
+export type BulkCreateNodeParams = z.infer<typeof BulkCreateNodeSchema>;
+export type BulkUpdateNodeParams = z.infer<typeof BulkUpdateNodeSchema>;
+export type BulkDeleteNodeParams = z.infer<typeof BulkDeleteNodeSchema>;
+export type BulkDuplicateNodeParams = z.infer<typeof BulkDuplicateNodeSchema>;
+export type BulkGetNodeParams = z.infer<typeof BulkGetNodeSchema>;
+export type UnifiedNodeOperationsParams = z.infer<typeof UnifiedNodeOperationsSchema>;

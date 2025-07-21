@@ -1,8 +1,9 @@
 import { z } from 'zod';
 import { FontName } from './figma-base.js';
+import { caseInsensitiveEnum } from './enum-utils.js';
 
 export const FontOperationsSchema = z.object({
-  operation: z.enum([
+  operation: caseInsensitiveEnum([
     'search_fonts',
     'check_availability', 
     'get_missing',
@@ -13,44 +14,46 @@ export const FontOperationsSchema = z.object({
     'get_project_fonts',
     'get_font_count'
   ]),
-  // Common parameters
-  fontFamily: z.string().optional(),
-  fontStyle: z.string().optional(),
-  fontNames: z.array(z.object({
-    family: z.string(),
-    style: z.string()
-  })).optional(),
-  preloadCount: z.number().optional(),
-  priority: z.enum(['high', 'normal', 'low']).optional(),
-  strict: z.boolean().optional(),
-  fallbackSuggestions: z.boolean().optional(),
+  
+  // Flat parameters with bulk support - support both single values and arrays
+  fontFamily: z.union([z.string(), z.array(z.string())]).optional(),
+  fontStyle: z.union([z.string(), z.array(z.string())]).optional(),
+  
+  
+  // Other parameters with bulk support
+  preloadCount: z.union([z.number(), z.array(z.number())]).optional(),
+  priority: z.union([caseInsensitiveEnum(['high', 'normal', 'low']), z.array(caseInsensitiveEnum(['high', 'normal', 'low']))]).optional(),
+  strict: z.union([z.boolean(), z.array(z.boolean())]).optional(),
+  fallbackSuggestions: z.union([z.boolean(), z.array(z.boolean())]).optional(),
+  
+  // Bulk operation control
+  failFast: z.boolean().optional(), // Stop on first error in bulk operations
   
   // Search parameters for search_fonts
   query: z.string().optional(),
-  source: z.enum(['system', 'google', 'custom']).optional(),
+  source: caseInsensitiveEnum(['system', 'google', 'custom']).optional(),
   includeGoogle: z.boolean().optional(),
   includeSystem: z.boolean().optional(),
   includeCustom: z.boolean().optional(),
   hasStyle: z.string().optional(),
   minStyleCount: z.number().optional(),
   limit: z.number().min(1).max(100).optional(),
-  sortBy: z.enum(['alphabetical', 'style_count', 'source']).optional(),
+  sortBy: caseInsensitiveEnum(['alphabetical', 'style_count', 'source']).optional(),
   
   // Count parameters for get_font_count
-  countSource: z.enum(['system', 'google', 'custom']).optional(),
+  countSource: caseInsensitiveEnum(['system', 'google', 'custom']).optional(),
   countHasStyle: z.string().optional()
 }).refine((data) => {
   // Validate required fields based on operation
   switch (data.operation) {
     case 'check_availability':
-      return data.fontNames && data.fontNames.length > 0;
+    case 'preload_fonts':
+      return !!data.fontFamily && !!data.fontStyle;
     case 'get_font_styles':
       return !!data.fontFamily;
     case 'validate_font':
     case 'get_font_info':
       return !!data.fontFamily && !!data.fontStyle;
-    case 'preload_fonts':
-      return data.fontNames && data.fontNames.length > 0;
     case 'search_fonts':
       // At least one search parameter is required
       return !!(data.query || data.source || data.includeGoogle || 

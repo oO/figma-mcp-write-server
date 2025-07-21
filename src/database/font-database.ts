@@ -221,6 +221,17 @@ export class FontDatabase {
    * Insert or update a font family with its styles
    */
   upsertFont(family: string, source: FontSource, styles: string[], isLoaded: boolean = true): void {
+    // Validate inputs
+    if (!family || typeof family !== 'string') {
+      throw new Error(`Invalid font family: ${family}`);
+    }
+    if (!source || typeof source !== 'string') {
+      throw new Error(`Invalid font source: ${source}`);
+    }
+    if (!Array.isArray(styles)) {
+      throw new Error(`Invalid styles array: ${styles}`);
+    }
+    
     const transaction = this.db.transaction(() => {
       // Insert or update font
       const fontSql = `
@@ -232,7 +243,7 @@ export class FontDatabase {
           updated_at = CURRENT_TIMESTAMP
       `;
       
-      const fontResult = this.db.prepare(fontSql).run(family, source, isLoaded);
+      const fontResult = this.db.prepare(fontSql).run(family, source, isLoaded ? 1 : 0);
       
       // Get font ID
       const fontId = fontResult.lastInsertRowid || (this.db.prepare(
@@ -254,6 +265,12 @@ export class FontDatabase {
       const styleStmt = this.db.prepare(styleSql);
 
       for (const style of styles) {
+        // Validate style
+        if (!style || typeof style !== 'string') {
+          console.error(`Skipping invalid style for ${family}:`, style);
+          continue;
+        }
+        
         const fullName = `${family} ${style}`;
         styleStmt.run(fontId, style, fullName);
       }
@@ -289,7 +306,11 @@ export class FontDatabase {
   updateSyncMetadata(updates: Partial<SyncMetadata>): void {
     const fields = Object.keys(updates).filter(key => key !== 'id');
     const setClause = fields.map(field => `${field} = ?`).join(', ');
-    const values = fields.map(field => updates[field as keyof SyncMetadata]);
+    const values = fields.map(field => {
+      const value = updates[field as keyof SyncMetadata];
+      // Convert undefined to null for SQLite compatibility
+      return value === undefined ? null : value;
+    });
     
     const sql = `
       UPDATE sync_metadata 

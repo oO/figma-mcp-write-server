@@ -10,12 +10,13 @@ export interface SyncProgress {
   endTime?: Date;
 }
 
+/**
+ * KISS: SyncResult returns data directly, errors are thrown
+ */
 export interface SyncResult {
-  success: boolean;
   totalFonts: number;
   totalStyles: number;
   duration: number;
-  error?: string;
 }
 
 export class FontSyncService {
@@ -40,8 +41,14 @@ export class FontSyncService {
     // Check if sync is needed
     if (!force && !this.db.isEmpty() && !this.db.isStale()) {
       const stats = this.db.getStats();
+      const metadata = this.db.getSyncMetadata();
+      const lastSync = metadata?.last_sync_time ? new Date(metadata.last_sync_time) : null;
+      const timeSinceSync = lastSync ? Math.round((Date.now() - lastSync.getTime()) / (1000 * 60 * 60)) : 0;
+      
+      console.error(`📦 Font database is fresh (${stats.totalFonts} families, last sync ${timeSinceSync}h ago), skipping sync`);
+      
+      // KISS: Return data directly
       return {
-        success: true,
         totalFonts: stats.totalFonts,
         totalStyles: stats.totalStyles,
         duration: 0
@@ -67,18 +74,24 @@ export class FontSyncService {
 
       // Phase 1: Fetch fonts from Figma API
       this.updateProgress('fetching', 0, 0, 'Fetching fonts from Figma API');
+      console.error('FontSync: Fetching fonts from Figma API...');
       
       const figmaFonts = await this.fetchFontsFromFigma();
+      console.error(`FontSync: Retrieved ${figmaFonts.length} fonts from Figma API`);
       
       // Phase 2: Process and categorize fonts
       this.updateProgress('processing', 0, figmaFonts.length, 'Processing font data');
+      console.error(`FontSync: Processing ${figmaFonts.length} fonts...`);
       
       const processedFonts = this.processFigmaFonts(figmaFonts);
+      console.error(`FontSync: Processed ${processedFonts.length} font families`);
       
       // Phase 3: Store in database
       this.updateProgress('storing', 0, processedFonts.length, 'Storing fonts in database');
+      console.error(`FontSync: Storing ${processedFonts.length} font families in database...`);
       
       await this.storeFontsInDatabase(processedFonts);
+      console.error('FontSync: Database storage completed');
       
       // Complete sync
       const endTime = new Date();
@@ -100,9 +113,10 @@ export class FontSyncService {
       });
 
       const stats = this.db.getStats();
+      console.error(`FontSync: Sync completed successfully! ${stats.totalFonts} families, ${stats.totalStyles} styles (${duration}ms)`);
       
+      // KISS: Return data directly
       return {
-        success: true,
         totalFonts: stats.totalFonts,
         totalStyles: stats.totalStyles,
         duration
@@ -112,6 +126,8 @@ export class FontSyncService {
       const endTime = new Date();
       const duration = endTime.getTime() - startTime.getTime();
       const errorMessage = error instanceof Error ? error.toString() : 'Unknown error';
+      
+      console.error(`FontSync: Sync failed after ${duration}ms:`, errorMessage);
       
       this.currentSync = {
         ...this.currentSync!,
@@ -126,13 +142,8 @@ export class FontSyncService {
         sync_error: errorMessage
       });
 
-      return {
-        success: false,
-        totalFonts: 0,
-        totalStyles: 0,
-        duration,
-        error: errorMessage
-      };
+      // KISS: Throw errors instead of returning them
+      throw new Error(`Font sync failed after ${duration}ms: ${errorMessage}`);
     }
   }
 
@@ -154,16 +165,32 @@ export class FontSyncService {
    * Fetch fonts from Figma Plugin API using direct figma.listAvailableFontsAsync()
    */
   private async fetchFontsFromFigma(): Promise<any[]> {
-    // Send a custom sync operation to get raw font data
-    const result = await this.sendToPlugin({
-      type: 'SYNC_FONTS',
-      payload: {}
-    });
+    let result: any;
+    
+    try {
+      // Send a custom sync operation to get raw font data
+      result = await this.sendToPlugin({
+        type: 'SYNC_FONTS',
+        payload: {}
+      });
+    } catch (error) {
+      console.error('FontSync: Error calling plugin:', error);
+      throw error;
+    }
 
-    // Use the raw plugin response since this is for sync
-    const fonts = result?.success ? result.data : result;
+    // Extract font data - result is returned directly
+    let fonts: any[];
+    if (result?.fonts) {
+      fonts = result.fonts;
+    } else if (Array.isArray(result)) {
+      fonts = result;
+    } else {
+      console.error('FontSync: Invalid result structure:', result);
+      throw new Error('Invalid font data received from Figma API');
+    }
     
     if (!Array.isArray(fonts)) {
+      console.error('FontSync: Fonts is not an array:', fonts);
       throw new Error('Invalid font data received from Figma API');
     }
 
@@ -215,16 +242,38 @@ export class FontSyncService {
     this.db.clearFonts();
 
     let stored = 0;
+    let errors = 0;
     
     for (const font of fonts) {
-      const styles = Array.from(font.styles);
-      this.db.upsertFont(font.family, font.source, styles, font.isLoaded);
-      
-      stored++;
-      if (stored % 100 === 0) {
-        this.updateProgress('storing', stored, fonts.length, 
-          `Stored ${stored}/${fonts.length} font families`);
+      try {
+        const styles = Array.from(font.styles);
+        this.db.upsertFont(font.family, font.source, styles, font.isLoaded);
+        stored++;
+      } catch (error) {
+        errors++;
+        console.error(`Failed to store font "${font.family}":`, error);
+        console.error(`Font data:`, { 
+          family: font.family, 
+          source: font.source, 
+          stylesCount: font.styles.size,
+          isLoaded: font.isLoaded,
+          styles: Array.from(font.styles).slice(0, 5) // Show first 5 styles for debugging
+        });
+        
+        // Don't fail the entire sync for one bad font
+        if (errors > 10) {
+          throw new Error(`Too many font storage errors (${errors}), aborting sync`);
+        }
       }
+      
+      if ((stored + errors) % 100 === 0) {
+        this.updateProgress('storing', stored + errors, fonts.length, 
+          `Stored ${stored}/${fonts.length} font families (${errors} errors)`);
+      }
+    }
+    
+    if (errors > 0) {
+      console.error(`FontSync: Storage completed with ${errors} errors out of ${fonts.length} fonts`);
     }
   }
 

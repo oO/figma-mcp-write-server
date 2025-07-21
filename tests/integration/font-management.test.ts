@@ -1,13 +1,13 @@
-import { describe, it, expect, beforeAll } from '@jest/globals';
-import { FontHandlers } from '../../src/handlers/font-handlers.js';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
+import { FontsHandler } from '@/handlers/fonts-handler';
 
 describe('Font Management Integration Tests', () => {
-  let fontHandlers: FontHandlers;
-  let sendToPlugin: jest.Mock;
+  let fontsHandler: FontsHandler;
+  let sendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeAll(() => {
     // Create send function with mock responses
-    sendToPlugin = jest.fn().mockImplementation(async (request) => {
+    sendToPlugin = vi.fn().mockImplementation(async (request) => {
       const { type, payload } = request;
       
       if (type === 'MANAGE_FONTS') {
@@ -17,7 +17,7 @@ describe('Font Management Integration Tests', () => {
       throw new Error(`Unexpected request type: ${type}`);
     });
 
-    fontHandlers = new FontHandlers(sendToPlugin);
+    fontsHandler = new FontsHandler(sendToPlugin);
   });
 
   function mockFontResponses(payload: any) {
@@ -100,7 +100,7 @@ describe('Font Management Integration Tests', () => {
 
   describe('Font Operations', () => {
     it('should handle search_fonts operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts', { 
         operation: 'search_fonts',
         query: 'Inter'
       });
@@ -116,7 +116,7 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle check_availability operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts', { 
         operation: 'check_availability',
         fontNames: [
           { family: 'Inter', style: 'Regular' },
@@ -129,14 +129,14 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle get_project_fonts operation', async () => {
-      const result = await fontHandlers.manageFonts({ operation: 'get_project_fonts' });
+      const result = await fontsHandler.handle('figma_fonts', { operation: 'get_project_fonts' });
       
       expect(result.content).toBeDefined();
       expect(result.isError).toBe(false);
     });
 
     it('should handle get_font_count operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts'({ 
         operation: 'get_font_count',
         countSource: 'google'
       });
@@ -146,7 +146,7 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle get_font_styles operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts'({ 
         operation: 'get_font_styles',
         fontFamily: 'Inter'
       });
@@ -156,7 +156,7 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle validate_font operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts'({ 
         operation: 'validate_font',
         fontFamily: 'Inter',
         fontStyle: 'Bold'
@@ -167,7 +167,7 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle get_font_info operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts'({ 
         operation: 'get_font_info',
         fontFamily: 'Inter',
         fontStyle: 'Bold'
@@ -178,7 +178,7 @@ describe('Font Management Integration Tests', () => {
     });
 
     it('should handle preload_fonts operation', async () => {
-      const result = await fontHandlers.manageFonts({ 
+      const result = await fontsHandler.handle('figma_fonts'({ 
         operation: 'preload_fonts',
         fontNames: [
           { family: 'Inter', style: 'Regular' },
@@ -199,7 +199,7 @@ describe('Font Management Integration Tests', () => {
         throw new Error(`Unexpected request`);
       });
 
-      const result = await fontHandlers.manageFonts({ operation: 'get_missing' });
+      const result = await fontsHandler.handle('figma_fonts'({ operation: 'get_missing' });
       
       expect(result.content).toBeDefined();
       expect(result.isError).toBe(false);
@@ -210,12 +210,12 @@ describe('Font Management Integration Tests', () => {
     it('should handle plugin errors gracefully', async () => {
       sendToPlugin.mockRejectedValueOnce(new Error('Plugin communication failed'));
 
-      await expect(fontHandlers.manageFonts({ operation: 'search_fonts', query: 'test' }))
+      await expect(fontsHandler.handle('figma_fonts'({ operation: 'search_fonts', query: 'test' }))
         .rejects.toThrow('Font management failed: Plugin communication failed');
     });
 
     it('should handle validation errors', async () => {
-      await expect(fontHandlers.manageFonts({ operation: 'invalid_operation' as any }))
+      await expect(fontsHandler.handle('figma_fonts'({ operation: 'invalid_operation' as any }))
         .rejects.toThrow();
     });
   });

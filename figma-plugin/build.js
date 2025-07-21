@@ -97,7 +97,8 @@ async function build() {
       sourcemap: config.sourcemap,
       treeShaking: true,
       define: {
-        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+        'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+        'PLUGIN_VERSION': JSON.stringify(buildInfo.version)
       },
       banner: {
         js: '// Figma MCP Plugin - Generated Bundle\n'

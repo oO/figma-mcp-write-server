@@ -3,8 +3,9 @@ import WebSocket from 'ws';
 import { v4 as uuidv4 } from 'uuid';
 import { LegacyServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types/index.js';
 import { checkPortAvailable, findZombieProcesses, killZombieProcesses, findAvailablePort } from '../utils/port-utils.js';
+import { EventEmitter } from 'events';
 
-export class FigmaWebSocketServer {
+export class FigmaWebSocketServer extends EventEmitter {
   private wsServer: WebSocketServer | null = null;
   private pluginConnection: WebSocket | null = null;
   private config: LegacyServerConfig;
@@ -23,6 +24,7 @@ export class FigmaWebSocketServer {
   private startupTime: number;
 
   constructor(config: LegacyServerConfig) {
+    super();
     this.config = config;
     
     // Initialize connection status
@@ -175,8 +177,7 @@ export class FigmaWebSocketServer {
     
     this.requestQueue = this.requestQueue.filter(request => {
       if (now - request.timestamp > staleThreshold) {
-        clearTimeout(request.timeout);
-        request.reject(new Error('Request timed out (stale)'));
+            request.reject(new Error('Request timed out (stale)'));
         return false;
       }
       return true;
@@ -195,6 +196,10 @@ export class FigmaWebSocketServer {
       
       // Process any queued requests
       this.processRequestQueue();
+      
+      // Emit plugin connected event for initialization tasks
+      this.emit('pluginConnected');
+      
       return;
     }
     
@@ -231,23 +236,22 @@ export class FigmaWebSocketServer {
     const responseTime = Date.now() - request.timestamp;
     this.recordResponseTime(responseTime);
     
-    clearTimeout(request.timeout);
     
-    if (message.success) {
-      this.healthMetrics.successCount++;
-      this.healthMetrics.lastSuccess = new Date();
-      request.resolve(message);
-    } else {
+    if (message.error) {
       // Don't count startup handshake failures in health metrics
       const timeSinceStartup = Date.now() - this.startupTime;
       const isStartupFailure = timeSinceStartup < 5000; // 5 second grace period
       
       if (!isStartupFailure) {
         this.healthMetrics.errorCount++;
-        this.healthMetrics.lastError = message.error || 'Plugin operation failed';
+        this.healthMetrics.lastError = message.error;
       }
       
-      request.reject(new Error(message.error || 'Plugin operation failed'));
+      request.reject(new Error(message.error));
+    } else {
+      this.healthMetrics.successCount++;
+      this.healthMetrics.lastSuccess = new Date();
+      request.resolve(message.result);
     }
   }
   
@@ -255,7 +259,6 @@ export class FigmaWebSocketServer {
     const batch = this.pendingBatches.get(message.batchId);
     if (!batch) return;
     
-    clearTimeout(batch.timeout);
     this.pendingBatches.delete(message.batchId);
     
     // Process each response in the batch
@@ -265,10 +268,7 @@ export class FigmaWebSocketServer {
         const responseTime = Date.now() - request.timestamp;
         this.recordResponseTime(responseTime);
         
-        if (response.success) {
-          this.healthMetrics.successCount++;
-          request.resolve(response);
-        } else {
+        if (response.error) {
           // Don't count startup handshake failures in health metrics
           const timeSinceStartup = Date.now() - this.startupTime;
           const isStartupFailure = timeSinceStartup < 5000; // 5 second grace period
@@ -277,7 +277,10 @@ export class FigmaWebSocketServer {
             this.healthMetrics.errorCount++;
           }
           
-          request.reject(new Error(response.error || 'Batch operation failed'));
+          request.reject(new Error(response.error));
+        } else {
+          this.healthMetrics.successCount++;
+          request.resolve(response.result);
         }
       }
     });
@@ -294,20 +297,13 @@ export class FigmaWebSocketServer {
 
   async sendToPlugin(request: any, priority: 'low' | 'normal' | 'high' = 'normal'): Promise<any> {
     const id = uuidv4();
-    const timeoutMs = this.getTimeoutForOperation(request.type);
     
     return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        this.removeRequestFromQueue(id);
-        reject(new Error(`Plugin request timeout after ${timeoutMs}ms for operation: ${request.type}`));
-      }, timeoutMs);
-
       const queuedRequest: QueuedRequest = {
         id,
         request: { ...request, id },
         resolve,
         reject,
-        timeout,
         timestamp: Date.now(),
         priority,
         retries: 0
@@ -323,10 +319,6 @@ export class FigmaWebSocketServer {
     });
   }
   
-  private getTimeoutForOperation(operationType: string): number {
-    return this.config.communication.operationTimeouts[operationType] || 
-           this.config.communication.defaultTimeout;
-  }
   
   private addToQueue(request: QueuedRequest): void {
     // Insert request based on priority
@@ -346,7 +338,6 @@ export class FigmaWebSocketServer {
     // Enforce queue size limit
     if (this.requestQueue.length > this.config.communication.requestQueueSize) {
       const dropped = this.requestQueue.pop()!;
-      clearTimeout(dropped.timeout);
       dropped.reject(new Error('Request dropped due to queue overflow'));
     }
   }
@@ -388,13 +379,7 @@ export class FigmaWebSocketServer {
     const batchId = uuidv4();
     const batch: RequestBatch = {
       id: batchId,
-      requests: batchRequests,
-      timeout: setTimeout(() => {
-        this.pendingBatches.delete(batchId);
-        batchRequests.forEach(req => {
-          req.reject(new Error('Batch request timeout'));
-        });
-      }, this.config.communication.defaultTimeout)
+      requests: batchRequests
     };
     
     this.pendingBatches.set(batchId, batch);
@@ -409,7 +394,6 @@ export class FigmaWebSocketServer {
       this.pluginConnection?.send(JSON.stringify(batchMessage));
     } catch (error) {
       this.pendingBatches.delete(batchId);
-      clearTimeout(batch.timeout);
       batchRequests.forEach(req => {
         req.reject(new Error(`Failed to send batch request: ${error}`));
       });
@@ -427,7 +411,6 @@ export class FigmaWebSocketServer {
       this.pluginConnection.send(JSON.stringify(request.request));
     } catch (error) {
       this.pendingRequests.delete(request.id);
-      clearTimeout(request.timeout);
       request.reject(new Error(`Failed to send request: ${error}`));
     }
   }
@@ -466,15 +449,13 @@ export class FigmaWebSocketServer {
     
     // Clear all pending requests
     this.requestQueue.forEach(request => {
-      clearTimeout(request.timeout);
-      request.reject(new Error('Server shutting down'));
+        request.reject(new Error('Server shutting down'));
     });
     this.requestQueue = [];
     
     // Clear pending batches
     for (const [id, batch] of this.pendingBatches.entries()) {
-      clearTimeout(batch.timeout);
-      batch.requests.forEach(req => {
+        batch.requests.forEach(req => {
         req.reject(new Error('Server shutting down'));
       });
     }

@@ -1,25 +1,25 @@
-import { describe, test, expect, jest, beforeEach } from '@jest/globals';
-import { StyleHandlers } from '../../../src/handlers/style-handlers.js';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { StyleHandler } from '@/handlers/style-handler';
 
-describe('StyleHandlers', () => {
-  let styleHandlers: StyleHandlers;
-  let mockSendToPlugin: jest.Mock;
+describe('StyleHandler', () => {
+  let styleHandler: StyleHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    styleHandlers = new StyleHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    styleHandler = new StyleHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
     test('should return manage_styles tool', () => {
-      const tools = styleHandlers.getTools();
+      const tools = styleHandler.getTools();
       expect(tools).toHaveLength(1);
       expect(tools[0].name).toBe('manage_styles');
       expect(tools[0].inputSchema.required).toContain('operation');
     });
 
     test('should support all style types', () => {
-      const tools = styleHandlers.getTools();
+      const tools = styleHandler.getTools();
       const manageStylesTool = tools[0];
       const styleTypeEnum = manageStylesTool.inputSchema.properties.styleType.enum;
       
@@ -43,7 +43,7 @@ describe('StyleHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await styleHandlers.handle('manage_styles', {
+      const result = await styleHandler.handle('manage_styles', {
         operation: 'create',
         styleType: 'paint',
         styleName: 'Primary Color'
@@ -74,7 +74,7 @@ describe('StyleHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await styleHandlers.handle('manage_styles', {
+      const result = await styleHandler.handle('manage_styles', {
         operation: 'list',
         styleType: 'text'
       });
@@ -96,7 +96,7 @@ describe('StyleHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await styleHandlers.handle('manage_styles', {
+      const result = await styleHandler.handle('manage_styles', {
         operation: 'apply',
         styleId: 'style-123',
         nodeId: 'node-456'
@@ -125,7 +125,7 @@ describe('StyleHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await styleHandlers.handle('manage_styles', {
+      const result = await styleHandler.handle('manage_styles', {
         operation: 'delete',
         styleId: 'style-123'
       });
@@ -150,7 +150,7 @@ describe('StyleHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await styleHandlers.handle('manage_styles', {
+      const result = await styleHandler.handle('manage_styles', {
         operation: 'get',
         styleId: 'style-123'
       });
@@ -162,18 +162,18 @@ describe('StyleHandlers', () => {
 
   describe('Validation', () => {
     test('should validate required operation parameter', async () => {
-      await expect(styleHandlers.handle('manage_styles', {}))
+      await expect(styleHandler.handle('manage_styles', {}))
         .rejects.toThrow();
     });
 
     test('should validate operation enum values', async () => {
-      await expect(styleHandlers.handle('manage_styles', {
+      await expect(styleHandler.handle('manage_styles', {
         operation: 'invalid_operation'
       })).rejects.toThrow();
     });
 
     test('should validate styleType enum values', async () => {
-      await expect(styleHandlers.handle('manage_styles', {
+      await expect(styleHandler.handle('manage_styles', {
         operation: 'create',
         styleType: 'invalid_type'
       })).rejects.toThrow();
@@ -184,7 +184,7 @@ describe('StyleHandlers', () => {
     test('should handle plugin connection errors', async () => {
       mockSendToPlugin.mockRejectedValue(new Error('Plugin not connected'));
 
-      await expect(styleHandlers.handle('manage_styles', {
+      await expect(styleHandler.handle('manage_styles', {
         operation: 'list',
         styleType: 'paint'
       })).rejects.toThrow('Plugin not connected');
@@ -193,14 +193,14 @@ describe('StyleHandlers', () => {
     test('should handle plugin operation failures', async () => {
       mockSendToPlugin.mockRejectedValue(new Error('Style not found'));
 
-      await expect(styleHandlers.handle('manage_styles', {
+      await expect(styleHandler.handle('manage_styles', {
         operation: 'get',
         styleId: 'invalid-id'
       })).rejects.toThrow('Style not found');
     });
 
     test('should handle unknown tool names', async () => {
-      await expect(styleHandlers.handle('unknown_tool', {}))
+      await expect(styleHandler.handle('unknown_tool', {}))
         .rejects.toThrow('Unknown tool: unknown_tool');
     });
   });

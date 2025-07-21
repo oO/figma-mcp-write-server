@@ -1,30 +1,40 @@
 import { OperationResult, NodeInfo } from '../types.js';
+import { cleanEmptyProperties } from './node-utils.js';
 
-export function createSuccessResponse(data?: any): OperationResult {
-  return {
-    success: true,
-    data
-  };
+/**
+ * DEPRECATED: Use direct data return instead
+ * KISS: Return data directly, no success wrapper
+ */
+export function createSuccessResponse(data?: any): any {
+  console.warn('createSuccessResponse is deprecated - return data directly');
+  return data;
 }
 
-export function createErrorResponse(error: string | Error): OperationResult {
+/**
+ * DEPRECATED: Use throw new Error() instead
+ * KISS: Throw errors directly, no error wrapper
+ */
+export function createErrorResponse(error: string | Error): never {
+  console.warn('createErrorResponse is deprecated - throw errors directly');
   const errorMessage = error instanceof Error ? error.message : error;
-  return {
-    success: false,
-    error: errorMessage
-  };
+  throw new Error(errorMessage);
 }
 
+/**
+ * DEPRECATED: Use direct async function calls instead
+ * KISS: Let functions return data directly or throw errors
+ */
 export function wrapAsync<T extends any[], R>(
   fn: (...args: T) => Promise<R>
-): (...args: T) => Promise<OperationResult> {
-  return async (...args: T): Promise<OperationResult> => {
+): (...args: T) => Promise<R> {
+  console.warn('wrapAsync is deprecated - use direct async calls');
+  return async (...args: T): Promise<R> => {
     try {
       const result = await fn(...args);
-      return createSuccessResponse(result);
+      return result;
     } catch (error) {
       console.error('❌ Operation failed:', error);
-      return createErrorResponse(error as Error);
+      throw error;
     }
   };
 }
@@ -68,7 +78,8 @@ export function formatStyleResponse(style: PaintStyle | TextStyle | EffectStyle 
     response.layoutGrids = (style as GridStyle).layoutGrids;
   }
 
-  return response;
+  // Clean empty properties before returning (removes empty {} and [] objects)
+  return cleanEmptyProperties(response) || response;
 }
 
 export function createOperationResponse(operation: string, data: any): any {
@@ -79,8 +90,13 @@ export function createOperationResponse(operation: string, data: any): any {
   };
 }
 
+/**
+ * DEPRECATED: KISS pattern doesn't use success wrappers
+ * Data is valid if it exists, errors are thrown
+ */
 export function validateResponse(response: any): boolean {
-  return response && typeof response === 'object' && 'success' in response;
+  console.warn('validateResponse is deprecated - KISS pattern uses direct data/errors');
+  return response !== undefined && response !== null;
 }
 
 export function sanitizeError(error: unknown): string {
@@ -93,13 +109,17 @@ export function sanitizeError(error: unknown): string {
   return 'Unknown error occurred';
 }
 
-export function logOperation(operation: string, params: any, result: OperationResult): void {
-  const status = result.success ? '✅' : '❌';
+/**
+ * DEPRECATED: KISS pattern - operations succeed (return data) or fail (throw)
+ */
+export function logOperation(operation: string, params: any, result: any): void {
+  console.warn('logOperation success check is deprecated - KISS pattern');
+  const status = '✅'; // If we got here, operation succeeded (otherwise would have thrown)
   console.log(`${status} ${operation}:`, { params, result });
 }
 
 export function createPageNodesResponse(nodes: any[], detail: string = 'standard'): any {
-  const topLevelNodes = nodes.filter(node => node.depth === 0);
+  const topLevelNodes = nodes.filter(node => node.depth === 1);
   
   const response = {
     nodes,

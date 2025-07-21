@@ -36,6 +36,8 @@ export interface OperationSchemaConfig<T extends z.ZodRawShape> {
   refinements?: OperationRefinements;
   /** Default values for optional fields */
   defaults?: Partial<z.infer<z.ZodObject<T>>>;
+  /** Operation-specific parameter validation - defines which parameters each operation accepts */
+  operationParameters?: Record<string, readonly string[]>;
 }
 
 /**
@@ -50,6 +52,7 @@ export function createOperationSchema<T extends z.ZodRawShape>(
     fields,
     validationRules,
     refinements,
+    operationParameters,
   } = config;
 
   const allOperations = [...baseOperations, ...additionalOperations] as [string, ...string[]];
@@ -97,6 +100,7 @@ export function createOperationSchema<T extends z.ZodRawShape>(
     });
   }
 
+
   return finalSchema;
 }
 
@@ -125,7 +129,7 @@ export function createManagementSchema<T extends z.ZodRawShape>(
   validationRules?: OperationValidationRules
 ) {
   return createOperationSchema({
-    baseOperations: ['create', 'update', 'delete', 'get', 'list'],
+    baseOperations: ['create', 'update', 'delete', 'get', 'list', 'duplicate'],
     additionalOperations: toolSpecificOperations,
     fields,
     validationRules,
@@ -138,13 +142,15 @@ export function createManagementSchema<T extends z.ZodRawShape>(
 export function createActionSchema<T extends z.ZodRawShape>(
   operations: readonly string[],
   fields: T,
-  validationRules?: OperationValidationRules
+  validationRules?: OperationValidationRules,
+  operationParameters?: Record<string, readonly string[]>
 ) {
   return createOperationSchema({
     baseOperations: [],
     additionalOperations: operations,
     fields,
     validationRules,
+    operationParameters,
   });
 }
 

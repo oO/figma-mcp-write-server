@@ -42,7 +42,7 @@ export class MessageRouter {
       };
 
       this.ws.onclose = () => {
-        console.log('❌ Disconnected from MCP server');
+        console.log('Disconnected from MCP server');
         this.isConnected = false;
         this.stopHeartbeat();
         this.notifyUI('disconnected', 'Disconnected from MCP server');
@@ -65,7 +65,7 @@ export class MessageRouter {
       type: 'PLUGIN_HELLO',
       payload: {
         pluginId: 'figma-mcp-write-plugin',
-        version: '0.28.2',
+        version: PLUGIN_VERSION,
         timestamp: Date.now()
       }
     });
@@ -195,6 +195,9 @@ export class MessageRouter {
   
   private startHeartbeat(): void {
     this.stopHeartbeat();
+    // Send immediate heartbeat upon connection
+    this.sendHeartbeat();
+    // Then continue with regular 30-second intervals
     this.heartbeatInterval = setInterval(() => {
       this.sendHeartbeat();
     }, 30000) as any; // Send heartbeat every 30 seconds
@@ -235,25 +238,28 @@ export class MessageRouter {
     for (const request of requests) {
       try {
         if (this.handlers[request.type]) {
-          const result = await this.executeOperation(request.type, request.payload);
-          responses.push({
-            id: request.id,
-            success: result.success,
-            data: result.data,
-            error: result.error
-          });
+          try {
+            const result = await this.executeOperation(request.type, request.payload);
+            responses.push({
+              id: request.id,
+              result
+            });
+          } catch (error) {
+            responses.push({
+              id: request.id,
+              error: error instanceof Error ? error.toString() : 'Unknown error'
+            });
+          }
         } else {
           responses.push({
             id: request.id,
-            success: false,
             error: `Unknown operation: ${request.type}`
           });
         }
       } catch (error) {
         responses.push({
           id: request.id,
-          success: false,
-          error: error instanceof Error ? error.message : 'Unknown error'
+          error: error instanceof Error ? error.toString() : 'Unknown error'
         });
       }
     }

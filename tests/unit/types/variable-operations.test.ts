@@ -1,10 +1,10 @@
-import { describe, test, expect } from '@jest/globals';
+import { describe, test, expect } from 'vitest';
 import { 
   ManageCollectionsSchema, 
   ManageVariablesSchema,
   VariableCollectionDataSchema,
-  VariableDataSchema 
-} from '../../../src/types/variable-operations.js';
+  VariableDataSchema,
+} from '@/types/variable-operations';
 
 describe('Variable Operations Schemas', () => {
   describe('ManageCollectionsSchema', () => {

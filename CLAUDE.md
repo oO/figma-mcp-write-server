@@ -21,6 +21,7 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - Use `{type: 'OPERATION', payload: parameters}` pattern
 - YAML responses for all tool outputs
 - **JSON-RPC**: Always use `error.toString()` never `error.message`
+- **Debug Logging**: Use `debugLog()` from `src/utils/debug-log.ts` for troubleshooting - it safely ignores errors to avoid breaking JSON-RPC communication
 
 ### Code Standards
 - Follow existing patterns before creating new ones
@@ -29,11 +30,16 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - Use descriptive names without hardcoded numbers in docs
 - Add tests for new features, run `npm test` before commits
 - Examine existing implementations first for consistency
+- **Version Management**: Never hardcode version numbers - use dynamic injection from package.json
+  - Server: Uses package.json import for VERSION constant
+  - Plugin: Uses `PLUGIN_VERSION` global constant injected during build
+  - UI: Uses `{{VERSION}}` template placeholder replaced during build
 
 ### Testing & Quality
 - Unit and integration test coverage
 - Run lint/typecheck commands if available
 - Handle errors properly in try/catch blocks
+- **Bug-Driven Testing**: Every bug found MUST have a corresponding test added to prevent regression
 
 ## API Pattern Guidelines
 
@@ -41,6 +47,21 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - **Style IDs**: Always clean trailing commas with `.replace(/,$/, '')`
 - **Style Operations**: Search local collections, don't use direct API calls
 - **Text Styles**: Clean style IDs before `setTextStyleIdAsync()`
+- **Property Modification**: For object/array properties (effects, fills, strokes), ALWAYS use the clone-modify-assign pattern
+  - Clone entire property array/object
+  - Modify the cloned data
+  - Assign entire new array/object back to property
+  - Use `FigmaPropertyManager` utility in `figma-plugin/src/utils/figma-property-utils.ts`
+  - Reference: https://www.figma.com/plugin-docs/editing-properties/
+
+### Image Transform Constraints (CRITICAL)
+- **Scale Mode Segregation**: Different transform systems for different scale modes
+  - **CROP mode**: Uses `imageTransform` matrix (arbitrary rotation/skew allowed)
+  - **FILL/FIT/TILE modes**: Uses individual `rotation`/`scalingFactor` properties only
+- **90-Degree Rotation Limit**: `rotation` property limited to ±90° increments for FILL/FIT/TILE modes
+- **Matrix vs Property Exclusivity**: Cannot mix `imageTransform` matrix with individual properties
+- **Transform API Selection**: Always check `scaleMode` before applying transforms
+- **JSON Serialization Issue**: `JSON.stringify()` returns empty objects for image paints - manually copy properties
 
 ### MCP Tool Design
 - **Flat parameters only** - never nest objects in tool interfaces
@@ -69,6 +90,24 @@ export class NewHandler extends BaseHandler {
 - Use flat parameters, convert to objects internally if needed
 - Don't use `async handle(type, payload)` patterns
 
+### Figma Property Management
+```typescript
+// CORRECT: Use FigmaPropertyManager for array/object properties
+import { modifyEffects } from '../utils/figma-property-utils.js';
+
+modifyEffects(target, manager => {
+  manager.push(newEffect);           // Add effect
+  manager.update(index, effect);     // Update effect
+  manager.remove(index);             // Delete effect
+  manager.move(fromIndex, toIndex);  // Reorder effect
+  manager.duplicate(from, to);       // Duplicate effect
+});
+
+// WRONG: Direct property mutation
+target.effects.push(effect);        // Will not trigger Figma updates
+target.effects[0] = newEffect;      // Will not work properly
+```
+
 ## Documentation Rules
 
 ### Pre-Release Phase (< 1.0.0)
@@ -85,13 +124,44 @@ export class NewHandler extends BaseHandler {
 
 ### File Purposes
 - **README.md**: Current capabilities and setup
-- **DEVELOPMENT.md**: Technical architecture for contributors
-- **EXAMPLES.md**: Current usage patterns
+- **docs/development.md**: Technical architecture for contributors
+- **docs/examples.md**: Current usage patterns
 - **CHANGELOG.md**: Commit-to-commit changes only
 
 ## Project Architecture
 
 Figma MCP Write Server with 24 MCP tools, handler-based architecture, WebSocket communication, and YAML responses.
+
+## Figma Plugin Development Critical Knowledge
+
+### Context Separation (CRITICAL)
+- **Main Plugin Thread**: Has access to Figma API (`figma.createImage`, etc.) but NO browser APIs
+- **UI Thread (iframe)**: Has browser APIs (`window.atob`, `fetch`, etc.) but NO Figma API access
+- **Communication**: Use `figma.ui.postMessage()` and message listeners for data exchange
+
+### Binary Data Handling (CRITICAL)
+- **NEVER send large byte arrays** (680K+ numbers) - causes JSON serialization hanging
+- **Use Base64 strings** for efficient binary data transmission between threads
+- **Convert Base64 in UI thread** using `window.atob` - main thread doesn't have this API
+- **Server preprocessing**: Convert image files to Base64, not byte arrays
+
+### Performance Patterns
+- **Research API availability first**: Check if functions exist in the target context before implementing
+- **Test with real data sizes**: Small test images won't reveal serialization issues
+- **Use proper error boundaries**: Catch and log specific error types for debugging
+
+### Debugging Strategy for Plugin Issues
+1. **Systematic approach**: Start with Figma API documentation research
+2. **Context-aware testing**: Test in the actual execution environment (main vs UI thread)
+3. **Real data validation**: Use actual file sizes, not toy examples
+4. **API availability checks**: Verify functions exist before calling them
+5. **Thread-specific solutions**: Don't assume browser APIs work in main thread
+
+### Common Anti-Patterns to Avoid
+- Attempting to use `atob`, `btoa`, `fetch` in main plugin thread (not available)
+- Sending large arrays through postMessage (causes hanging)
+- Using Node.js APIs like `Buffer` in plugin context (not available)
+- Implementing manual Base64 decoding when UI thread can handle it
 
 ## Critical Reminders
 
@@ -99,3 +169,4 @@ Figma MCP Write Server with 24 MCP tools, handler-based architecture, WebSocket 
 - **Files**: Edit existing over creating new, no proactive documentation
 - **Patterns**: Match established codebase conventions
 - **Quality**: Preserve all functionality during refactoring
+- **Figma Constraints**: Always consider thread context and API availability first

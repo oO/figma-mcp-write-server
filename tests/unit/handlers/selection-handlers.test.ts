@@ -1,18 +1,18 @@
-import { describe, test, expect, jest, beforeEach } from '@jest/globals';
-import { SelectionHandlers } from '../../../src/handlers/selection-handlers.js';
+import { describe, test, expect, vi, beforeEach } from 'vitest';
+import { SelectionHandler } from '@/handlers/selection-handler';
 
 describe('SelectionHandlers', () => {
-  let selectionHandlers: SelectionHandlers;
-  let mockSendToPlugin: jest.Mock;
+  let selectionHandler: SelectionHandler;
+  let mockSendToPlugin: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    mockSendToPlugin = jest.fn();
-    selectionHandlers = new SelectionHandlers(mockSendToPlugin);
+    mockSendToPlugin = vi.fn();
+    selectionHandler = new SelectionHandler(mockSendToPlugin);
   });
 
   describe('getTools', () => {
     test('should return selection-related tools', () => {
-      const tools = selectionHandlers.getTools();
+      const tools = selectionHandler.getTools();
       const toolNames = tools.map(tool => tool.name);
       
       expect(toolNames).toContain('get_selection');
@@ -20,7 +20,7 @@ describe('SelectionHandlers', () => {
     });
 
     test('should have correct tool schemas', () => {
-      const tools = selectionHandlers.getTools();
+      const tools = selectionHandler.getTools();
       const getSelectionTool = tools.find(tool => tool.name === 'get_selection');
       const setSelectionTool = tools.find(tool => tool.name === 'set_selection');
       
@@ -44,7 +44,7 @@ describe('SelectionHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await selectionHandlers.handle('get_selection', {});
+      const result = await selectionHandler.handle('get_selection', {});
 
       expect(result.isError).toBe(false);
       expect(result.content[0].text).toContain('Rectangle 1');
@@ -65,7 +65,7 @@ describe('SelectionHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await selectionHandlers.handle('get_selection', {});
+      const result = await selectionHandler.handle('get_selection', {});
 
       expect(result.isError).toBe(false);
       expect(result.content[0].text).toContain('selectionCount: 0');
@@ -83,7 +83,7 @@ describe('SelectionHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await selectionHandlers.handle('set_selection', {
+      const result = await selectionHandler.handle('set_selection', {
         nodeIds: ['node-1', 'node-2']
       });
 
@@ -106,7 +106,7 @@ describe('SelectionHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await selectionHandlers.handle('set_selection', {
+      const result = await selectionHandler.handle('set_selection', {
         nodeIds: []
       });
 
@@ -115,12 +115,12 @@ describe('SelectionHandlers', () => {
     });
 
     test('should validate nodeIds parameter', async () => {
-      await expect(selectionHandlers.handle('set_selection', {}))
+      await expect(selectionHandler.handle('set_selection', {}))
         .rejects.toThrow('nodeIds');
     });
 
     test('should validate nodeIds is array', async () => {
-      await expect(selectionHandlers.handle('set_selection', {
+      await expect(selectionHandler.handle('set_selection', {
         nodeIds: 'not-an-array'
       })).rejects.toThrow('array');
     });
@@ -130,7 +130,7 @@ describe('SelectionHandlers', () => {
     test('should handle plugin connection errors', async () => {
       mockSendToPlugin.mockRejectedValue(new Error('Plugin not connected'));
 
-      await expect(selectionHandlers.handle('get_selection', {}))
+      await expect(selectionHandler.handle('get_selection', {}))
         .rejects.toThrow('Plugin not connected');
     });
 
@@ -140,13 +140,13 @@ describe('SelectionHandlers', () => {
         error: 'Node not found: invalid-id'
       });
 
-      await expect(selectionHandlers.handle('set_selection', {
+      await expect(selectionHandler.handle('set_selection', {
         nodeIds: ['invalid-id']
       })).rejects.toThrow('Node not found: invalid-id');
     });
 
     test('should handle unknown tool names', async () => {
-      await expect(selectionHandlers.handle('unknown_tool', {}))
+      await expect(selectionHandler.handle('unknown_tool', {}))
         .rejects.toThrow('Unknown tool: unknown_tool');
     });
   });
@@ -162,7 +162,7 @@ describe('SelectionHandlers', () => {
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      const result = await selectionHandlers.handle('get_selection', {});
+      const result = await selectionHandler.handle('get_selection', {});
 
       expect(result.content[0].type).toBe('text');
       expect(result.content[0].text).toContain('selection:');

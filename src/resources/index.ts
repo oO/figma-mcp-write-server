@@ -1,4 +1,4 @@
-import { Resource, ResourceContents } from '@modelcontextprotocol/sdk/types.js';
+import { Resource, ResourceContents } from '@modelcontextprotocol/sdk/types';
 
 /**
  * Central registry for all MCP resources

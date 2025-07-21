@@ -1,5 +1,8 @@
 // TypeScript definitions for Figma MCP Plugin
 
+// Global constants injected by build system
+declare const PLUGIN_VERSION: string;
+
 export interface PluginMessage {
   type: string;
   operation?: string;
@@ -14,6 +17,9 @@ export interface OperationResult {
 }
 
 export interface NodeParams {
+  // === IDENTIFICATION ===
+  nodeId?: string;
+  
   // === BASIC PROPERTIES ===
   nodeType?: string;
   name?: string;
@@ -34,9 +40,11 @@ export interface NodeParams {
   
   // === BASIC STYLING ===
   fillColor?: string;
+  fillOpacity?: number;
   opacity?: number;
   visible?: boolean;
   strokeColor?: string;
+  strokeOpacity?: number;
   strokeWidth?: number;
   
   // === TRANSFORM ===
@@ -72,6 +80,9 @@ export interface TextParams extends NodeParams {
   styleRanges?: TextStyleRange[];
   createStyle?: boolean;
   styleName?: string;
+  textTruncation?: string;
+  maxLines?: number;
+  // Note: OpenType features (ligatures, kerning) are read-only in Figma Plugin API
 }
 
 export interface FontName {
@@ -266,6 +277,36 @@ export interface NodeInfo extends SimpleNodeInfo {
   fillColor?: string;
   strokeColor?: string;
   strokeWidth?: number;
+  // Paint arrays for complete fill/stroke information
+  fills?: readonly Paint[];
+  strokes?: readonly Paint[];
+  strokeWeight?: number;
+  strokeAlign?: 'CENTER' | 'INSIDE' | 'OUTSIDE';
+  
+  // CRITICAL: Variable binding information
+  boundVariables?: any;
+  
+  // Additional corner radius properties
+  topLeftRadius?: number;
+  topRightRadius?: number;
+  bottomLeftRadius?: number;
+  bottomRightRadius?: number;
+  
+  // Layout properties for frames
+  spacing?: number;
+  paddingTop?: number;
+  paddingRight?: number;
+  paddingBottom?: number;
+  paddingLeft?: number;
+  
+  // Typography properties for text nodes
+  characters?: string;
+  fontSize?: number;
+  fontName?: FontName;
+  textCase?: string;
+  textDecoration?: string;
+  letterSpacing?: any; // Can be number or LetterSpacing object
+  lineHeight?: any; // Can be number or LineHeight object
 }
 
 export interface DetailedNodeInfo extends NodeInfo {

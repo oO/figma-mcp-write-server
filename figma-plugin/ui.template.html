@@ -442,11 +442,35 @@
 
             function sendResponse(id, success, data = null, error = null) {
                 if (ws && isConnected) {
-                    const response = { id, success, data, error };
+                    // Server expects 'result' field, not 'data'
+                    const response = { id, result: data, error };
                     ws.send(JSON.stringify(response));
                     if (debugMode) {
                         console.log(`[DEBUG] Sent response for ${id}: ${success ? "success" : "error"}`);
                     }
+                }
+            }
+
+            // CRITICAL: Base64 to Uint8Array conversion in UI thread
+            // 
+            // This function MUST remain in the UI thread because:
+            // 1. Figma plugin main thread lacks browser APIs (no `window.atob`)
+            // 2. Only UI thread (iframe context) has access to `window.atob`
+            // 3. Alternative approaches cause failures or performance issues
+            //
+            // DO NOT move this to the main thread - it will break local image loading.
+            // This is the only reliable way to decode Base64 in Figma plugin environment.
+            function base64ToUint8Array(base64) {
+                try {
+                    const binaryString = window.atob(base64);
+                    const length = binaryString.length;
+                    const bytes = new Uint8Array(length);
+                    for (let i = 0; i < length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    return bytes;
+                } catch (error) {
+                    throw new Error(`Failed to convert Base64 to Uint8Array: ${error.message}`);
                 }
             }
 
@@ -455,11 +479,37 @@
                 const msg = event.data.pluginMessage;
                 if (!msg) return;
 
-                switch (msg.type) {
-                    case "OPERATION_RESPONSE":
-                        sendResponse(msg.id, msg.success, msg.data, msg.error);
-                        logCommand(msg.operation || msg.type || "UNKNOWN", msg.success);
-                        break;
+                if (msg.type === "CONVERT_BASE64_TO_UINT8ARRAY") {
+                    try {
+                        console.log('🔄 UI: Converting Base64 to Uint8Array, length:', msg.base64.length);
+                        const uint8Array = base64ToUint8Array(msg.base64);
+                        console.log('✅ UI: Base64 conversion successful, array length:', uint8Array.length);
+                        
+                        // Send back as regular array (Uint8Array doesn't serialize well)
+                        parent.postMessage({
+                            pluginMessage: {
+                                id: msg.id,
+                                result: Array.from(uint8Array)
+                            }
+                        }, "*");
+                    } catch (error) {
+                        console.log('❌ UI: Base64 conversion failed:', error.message);
+                        parent.postMessage({
+                            pluginMessage: {
+                                id: msg.id,
+                                error: error.message
+                            }
+                        }, "*");
+                    }
+                    return;
+                }
+
+                if (msg.type === "OPERATION_RESPONSE") {
+                    // Handle response format from main thread
+                    const success = !msg.error;
+                    const data = msg.result || null;
+                    sendResponse(msg.id, success, data, msg.error);
+                    logCommand(msg.operation || msg.type || "UNKNOWN", success);
                 }
             });
 

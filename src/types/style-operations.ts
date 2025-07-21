@@ -25,13 +25,13 @@ import {
 // Style Management Schemas - Consolidated with Shared Types
 // ================================================================================
 
-// Gradient and effect definitions (style-specific, not commonly reused)
-export const GradientStopSchema = z.object({
+// Internal schema definitions (not exported - only used within ManageStylesSchema)
+const GradientStopSchema = z.object({
   position: z.number(),
   color: z.string(),
 });
 
-export const EffectSchema = z.object({
+const EffectSchema = z.object({
   type: FigmaEffectTypes,
   visible: z.boolean().default(true),
   color: z.string().optional(),
@@ -45,7 +45,7 @@ export const EffectSchema = z.object({
   showShadowBehindNode: z.boolean().optional(),
 });
 
-export const LayoutGridSchema = z.object({
+const LayoutGridSchema = z.object({
   pattern: z.enum(['columns', 'rows', 'grid']),
   sectionSize: z.number().optional(),
   visible: z.boolean().default(true),
@@ -69,8 +69,7 @@ export const ManageStylesSchema = createManagementSchema(
     collectionId: z.string().optional(),
     
     // Style-specific fields
-    styleType: FigmaStyleTypesCompat.optional(),
-    styleName: z.string().optional(),
+    type: FigmaStyleTypesCompat.optional(),
     
     // Paint Style Properties
     paintType: FigmaPaintTypes.optional(),
@@ -79,8 +78,10 @@ export const ManageStylesSchema = createManagementSchema(
     imageHash: z.string().optional(),
     scaleMode: FigmaScaleModes.optional(),
     
-    // Use shared color and visual fields
-    ...ColorFields,
+    // Style-specific color field (styles use 'color', not 'fillColor')
+    color: z.string().regex(/^#[0-9A-Fa-f]{6}([0-9A-Fa-f]{2})?$/).optional(),
+    
+    // Use shared visual fields
     ...VisualFields,
     
     // Use shared typography fields for text styles
@@ -107,16 +108,14 @@ export const ManageStylesSchema = createManagementSchema(
   },
   // Validation rules for implemented operations only
   {
-    create: (data) => !!data.styleName && !!data.styleType,
+    create: (data) => !!data.name && !!data.type,
     update: (data) => !!data.styleId,
     delete: (data) => !!data.styleId,
     get: (data) => !!data.styleId,
     apply: (data) => !!data.nodeId && !!data.styleId,
+    duplicate: (data) => !!data.styleId,
   }
 );
 
 // Export types
 export type ManageStylesParams = z.infer<typeof ManageStylesSchema>;
-export type GradientStop = z.infer<typeof GradientStopSchema>;
-export type Effect = z.infer<typeof EffectSchema>;
-export type LayoutGrid = z.infer<typeof LayoutGridSchema>;

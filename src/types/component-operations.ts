@@ -1,72 +1,49 @@
 import { z } from 'zod';
+import { caseInsensitiveEnum } from './enum-utils.js';
 
 // ================================================================================
 // Component System Operations
 // ================================================================================
 
-// Component property definition for variant creation
-export const ComponentPropertySchema = z.object({
-  name: z.string(),
-  type: z.enum(['BOOLEAN', 'TEXT', 'INSTANCE_SWAP', 'VARIANT']),
-  defaultValue: z.union([z.string(), z.boolean(), z.null()]).optional(),
-  values: z.array(z.string()).optional(), // For VARIANT type
-  preferredValues: z.array(z.string()).optional(), // For TEXT type
-});
 
 // Manage components schema (consolidated)
 export const ManageComponentsSchema = z.object({
-  operation: z.enum(['create', 'create_set', 'add_variant', 'remove_variant', 'update', 'delete', 'get']),
-  nodeId: z.string().optional(), // Source node to convert (for create)
-  componentIds: z.array(z.string()).optional(), // Components to combine (for create_set)
-  componentId: z.string().optional(), // Target component (for modify operations)
-  name: z.string().optional(), // Component/set name
-  description: z.string().optional(), // Component description
-  variantProperties: z.record(z.array(z.string())).optional(), // Variant properties
+  operation: caseInsensitiveEnum(['create', 'create_set', 'create_instance', 'update', 'delete', 'publish', 'list', 'get', 'detach_instance', 'swap_instance']),
+  nodeId: z.union([z.string(), z.array(z.string())]).optional(), // Source node(s) to convert (for create) - supports bulk
+  componentIds: z.array(z.string()).optional(), // Components to combine (for create_set) - array only, not bulk-aware
+  componentId: z.union([z.string(), z.array(z.string())]).optional(), // Target component(s) (for modify operations) - supports bulk
+  instanceId: z.union([z.string(), z.array(z.string())]).optional(), // Target instance(s) (for instance operations) - supports bulk
+  newComponentId: z.union([z.string(), z.array(z.string())]).optional(), // New component(s) (for swap operations) - supports bulk
+  id: z.union([z.string(), z.array(z.string())]).optional(), // Universal node ID(s) - works for components, instances, or component sets - supports bulk
+  componentSetId: z.string().optional(), // Component set ID for operations
+  name: z.union([z.string(), z.array(z.string())]).optional(), // Component/set name(s) - supports bulk
+  description: z.union([z.string(), z.array(z.string())]).optional(), // Component description(s) - supports bulk
+  variantProperties: z.array(z.string()).optional(), // Flattened variant properties array (parallel to componentIds): ["type=Primary, size=Small", "type=Secondary, size=Large"]
+  properties: z.record(z.unknown()).optional(), // Component properties to update
+  variantName: z.string().optional(), // Variant property name to change (for change_variant)
+  variantValue: z.string().optional(), // New variant property value (for change_variant)
+  variants: z.record(z.string()).optional(), // Multiple variant properties to change (for change_variant)
+  x: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) for created components - supports bulk
+  y: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) for created components - supports bulk
+  includeInstances: z.boolean().nullable().optional(), // Include instances in listing
+  filterType: caseInsensitiveEnum(['all', 'components', 'component_sets']).optional(), // Filter type for listing
+  failFast: z.boolean().nullable().optional(), // Stop on first error in bulk operations
 });
 
 // Manage instances schema
 export const ManageInstancesSchema = z.object({
-  operation: z.enum(['create', 'swap', 'detach', 'reset_overrides', 'set_override', 'get']),
-  componentId: z.string().optional(), // Source component (for create)
-  instanceId: z.string().optional(), // Target instance (for modify operations)
+  operation: caseInsensitiveEnum(['create', 'update', 'duplicate', 'detach', 'swap', 'reset_overrides', 'get', 'list']),
+  componentId: z.union([z.string(), z.array(z.string())]).optional(), // Source component(s) (for create) - supports bulk
+  instanceId: z.union([z.string(), z.array(z.string())]).optional(), // Instance ID(s) for target operations - supports bulk
+  mainComponentId: z.union([z.string(), z.array(z.string())]).optional(), // New component(s) (for swap operation) - supports bulk
+  name: z.union([z.string(), z.array(z.string())]).optional(), // Instance name(s) - supports bulk
   overrides: z.record(z.unknown()).optional(), // Property overrides
-  swapTarget: z.string().optional(), // New component (for swap operation)
-  x: z.number().optional(), // Position (for create operation)
-  y: z.number().optional(), // Position (for create operation)
+  x: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) - supports bulk
+  y: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) - supports bulk
+  failFast: z.boolean().optional(), // Stop on first error in bulk operations
 });
 
-// Component response data schemas
-export const ComponentDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.literal('COMPONENT'),
-  description: z.string().optional(),
-  componentSetId: z.string().optional(),
-  properties: z.array(ComponentPropertySchema).optional(),
-  variantProperties: z.record(z.string()).optional(),
-});
-
-export const ComponentSetDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.literal('COMPONENT_SET'),
-  components: z.array(z.string()), // Component IDs
-  variantProperties: z.record(z.array(z.string())),
-});
-
-export const InstanceDataSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.literal('INSTANCE'),
-  componentId: z.string(),
-  overrides: z.record(z.unknown()).optional(),
-  detached: z.boolean().default(false),
-});
 
 // Export types
-export type ComponentProperty = z.infer<typeof ComponentPropertySchema>;
 export type ManageComponentsParams = z.infer<typeof ManageComponentsSchema>;
 export type ManageInstancesParams = z.infer<typeof ManageInstancesSchema>;
-export type ComponentData = z.infer<typeof ComponentDataSchema>;
-export type ComponentSetData = z.infer<typeof ComponentSetDataSchema>;
-export type InstanceData = z.infer<typeof InstanceDataSchema>;
