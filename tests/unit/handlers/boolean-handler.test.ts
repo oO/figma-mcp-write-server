@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { BooleanOperationsHandler } from '../../../src/handlers/boolean-operations-handler.js';
+import { BooleanOperationsHandler } from '../../../src/handlers/boolean-handler.js';
 
 // Mock the unified handler
 vi.mock('../../../src/utils/unified-handler.js', () => ({
@@ -13,7 +13,7 @@ vi.mock('../../../src/utils/unified-handler.js', () => ({
 }));
 
 // Mock the schema
-vi.mock('../../../src/types/boolean-operations.js', () => ({
+vi.mock('../../../src/types/boolean-operation.js', () => ({
   ManageBooleanOperationsSchema: {
     parse: vi.fn().mockImplementation((args) => args)
   }

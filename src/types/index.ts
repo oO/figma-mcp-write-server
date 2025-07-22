@@ -52,7 +52,7 @@ export * from './font-operations.js';
 export * from './text-operations.js';
 
 // Effects management operations
-export * from './effects-operations.js';
+export * from './effect-operations.js';
 
 // Selection management operations
 export * from './selection-operations.js';

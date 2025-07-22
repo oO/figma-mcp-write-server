@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { TextHandler } from '../../../src/handlers/text-handler.js';
+import { TextHandler } from '../../../src/handlers/texts-handler.js';
 import * as yaml from 'js-yaml';
 
 describe('TextHandler - New Operations', () => {

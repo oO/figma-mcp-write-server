@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { StyleHandler } from '../../../src/handlers/style-handler';
+import { StyleHandler } from '../../../src/handlers/styles-handler';
 import * as yaml from 'js-yaml';
 
 describe('StyleHandler', () => {

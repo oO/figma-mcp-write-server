@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { NodeHandler } from '../../../src/handlers/node-handler';
+import { NodeHandler } from '../../../src/handlers/nodes-handler';
 import * as yaml from 'js-yaml';
 
 describe('NodeHandler', () => {

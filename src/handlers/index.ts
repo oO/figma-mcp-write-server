@@ -66,10 +66,10 @@ export class HandlerRegistry {
   private discoverHandlers(): (() => Promise<any>)[] {
     // Manual import list - update when adding new handlers
     const handlerImports = [
-      () => import('./alignment-handler.js').then(m => ({ class: m.AlignmentHandler, name: 'AlignmentHandler' })),
+      () => import('./alignments-handler.js').then(m => ({ class: m.AlignmentHandler, name: 'AlignmentHandler' })),
       () => import('./annotations-handler.js').then(m => ({ class: m.AnnotationsHandler, name: 'AnnotationsHandler' })),
       () => import('./auto-layout-handler.js').then(m => ({ class: m.AutoLayoutHandler, name: 'AutoLayoutHandler' })),
-      () => import('./boolean-operations-handler.js').then(m => ({ class: m.BooleanOperationsHandler, name: 'BooleanOperationsHandler' })),
+      () => import('./boolean-handler.js').then(m => ({ class: m.BooleanOperationsHandler, name: 'BooleanOperationsHandler' })),
       () => import('./components-handler.js').then(m => ({ class: m.ComponentsHandler, name: 'ComponentsHandler' })),
       () => import('./constraints-handler.js').then(m => ({ class: m.ConstraintsHandler, name: 'ConstraintsHandler' })),
       () => import('./dev-resources-handler.js').then(m => ({ class: m.DevResourcesHandler, name: 'DevResourcesHandler' })),
@@ -80,14 +80,14 @@ export class HandlerRegistry {
       () => import('./hierarchy-handler.js').then(m => ({ class: m.HierarchyHandler, name: 'HierarchyHandler' })),
       () => import('./instances-handler.js').then(m => ({ class: m.InstancesHandler, name: 'InstancesHandler' })),
       () => import('./measurements-handler.js').then(m => ({ class: m.MeasurementsHandler, name: 'MeasurementsHandler' })),
-      () => import('./node-handler.js').then(m => ({ class: m.NodeHandler, name: 'NodeHandler' })),
+      () => import('./nodes-handler.js').then(m => ({ class: m.NodeHandler, name: 'NodeHandler' })),
       () => import('./pages-handler.js').then(m => ({ class: m.PagesHandler, name: 'PagesHandler' })),
       () => import('./plugin-status-handler.js').then(m => ({ class: m.PluginStatusHandler, name: 'PluginStatusHandler' })),
-      () => import('./selection-handler.js').then(m => ({ class: m.SelectionHandler, name: 'SelectionHandler' })),
-      () => import('./style-handler.js').then(m => ({ class: m.StyleHandler, name: 'StyleHandler' })),
-      () => import('./text-handler.js').then(m => ({ class: m.TextHandler, name: 'TextHandler' })),
+      () => import('./selections-handler.js').then(m => ({ class: m.SelectionHandler, name: 'SelectionHandler' })),
+      () => import('./styles-handler.js').then(m => ({ class: m.StyleHandler, name: 'StyleHandler' })),
+      () => import('./texts-handler.js').then(m => ({ class: m.TextHandler, name: 'TextHandler' })),
       () => import('./variables-handler.js').then(m => ({ class: m.VariablesHandler, name: 'VariablesHandler' })),
-      () => import('./vector-operations-handler.js').then(m => ({ class: m.VectorOperationsHandler, name: 'VectorOperationsHandler' }))
+      () => import('./vector-handler.js').then(m => ({ class: m.VectorOperationsHandler, name: 'VectorOperationsHandler' }))
     ];
 
     return handlerImports;

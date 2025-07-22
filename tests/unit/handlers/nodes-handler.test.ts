@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { NodeHandler } from '@/handlers/node-handler';
+import { NodeHandler } from '@/handlers/nodes-handler';
 import * as yaml from 'js-yaml';
 
 describe('NodeHandlers - Updated Architecture', () => {

@@ -50,7 +50,7 @@ export class OperationRouter {
       { module: () => import('../operations/manage-nodes.js'), messageTypes: ['MANAGE_NODES'] },
       
       // Effect operations
-      { module: () => import('../operations/effect-operations.js'), messageTypes: ['CREATE_EFFECT', 'UPDATE_EFFECT', 'DELETE_EFFECT', 'GET_EFFECTS', 'REORDER_EFFECT', 'DUPLICATE_EFFECT'] },
+      { module: () => import('../operations/manage-effects.js'), messageTypes: ['CREATE_EFFECT', 'UPDATE_EFFECT', 'DELETE_EFFECT', 'GET_EFFECTS', 'REORDER_EFFECT', 'DUPLICATE_EFFECT'] },
       
       // Text operations
       { module: () => import('../operations/manage-text.js'), messageTypes: ['MANAGE_TEXT'] },
@@ -72,16 +72,16 @@ export class OperationRouter {
       { module: () => import('../operations/manage-variables.js'), messageTypes: ['MANAGE_VARIABLES', 'MANAGE_COLLECTIONS'] },
       
       // Boolean and vector operations
-      { module: () => import('../operations/boolean-operation.js'), messageTypes: ['BOOLEAN_OPERATION'] },
-      { module: () => import('../operations/vector-operation.js'), messageTypes: ['VECTOR_OPERATION'] },
+      { module: () => import('../operations/manage-boolean.js'), messageTypes: ['BOOLEAN_OPERATION'] },
+      { module: () => import('../operations/manage-vector.js'), messageTypes: ['VECTOR_OPERATION'] },
       
       // Dev mode operations
-      { module: () => import('../operations/annotation-operation.js'), messageTypes: ['ANNOTATION_OPERATION'] },
-      { module: () => import('../operations/measurement-operation.js'), messageTypes: ['MEASUREMENT_OPERATION'] },
-      { module: () => import('../operations/dev-resource-operation.js'), messageTypes: ['DEV_RESOURCE_OPERATION'] },
+      { module: () => import('../operations/manage-annotations.js'), messageTypes: ['ANNOTATION_OPERATION'] },
+      { module: () => import('../operations/manage-measurements.js'), messageTypes: ['MEASUREMENT_OPERATION'] },
+      { module: () => import('../operations/manage-dev-resources.js'), messageTypes: ['DEV_RESOURCE_OPERATION'] },
       
       // Export and other operations
-      { module: () => import('../operations/export-operations.js'), messageTypes: ['EXPORT_SINGLE', 'EXPORT_BULK', 'EXPORT_NODE'] },
+      { module: () => import('../operations/manage-exports.js'), messageTypes: ['EXPORT_SINGLE', 'EXPORT_BULK', 'EXPORT_NODE'] },
       { module: () => import('../operations/export-settings-operations.js'), messageTypes: ['MANAGE_EXPORTS'] },
       { module: () => import('../operations/manage-fills.js'), messageTypes: ['MANAGE_FILLS'] },
       { module: () => import('../operations/manage-fonts.js'), messageTypes: ['MANAGE_FONTS'] },

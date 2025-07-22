@@ -1,4 +1,4 @@
-import { ManageVectorOperationsSchema } from '../types/vector-operations.js';
+import { ManageVectorOperationsSchema } from '../types/vector-operation.js';
 import { ToolHandler, ToolResult, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 

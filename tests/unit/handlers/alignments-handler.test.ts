@@ -1,4 +1,4 @@
-import { AlignmentHandler } from '@/handlers/alignment-handler';
+import { AlignmentHandler } from '@/handlers/alignments-handler';
 import { ManageAlignmentSchema } from '@/types/layout-operations';
 import { describe, expect, test, beforeEach, vi } from 'vitest';
 

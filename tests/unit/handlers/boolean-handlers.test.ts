@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { BooleanOperationsHandler } from '@/handlers/boolean-operations-handler';
+import { BooleanOperationsHandler } from '@/handlers/boolean-handler';
 
 describe('BooleanOperationsHandler', () => {
   let booleanOperationsHandler: BooleanOperationsHandler;

@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { SelectionHandler } from '@/handlers/selection-handler';
+import { SelectionHandler } from '@/handlers/selections-handler';
 
 describe('SelectionHandlers', () => {
   let selectionHandler: SelectionHandler;

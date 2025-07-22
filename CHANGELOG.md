@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.1] - 2025-07-22
+
+### Refactored
+- **Filename Consistency Standardization**: Comprehensive filename standardization across entire codebase
+  - **Handler Files**: Renamed 15 handler files to plural convention (nodes-handler, styles-handler, etc.)
+  - **Operation Files**: Renamed 8 operation files to manage-[domain] pattern (manage-effects, manage-boolean, etc.)
+  - **Type Definition Files**: Renamed 3 type definition files to singular convention (effect-operations, boolean-operation, etc.)
+  - **Import References**: Updated 45+ import references across registry, router, and handlers
+  - **Test Files**: Standardized test filenames to match source files exactly
+  - **Git History**: Preserved git history using git mv for all renames
+  - **Build Verification**: Verified TypeScript build and core functionality intact after changes
+
 ## [0.31.0] - 2025-07-21
 
 ### Added

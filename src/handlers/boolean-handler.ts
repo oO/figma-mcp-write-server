@@ -1,4 +1,4 @@
-import { ManageBooleanOperationsSchema } from '../types/boolean-operations.js';
+import { ManageBooleanOperationsSchema } from '../types/boolean-operation.js';
 import { ToolHandler, ToolResult, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 

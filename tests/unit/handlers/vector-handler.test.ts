@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { VectorOperationsHandler } from '../../../src/handlers/vector-operations-handler.js';
+import { VectorOperationsHandler } from '../../../src/handlers/vector-handler.js';
 
 // Mock the unified handler
 vi.mock('../../../src/utils/unified-handler.js', () => ({
@@ -13,7 +13,7 @@ vi.mock('../../../src/utils/unified-handler.js', () => ({
 }));
 
 // Mock the schema
-vi.mock('../../../src/types/vector-operations.js', () => ({
+vi.mock('../../../src/types/vector-operation.js', () => ({
   ManageVectorOperationsSchema: {
     parse: vi.fn().mockImplementation((args) => args)
   }

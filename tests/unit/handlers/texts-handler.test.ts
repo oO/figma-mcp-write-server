@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
-import { TextHandler } from '@/handlers/text-handler';
+import { TextHandler } from '@/handlers/texts-handler';
 import { ManageTextSchema } from '@/types/text-operations';
 
 describe('TextHandler', () => {
@@ -93,7 +93,7 @@ describe('TextHandler', () => {
           y: 100
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -115,7 +115,7 @@ describe('TextHandler', () => {
         };
         mockSendToPlugin.mockResolvedValue(mockResponse);
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Missing required parameter: characters');
       });
 
@@ -125,7 +125,7 @@ describe('TextHandler', () => {
           characters: ''
         };
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Text content cannot be empty');
       });
 
@@ -141,7 +141,7 @@ describe('TextHandler', () => {
         };
         mockSendToPlugin.mockResolvedValue(mockResponse);
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Text nodes must have non-empty characters content');
       });
 
@@ -158,7 +158,7 @@ describe('TextHandler', () => {
           fontFamily: 'NonExistentFont'
         };
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Font loading failed');
       });
 
@@ -190,7 +190,7 @@ describe('TextHandler', () => {
           }]
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -219,7 +219,7 @@ describe('TextHandler', () => {
           fontSize: 32
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -235,7 +235,7 @@ describe('TextHandler', () => {
           characters: ''
         };
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Text content cannot be empty');
       });
 
@@ -252,7 +252,7 @@ describe('TextHandler', () => {
           characters: '   \t\n  '
         };
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Text nodes cannot be updated to have empty characters content');
       });
     });
@@ -287,7 +287,7 @@ describe('TextHandler', () => {
           }]
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -318,7 +318,7 @@ describe('TextHandler', () => {
           }
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -345,7 +345,7 @@ describe('TextHandler', () => {
           textStyleId: 'heading_style_456'
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -374,7 +374,7 @@ describe('TextHandler', () => {
           styleDescription: 'Large body text for emphasis'
         };
 
-        const result = await textHandler.handle('manage_text', args);
+        const result = await textHandler.handle('figma_text', args);
 
         expect(mockSendToPlugin).toHaveBeenCalledWith({
           type: 'MANAGE_TEXT',
@@ -398,7 +398,7 @@ describe('TextHandler', () => {
           characters: 'test'
         };
 
-        await expect(textHandler.handle('manage_text', args))
+        await expect(textHandler.handle('figma_text', args))
           .rejects.toThrow('Node not found');
       });
 
@@ -408,7 +408,7 @@ describe('TextHandler', () => {
           nodeId: 'test'
         };
 
-        await expect(textHandler.handle('manage_text', invalidArgs))
+        await expect(textHandler.handle('figma_text', invalidArgs))
           .rejects.toThrow();
       });
 
@@ -442,7 +442,7 @@ describe('TextHandler', () => {
         fontStyle: 'Bold'
       };
 
-      const result = await textHandler.handle('manage_text', args);
+      const result = await textHandler.handle('figma_text', args);
 
       expect(result.content[0].text).toContain('substituted: true');
       expect(result.content[0].text).toContain('Custom font not available');
@@ -477,7 +477,7 @@ describe('TextHandler', () => {
         }]
       };
 
-      const result = await textHandler.handle('manage_text', args);
+      const result = await textHandler.handle('figma_text', args);
 
       expect(result.content[0].text).toContain('characterRanges');
     });
@@ -497,7 +497,7 @@ describe('TextHandler', () => {
       };
 
       const startTime = Date.now();
-      await textHandler.handle('manage_text', args);
+      await textHandler.handle('figma_text', args);
       const endTime = Date.now();
 
       // Should complete in reasonable time (allowing for test overhead)
@@ -522,7 +522,7 @@ describe('TextHandler', () => {
         characters: 'Text with effects'
       };
 
-      const result = await textHandler.handle('manage_text', args);
+      const result = await textHandler.handle('figma_text', args);
 
       expect(result.content[0].text).toContain('manage_effects tool');
       expect(result.content[0].text).toContain('manage_strokes tool');
