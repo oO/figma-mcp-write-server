@@ -32,13 +32,8 @@ export const PatternTileTypeSchema = caseInsensitiveEnum(['RECTANGULAR', 'HORIZO
 
 export const PatternAlignmentSchema = caseInsensitiveEnum(['START', 'CENTER', 'END']);
 
-const BlendModeSchema = caseInsensitiveEnum([
-  'NORMAL', 'DARKEN', 'MULTIPLY', 'LINEAR_BURN', 'COLOR_BURN',
-  'LIGHTEN', 'SCREEN', 'LINEAR_DODGE', 'COLOR_DODGE',
-  'OVERLAY', 'SOFT_LIGHT', 'HARD_LIGHT', 'VIVID_LIGHT', 'LINEAR_LIGHT', 'PIN_LIGHT', 'HARD_MIX',
-  'DIFFERENCE', 'EXCLUSION', 'SUBTRACT', 'DIVIDE',
-  'HUE', 'SATURATION', 'COLOR', 'LUMINOSITY'
-]);
+// Import BlendModeSchema from effect-operations to avoid duplicate export
+import { BlendModeSchema } from './effect-operations.js';
 
 // Core parameter schemas
 export const FillIndexSchema = z.number().int().min(0).describe('Fill array index');

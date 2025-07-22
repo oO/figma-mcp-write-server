@@ -1,4 +1,4 @@
-import { ManageFillsSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
+import { ManageFillsSchema, ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 import { debugLog } from '../utils/debug-log.js';
 import * as fs from 'fs';

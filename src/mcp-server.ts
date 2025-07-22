@@ -135,7 +135,7 @@ export class FigmaMCPServer {
 
     try {
       if (this.config.fontDatabase?.enabled !== false) {
-        console.error('🔤 Initializing font database...');
+        console.error('🔤 Checking font database status...');
         
         // Create FontService which will handle database initialization and sync
         this.fontService = new FontService(
@@ -146,7 +146,7 @@ export class FigmaMCPServer {
           }
         );
         
-        console.error('✅ Font database initialization started');
+        console.error('✅ Font database service ready');
       } else {
         console.error('⚠️  Font database disabled in configuration');
       }

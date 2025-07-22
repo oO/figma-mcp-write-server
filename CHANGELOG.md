@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.4] - 2025-07-22
+
+### Enhanced
+- **Code Quality Improvements**: Handler cleanup and development tools enhancement
+  - **Import Cleanup**: Removed unused imports across all handler files (fills, fonts, hierarchy, instances)
+  - **Type System**: Enhanced fill operation type definitions for better maintainability
+  - **Development Tools**: Added zombie MCP process cleanup utility for improved development workflow
+  - **Server Logging**: Improved font database initialization messaging for better user experience
+
 ## [0.31.3] - 2025-07-22
 
 ### Fixed

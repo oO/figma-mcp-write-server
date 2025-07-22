@@ -1,4 +1,4 @@
-import { ToolHandler, ToolResult, Tool, ManageHierarchySchema } from '../types/index.js';
+import { ToolHandler, Tool, ManageHierarchySchema } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 
 export class HierarchyHandler implements ToolHandler {

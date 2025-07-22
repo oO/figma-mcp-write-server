@@ -1,4 +1,4 @@
-import { ToolHandler, ToolResult, Tool } from '../types/index.js';
+import { ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 import { FontOperationsSchema } from '../types/font-operations.js';
 

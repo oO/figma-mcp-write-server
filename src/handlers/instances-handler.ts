@@ -1,4 +1,4 @@
-import { ManageInstancesSchema, ToolHandler, ToolResult, Tool } from '../types/index.js';
+import { ManageInstancesSchema, ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 
 export class InstancesHandler implements ToolHandler {
