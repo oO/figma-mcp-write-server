@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.31.3] - 2025-07-22
+
+### Fixed
+- **Build Script Compatibility**: Fixed plugin build command for shx limitation
+  - **shx cd Issue**: Reverted plugin build to standard `cd` command (shx cd not supported)
+  - **Cross-Platform Support**: Maintained shx for rm and cp operations
+  - **Build Reliability**: Ensures consistent builds across all platforms
+
+## [0.31.2] - 2025-07-22
+
+### Enhanced
+- **Cross-Platform Build Scripts**: Complete npm script overhaul for Windows/macOS/Linux compatibility
+  - **shx Integration**: Added shx dependency for cross-platform shell command execution
+  - **Unified Commands**: Single script set replaces OS-specific variants
+  - **Developer Experience**: Eliminated need for :win suffix commands
+
 ## [0.31.1] - 2025-07-22
 
 ### Refactored
