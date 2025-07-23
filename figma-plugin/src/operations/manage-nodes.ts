@@ -2,6 +2,7 @@ import { NodeParams } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { hexToRgb, createSolidPaint, parseHexColor } from '../utils/color-utils.js';
 import { findNodeById, formatNodeResponse, selectAndFocus, moveNodeToPosition, resizeNode } from '../utils/node-utils.js';
+import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';
 
 export async function handleManageNodes(payload: any): Promise<any> {
   const operation = BaseOperation.validateStringParam(
@@ -190,13 +191,14 @@ async function createRectangle(payload: any): Promise<any> {
   
   rect.name = payload.name || 'Rectangle';
   
-  if (payload.x !== undefined || payload.y !== undefined) {
-    moveNodeToPosition(rect, payload.x || 0, payload.y || 0);
-  }
+  const width = payload.width || 100;
+  const height = payload.height || 100;
   
-  if (payload.width !== undefined || payload.height !== undefined) {
-    resizeNode(rect, payload.width || 100, payload.height || 100);
-  }
+  // Resize first to get proper dimensions for positioning calculations
+  resizeNode(rect, width, height);
+  
+  // Handle positioning with smart placement and overlap detection
+  const positionResult = handleNodePositioning(rect, payload, { width, height });
   
   await applyVisualProperties(rect, payload);
   
@@ -204,7 +206,17 @@ async function createRectangle(payload: any): Promise<any> {
   figma.currentPage.appendChild(rect);
   selectAndFocus([rect]);
   
-  return formatNodeResponse(rect);
+  const response = formatNodeResponse(rect);
+  
+  // Add positioning info and warnings to response
+  if (positionResult.warning) {
+    response.warning = positionResult.warning;
+  }
+  if (positionResult.positionReason) {
+    response.positionReason = positionResult.positionReason;
+  }
+  
+  return response;
 }
 
 async function createEllipse(payload: any): Promise<any> {
@@ -212,20 +224,31 @@ async function createEllipse(payload: any): Promise<any> {
   
   ellipse.name = payload.name || 'Ellipse';
   
-  if (payload.x !== undefined || payload.y !== undefined) {
-    moveNodeToPosition(ellipse, payload.x || 0, payload.y || 0);
-  }
+  const width = payload.width || 100;
+  const height = payload.height || 100;
   
-  if (payload.width !== undefined || payload.height !== undefined) {
-    resizeNode(ellipse, payload.width || 100, payload.height || 100);
-  }
+  // Resize first to get proper dimensions for positioning calculations
+  resizeNode(ellipse, width, height);
+  
+  // Handle positioning with smart placement and overlap detection
+  const positionResult = handleNodePositioning(ellipse, payload, { width, height });
   
   await applyVisualProperties(ellipse, payload);
   
   figma.currentPage.appendChild(ellipse);
   selectAndFocus([ellipse]);
   
-  return formatNodeResponse(ellipse);
+  const response = formatNodeResponse(ellipse);
+  
+  // Add positioning info and warnings to response
+  if (positionResult.warning) {
+    response.warning = positionResult.warning;
+  }
+  if (positionResult.positionReason) {
+    response.positionReason = positionResult.positionReason;
+  }
+  
+  return response;
 }
 
 async function createFrame(payload: any): Promise<any> {
@@ -233,20 +256,31 @@ async function createFrame(payload: any): Promise<any> {
   
   frame.name = payload.name || 'Frame';
   
-  if (payload.x !== undefined || payload.y !== undefined) {
-    moveNodeToPosition(frame, payload.x || 0, payload.y || 0);
-  }
+  const width = payload.width || 200;
+  const height = payload.height || 200;
   
-  if (payload.width !== undefined || payload.height !== undefined) {
-    resizeNode(frame, payload.width || 200, payload.height || 200);
-  }
+  // Resize first to get proper dimensions for positioning calculations
+  resizeNode(frame, width, height);
+  
+  // Handle positioning with smart placement and overlap detection
+  const positionResult = handleNodePositioning(frame, payload, { width, height });
   
   await applyVisualProperties(frame, payload);
   
   figma.currentPage.appendChild(frame);
   selectAndFocus([frame]);
   
-  return formatNodeResponse(frame);
+  const response = formatNodeResponse(frame);
+  
+  // Add positioning info and warnings to response
+  if (positionResult.warning) {
+    response.warning = positionResult.warning;
+  }
+  if (positionResult.positionReason) {
+    response.positionReason = positionResult.positionReason;
+  }
+  
+  return response;
 }
 
 async function createStar(payload: any): Promise<any> {
@@ -262,20 +296,31 @@ async function createStar(payload: any): Promise<any> {
     star.innerRadius = Math.max(0, Math.min(1, payload.innerRadius));
   }
   
-  if (payload.x !== undefined || payload.y !== undefined) {
-    moveNodeToPosition(star, payload.x || 0, payload.y || 0);
-  }
+  const width = payload.width || 100;
+  const height = payload.height || 100;
   
-  if (payload.width !== undefined || payload.height !== undefined) {
-    resizeNode(star, payload.width || 100, payload.height || 100);
-  }
+  // Resize first to get proper dimensions for positioning calculations
+  resizeNode(star, width, height);
+  
+  // Handle positioning with smart placement and overlap detection
+  const positionResult = handleNodePositioning(star, payload, { width, height });
   
   await applyVisualProperties(star, payload);
   
   figma.currentPage.appendChild(star);
   selectAndFocus([star]);
   
-  return formatNodeResponse(star);
+  const response = formatNodeResponse(star);
+  
+  // Add positioning info and warnings to response
+  if (positionResult.warning) {
+    response.warning = positionResult.warning;
+  }
+  if (positionResult.positionReason) {
+    response.positionReason = positionResult.positionReason;
+  }
+  
+  return response;
 }
 
 async function createPolygon(payload: any): Promise<any> {
@@ -287,20 +332,31 @@ async function createPolygon(payload: any): Promise<any> {
     polygon.pointCount = Math.max(3, payload.pointCount);
   }
   
-  if (payload.x !== undefined || payload.y !== undefined) {
-    moveNodeToPosition(polygon, payload.x || 0, payload.y || 0);
-  }
+  const width = payload.width || 100;
+  const height = payload.height || 100;
   
-  if (payload.width !== undefined || payload.height !== undefined) {
-    resizeNode(polygon, payload.width || 100, payload.height || 100);
-  }
+  // Resize first to get proper dimensions for positioning calculations
+  resizeNode(polygon, width, height);
+  
+  // Handle positioning with smart placement and overlap detection
+  const positionResult = handleNodePositioning(polygon, payload, { width, height });
   
   await applyVisualProperties(polygon, payload);
   
   figma.currentPage.appendChild(polygon);
   selectAndFocus([polygon]);
   
-  return formatNodeResponse(polygon);
+  const response = formatNodeResponse(polygon);
+  
+  // Add positioning info and warnings to response
+  if (positionResult.warning) {
+    response.warning = positionResult.warning;
+  }
+  if (positionResult.positionReason) {
+    response.positionReason = positionResult.positionReason;
+  }
+  
+  return response;
 }
 
 async function createLine(payload: any): Promise<any> {
@@ -339,17 +395,26 @@ async function createSimpleLine(payload: any): Promise<any> {
     rotation = Math.atan2(deltaY, deltaX); // Rotation in radians
   } else {
     // Length/Rotation style (or fallback defaults)
-    startX = payload.x || 0;
-    startY = payload.y || 0;
-    length = payload.length || 100; // Default 100px length
-    rotation = payload.rotation !== undefined ? (payload.rotation * Math.PI / 180) : 0; // Convert degrees to radians
+    const defaultLength = 100;
+    length = payload.length || defaultLength;
+    rotation = payload.rotation !== undefined ? (payload.rotation * Math.PI / 180) : 0;
+    
+    // Handle positioning with smart placement if no explicit position
+    if (payload.x === undefined && payload.y === undefined) {
+      const smartPos = findSmartPosition({ width: length, height: 4 }); // Lines are thin
+      startX = smartPos.x;
+      startY = smartPos.y;
+    } else {
+      startX = payload.x || 0;
+      startY = payload.y || 0;
+    }
   }
-  
-  // Set position to start point
-  moveNodeToPosition(line, startX, startY);
   
   // Set line length (width = length, height = 0 for lines)
   resizeNode(line, length, 0);
+  
+  // Set position to start point
+  moveNodeToPosition(line, startX, startY);
   
   // Apply rotation
   line.rotation = rotation;
@@ -365,7 +430,20 @@ async function createSimpleLine(payload: any): Promise<any> {
   figma.currentPage.appendChild(line);
   selectAndFocus([line]);
   
-  return formatNodeResponse(line);
+  const response = formatNodeResponse(line);
+  
+  // Check for overlaps if explicit position was provided
+  if (payload.x !== undefined || payload.y !== undefined) {
+    const overlapInfo = checkForOverlaps(
+      { x: startX, y: startY, width: length, height: 4 },
+      figma.currentPage
+    );
+    if (overlapInfo.hasOverlap) {
+      response.warning = createOverlapWarning(overlapInfo, { x: startX, y: startY });
+    }
+  }
+  
+  return response;
 }
 
 async function createConnectorLine(payload: any): Promise<any> {
@@ -467,4 +545,45 @@ async function applyVisualProperties(node: any, params: any) {
   if (params.locked !== undefined) {
     node.locked = params.locked;
   }
+}
+
+/**
+ * Handle positioning for a node with smart placement and overlap detection
+ */
+function handleNodePositioning(
+  node: SceneNode,
+  payload: any,
+  size: { width: number; height: number }
+): { warning?: string; positionReason?: string } {
+  let finalX: number;
+  let finalY: number;
+  let positionReason: string | undefined;
+  let warning: string | undefined;
+  
+  if ((payload.x !== undefined && payload.x !== null) || (payload.y !== undefined && payload.y !== null)) {
+    // Explicit position provided - use it but check for overlaps
+    finalX = payload.x || 0;
+    finalY = payload.y || 0;
+    
+    // Check for overlaps with existing nodes
+    const overlapInfo = checkForOverlaps(
+      { x: finalX, y: finalY, width: size.width, height: size.height },
+      figma.currentPage
+    );
+    
+    if (overlapInfo.hasOverlap) {
+      warning = createOverlapWarning(overlapInfo, { x: finalX, y: finalY });
+    }
+  } else {
+    // No explicit position - use smart placement
+    const smartPosition = findSmartPosition(size, figma.currentPage);
+    finalX = smartPosition.x;
+    finalY = smartPosition.y;
+    positionReason = smartPosition.reason;
+  }
+  
+  // Apply the final position
+  moveNodeToPosition(node, finalX, finalY);
+  
+  return { warning, positionReason };
 }

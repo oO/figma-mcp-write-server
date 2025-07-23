@@ -476,10 +476,10 @@ export class FillsHandler implements ToolHandler {
     const processedArgs = await this.preprocessImagePaths(args);
     
     debugLog('FillsHandler.handle passing to unifiedHandler', {
-      originalKeys: Object.keys(args),
-      processedKeys: Object.keys(processedArgs),
-      hasImageBytes: !!processedArgs.imageBytes,
-      hasImagePath: !!processedArgs.imagePath
+      originalKeys: args ? Object.keys(args) : [],
+      processedKeys: processedArgs ? Object.keys(processedArgs) : [],
+      hasImageBytes: !!processedArgs?.imageBytes,
+      hasImagePath: !!processedArgs?.imagePath
     });
     
     return this.unifiedHandler.handle(processedArgs, config);
@@ -497,11 +497,16 @@ export class FillsHandler implements ToolHandler {
    */
   private async preprocessImagePaths(args: any): Promise<any> {
     debugLog('FillsHandler.preprocessImagePaths called', { 
-      operation: args.operation, 
-      hasImagePath: !!args.imagePath,
-      imagePath: args.imagePath,
-      allArgs: Object.keys(args)
+      operation: args?.operation, 
+      hasImagePath: !!args?.imagePath,
+      imagePath: args?.imagePath,
+      allArgs: args ? Object.keys(args) : []
     });
+
+    // Handle null/undefined args
+    if (!args || typeof args !== 'object') {
+      return args || {};
+    }
 
     // Only process add_image operations that have imagePath
     if (args.operation !== 'add_image' || !args.imagePath) {

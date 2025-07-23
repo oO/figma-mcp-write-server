@@ -27,6 +27,11 @@ export class BulkOperationsParser {
       args = {};
     }
     
+    // Null-safe paramConfigs handling (defensive against Claude Desktop bugs)
+    if (!paramConfigs || typeof paramConfigs !== 'object') {
+      return args;
+    }
+    
     const normalized = { ...args };
     
     // Check for unknown parameters first

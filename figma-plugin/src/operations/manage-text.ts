@@ -3,6 +3,7 @@ import { BaseOperation } from './base-operation.js';
 import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-utils.js';
 import { loadFont, getFontFromParams, ensureFontLoaded, loadDefaultFont } from '../utils/font-utils.js';
 import { hexToRgb, createSolidPaint } from '../utils/color-utils.js';
+import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';
 
 /**
  * Handle MANAGE_TEXT operation
@@ -78,8 +79,40 @@ async function createTextNode(params: TextParams): Promise<any> {
     
     // STEP 1: Create text node with minimal properties (font must be loaded first)
     text.characters = characters;
-    text.x = x || 0;
-    text.y = y || 0;
+    
+    // Handle positioning with smart placement and overlap detection
+    let finalX: number;
+    let finalY: number;
+    let positionReason: string | undefined;
+    let warning: string | undefined;
+    
+    const estimatedWidth = Math.max(characters.length * ((fontSize || 16) * 0.6), 100); // Rough text width estimation
+    const textHeight = (fontSize || 16) * 1.2; // Rough text height estimation
+    
+    if (x !== undefined || y !== undefined) {
+      // Explicit position provided - use it but check for overlaps
+      finalX = x || 0;
+      finalY = y || 0;
+      
+      // Check for overlaps with existing nodes
+      const overlapInfo = checkForOverlaps(
+        { x: finalX, y: finalY, width: estimatedWidth, height: textHeight },
+        figma.currentPage
+      );
+      
+      if (overlapInfo.hasOverlap) {
+        warning = createOverlapWarning(overlapInfo, { x: finalX, y: finalY });
+      }
+    } else {
+      // No explicit position - use smart placement
+      const smartPosition = findSmartPosition({ width: estimatedWidth, height: textHeight }, figma.currentPage);
+      finalX = smartPosition.x;
+      finalY = smartPosition.y;
+      positionReason = smartPosition.reason;
+    }
+    
+    text.x = finalX;
+    text.y = finalY;
     text.fontSize = fontSize || 16;
     
     // Set autoRename BEFORE setting name (per Figma API: manual name setting resets autoRename to false)
@@ -137,7 +170,7 @@ async function createTextNode(params: TextParams): Promise<any> {
     // Only add to page after all operations succeed
     figma.currentPage.appendChild(text);
     
-    return {
+    const response = {
       ...formatNodeResponse(text, 'created'),
       appliedFont: {
         requested: fontFamily ? `${fontFamily} ${fontStyle || 'Regular'}` : 'Inter Regular',
@@ -146,6 +179,16 @@ async function createTextNode(params: TextParams): Promise<any> {
         reason: fontResult.reason
       }
     };
+    
+    // Add positioning info and warnings to response
+    if (warning) {
+      response.warning = warning;
+    }
+    if (positionReason) {
+      response.positionReason = positionReason;
+    }
+    
+    return response;
   } catch (error) {
     // Rollback: Remove the text node if it was created but operations failed
     if (text) {
