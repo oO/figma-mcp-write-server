@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.0] - 2025-07-23
+
+### Added
+- **Complete Stroke Management System**: Full-featured stroke management with 24 MCP tools
+  - **figma_strokes tool**: Comprehensive stroke manipulation with operations: get, add_solid, add_gradient, add_image, add_pattern, update, update_solid, update_gradient, update_image, update_pattern, delete, reorder, clear, duplicate
+  - **Cross-platform paint operations**: Shared utilities for fills and strokes to eliminate code duplication (~85% reduction)
+  - **Smart positioning system**: Intelligent node placement and layout management utilities
+  - **Comprehensive test coverage**: Unit and integration tests for all stroke operations
+  - **Gradient type update fix**: Resolved gradient type parameter being ignored in stroke updates
+
+### Fixed
+- **Cross-platform build compatibility**: Resolved Windows generating bundle.js instead of expected dist structure
+  - Fixed hardcoded macOS paths in build scripts using cross-platform config utilities
+  - Converted mixed CommonJS/ES module imports to consistent ES modules
+  - Added proper build cleanup to prevent temporary file retention
+  - Enhanced build process with platform-aware configuration loading
+
+### Enhanced
+- **Code Architecture**: DRY refactoring with shared paint operations between fills and strokes
+- **Build System**: Improved cross-platform reliability and cleanup processes
+- **Error Handling**: Better debug logging and defensive null checks for Claude Desktop compatibility
+
+## [0.31.5] - 2025-07-22
+
+### Added
+- **Python MCP Client**: Implemented an interactive Python client for the Figma MCP Write Server.
+  - Uses fastmcp library for STDIO communication with the server.
+  - Dynamically locates Node.js executable for cross-platform compatibility.
+  - Provides a help system to list tools and display their schemas.
+  - Supports JSON string input for tool calls.
+  - Enables command history and editing using prompt_toolkit.
+  - Ensures proper server termination on client exit.
+  - Confirms Figma plugin connection before presenting the prompt.
+
 ## [0.31.4] - 2025-07-22
 
 ### Enhanced

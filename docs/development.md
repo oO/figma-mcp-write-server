@@ -108,6 +108,22 @@ The server translates MCP tool calls into Figma operations and returns structure
 4. **MCP Protocol Compliance**: Strict adherence to Model Context Protocol standards
 5. **Extensible Design**: Easy to add operations without creating tools
 
+### Cross-Platform Build System
+
+The build system is designed for Windows, macOS, and Linux compatibility:
+
+- **Dynamic Path Resolution**: Uses `getDefaultPaths()` from `src/config/config.ts` for platform-specific configuration directories
+- **ES Module Consistency**: All build scripts use consistent ES module imports with `createRequire()` for CommonJS dependencies
+- **Automatic Cleanup**: Build process removes temporary files (`dist/bundled.js`) to prevent Windows from retaining intermediate bundles
+- **Platform Detection**: Automatically handles config paths for Windows (`%APPDATA%`), macOS (`~/Library/Application Support`), and Linux (`~/.config`)
+
+**Build Commands:**
+```bash
+npm run build              # Full build with cross-platform cleanup
+npm run build:plugin       # Plugin-only build with temporary file cleanup
+npm run build:plugin-ui    # UI template processing with platform-aware config loading
+```
+
 ## 📋 Handler System
 
 ### Handler Registry (`src/handlers/index.ts`)
@@ -122,10 +138,10 @@ Central registry with auto-discovery pattern:
 
 ### Available MCP Tools Summary
 
-The server provides 21 consolidated tools organized by domain:
+The server provides 22 consolidated tools organized by domain:
 
 **Core Design Tools**
-- `figma_nodes`, `figma_text`, `figma_fills`, `figma_effects`
+- `figma_nodes`, `figma_text`, `figma_fills`, `figma_strokes`, `figma_effects`
 
 **Layout & Positioning**
 - `figma_auto_layout`, `figma_constraints`, `figma_alignment`, `figma_hierarchy`, `figma_selection`

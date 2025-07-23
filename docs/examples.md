@@ -2,7 +2,7 @@
 
 Practical examples showing how to use the Figma MCP Write Server through natural language instructions to AI agents.
 
-> **Current State**: Features 21 MCP tools with YAML response format, handler-based architecture, precision alignment system with parent validation, dev mode integration, boolean & vector operations, component system, variables & design tokens, and SQLite font database with cross-platform configuration.
+> **Current State**: Features 22 MCP tools with YAML response format, handler-based architecture, complete stroke management system, precision alignment system with parent validation, dev mode integration, boolean & vector operations, component system, variables & design tokens, and SQLite font database with cross-platform configuration.
 
 ## Table of Contents
 
@@ -10,6 +10,7 @@ Practical examples showing how to use the Figma MCP Write Server through natural
 - [🎨 Creating Shapes](#-creating-shapes)
 - [🔤 Working with Text](#-working-with-text)
 - [🎨 Colors and Fills](#-colors-and-fills)
+- [🖋️ Strokes and Borders](#-strokes-and-borders)
 - [📐 Layout and Positioning](#-layout-and-positioning)
 
 ### Design Systems
@@ -113,6 +114,40 @@ Practical examples showing how to use the Figma MCP Write Server through natural
 
 - **"Add multiple fills - gradient background with color overlay"**
   - AI uses `figma_fills` to create multiple fill layers with different blend modes
+
+---
+
+## 🖋️ Strokes and Borders
+
+### Basic Stroke Operations
+- **"Add a 2px red stroke to this rectangle"**
+  - AI uses `figma_strokes` with operation `add_solid`, red color, and 2px weight
+
+- **"Make the border thicker - change stroke to 4px"**
+  - AI uses `figma_strokes` with operation `update` to modify stroke weight
+
+- **"Remove the stroke from this shape"**
+  - AI uses `figma_strokes` with operation `delete` to remove stroke paint
+
+### Advanced Stroke Styling
+- **"Create a dashed border with 5px dashes and 3px gaps"**
+  - AI uses `figma_strokes` with `dashPattern: [5, 3]` for custom dash styling
+
+- **"Make stroke with rounded end caps and rounded corners"**
+  - AI applies `strokeCap: 'ROUND'` and `strokeJoin: 'ROUND'` properties
+
+- **"Add gradient stroke from blue to green"**
+  - AI uses `figma_strokes` with operation `add_gradient`, setting color stops and direction
+
+### Stroke Positioning
+- **"Make the stroke appear inside the shape"**
+  - AI sets `strokeAlign: 'INSIDE'` to position stroke within shape bounds
+
+- **"Center the stroke on the shape edge"**
+  - AI uses `strokeAlign: 'CENTER'` for stroke positioning
+
+- **"Put stroke outside the shape boundaries"**
+  - AI applies `strokeAlign: 'OUTSIDE'` for external stroke positioning
 
 ---
 

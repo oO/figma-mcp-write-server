@@ -227,6 +227,56 @@ describe('NodeHandlers - Updated Architecture', () => {
       });
     });
 
+    test('should handle mixed null/non-null positioning in bulk operations', async () => {
+      const mockResponse = { success: true, data: { id: 'node-123' } };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      await nodeHandler.handle('figma_nodes', {
+        operation: 'create',
+        nodeType: 'rectangle',
+        count: 4,
+        x: [null, 200, null, null],
+        y: [null, 350, null, null]
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(4);
+      
+      // Check first node has null coordinates (should trigger smart positioning)
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
+        type: 'CREATE_NODE',
+        payload: expect.objectContaining({
+          x: null,
+          y: null
+        })
+      });
+      
+      // Check second node has explicit coordinates
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(2, {
+        type: 'CREATE_NODE',
+        payload: expect.objectContaining({
+          x: 200,
+          y: 350
+        })
+      });
+      
+      // Check third and fourth nodes have null coordinates
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(3, {
+        type: 'CREATE_NODE',
+        payload: expect.objectContaining({
+          x: null,
+          y: null
+        })
+      });
+      
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(4, {
+        type: 'CREATE_NODE',
+        payload: expect.objectContaining({
+          x: null,
+          y: null
+        })
+      });
+    });
+
     test('should handle bulk deletions', async () => {
       const mockResponse = { success: true, data: { deleted: true } };
       mockSendToPlugin.mockResolvedValue(mockResponse);
