@@ -112,14 +112,17 @@ export function preprocessEnumFields<T extends Record<string, any>>(
 ): T {
   const processed = { ...data } as Record<string, any>;
   
-  Object.entries(enumFieldMappings).forEach(([fieldName, enumValues]) => {
-    if (enumValues && processed[fieldName] !== undefined) {
-      processed[fieldName] = EnumPreprocessor.preprocessEnumValue(
-        processed[fieldName],
-        enumValues
-      );
-    }
-  });
+  // Null-safe Object.entries check (defensive against Claude Desktop bugs)
+  if (enumFieldMappings && typeof enumFieldMappings === 'object') {
+    Object.entries(enumFieldMappings).forEach(([fieldName, enumValues]) => {
+      if (enumValues && processed[fieldName] !== undefined) {
+        processed[fieldName] = EnumPreprocessor.preprocessEnumValue(
+          processed[fieldName],
+          enumValues
+        );
+      }
+    });
+  }
   
   return processed as T;
 }

@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 
 import * as esbuild from 'esbuild';
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
+import { getDefaultPaths } from '../dist/config/config.js';
 
 
 
@@ -40,12 +42,13 @@ function getBuildInfo() {
   const packageJsonPath = join(__dirname, '..', 'package.json');
   const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'));
   
-  // Load port from config file if available
+  // Load port from config file if available using cross-platform paths
   let port = 8765; // Default
   try {
-    const os = require('os');
+    const require = createRequire(import.meta.url);
     const yaml = require('js-yaml');
-    const configFile = join(os.homedir(), 'Library', 'Application Support', 'figma-mcp-write-server', 'config.yaml');
+    const paths = getDefaultPaths();
+    const configFile = paths.configFile;
     const configContent = readFileSync(configFile, 'utf-8');
     const config = yaml.load(configContent);
     if (config.port) {
@@ -124,7 +127,17 @@ ${bundledCode}
     // Step 4: Write final code.js
     writeFileSync(config.outfile, optimizedCode, 'utf-8');
     
-    // Step 5: Calculate file sizes
+    // Step 5: Clean up temporary file
+    try {
+      unlinkSync(config.tempFile);
+      if (existsSync(config.tempFile + '.map')) {
+        unlinkSync(config.tempFile + '.map');
+      }
+    } catch (error) {
+      console.warn('⚠️ Failed to clean up temporary files:', error.message);
+    }
+    
+    // Step 6: Calculate file sizes
     const originalSize = bundledCode.length;
     const finalSize = optimizedCode.length;
     const compressionRatio = ((originalSize - finalSize) / originalSize * 100).toFixed(1);
