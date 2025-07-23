@@ -45,6 +45,9 @@ export * from './export-operations.js';
 // Fill management operations (Paint objects)
 export * from './fill-operations.js';
 
+// Stroke management operations (Paint objects for strokes)
+export * from './stroke-operations.js';
+
 // Font management operations
 export * from './font-operations.js';
 

@@ -76,6 +76,7 @@ export class HandlerRegistry {
       () => import('./effects-handler.js').then(m => ({ class: m.EffectsHandler, name: 'EffectsHandler' })),
       () => import('./exports-handler.js').then(m => ({ class: m.ExportsHandler, name: 'ExportsHandler' })),
       () => import('./fills-handler.js').then(m => ({ class: m.FillsHandler, name: 'FillsHandler' })),
+      () => import('./strokes-handler.js').then(m => ({ class: m.StrokesHandler, name: 'StrokesHandler' })),
       () => import('./fonts-handler.js').then(m => ({ class: m.FontsHandler, name: 'FontsHandler' })),
       () => import('./hierarchy-handler.js').then(m => ({ class: m.HierarchyHandler, name: 'HierarchyHandler' })),
       () => import('./instances-handler.js').then(m => ({ class: m.InstancesHandler, name: 'InstancesHandler' })),

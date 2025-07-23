@@ -84,6 +84,7 @@ export class OperationRouter {
       { module: () => import('../operations/manage-exports.js'), messageTypes: ['EXPORT_SINGLE', 'EXPORT_BULK', 'EXPORT_NODE'] },
       { module: () => import('../operations/export-settings-operations.js'), messageTypes: ['MANAGE_EXPORTS'] },
       { module: () => import('../operations/manage-fills.js'), messageTypes: ['MANAGE_FILLS'] },
+      { module: () => import('../operations/manage-strokes.js'), messageTypes: ['MANAGE_STROKES'] },
       { module: () => import('../operations/manage-fonts.js'), messageTypes: ['MANAGE_FONTS'] },
       { module: () => import('../operations/manage-selection.js'), messageTypes: ['MANAGE_SELECTION'] },
       { module: () => import('../operations/manage-pages.js'), messageTypes: ['MANAGE_PAGES'] },
