@@ -1,5 +1,6 @@
 import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
 import { imageMatrixToFlattened, extractFlattenedImageParams } from './color-utils.js';
+import { logMessage, logWarning, logError } from './plugin-logger.js';
 
 export function findNodeById(nodeId: string): SceneNode | null {
   try {
@@ -21,6 +22,40 @@ export function findNodeById(nodeId: string): SceneNode | null {
     return node as SceneNode;
   } catch (error) {
     // figma.getNodeById can throw if nodeId is invalid format
+    return null;
+  }
+}
+
+/**
+ * Find a node within a specific page by ID
+ */
+export function findNodeInPage(page: PageNode, nodeId: string): SceneNode | null {
+  try {
+    const node = figma.getNodeById(nodeId);
+    if (!node) {
+      return null;
+    }
+    
+    // Check if this node is within the specified page
+    let current = node;
+    while (current.parent) {
+      if (current.parent.id === page.id) {
+        // Node is within this page, check if it's a scene node
+        const exportableTypes = [
+          'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
+          'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION', 'SLICE', 'SECTION'
+        ];
+        
+        if (exportableTypes.includes(node.type)) {
+          return node as SceneNode;
+        }
+        return null;
+      }
+      current = current.parent;
+    }
+    
+    return null; // Node not in this page
+  } catch (error) {
     return null;
   }
 }
@@ -160,7 +195,11 @@ export function createNodeData(node: BaseNode, detail: string, depth: number, pa
   if (detail === 'minimal') {
     return {
       id: node.id,
-      name: node.name
+      name: node.name,
+      parentId: parentId || undefined,
+      // Include essential properties needed for filtering
+      type: node.type,
+      visible: 'visible' in node ? (node as any).visible : true
     };
   }
 
@@ -326,16 +365,16 @@ async function enhanceImageMetadata(imageHash: string): Promise<{
   imageFileSize?: number;
 }> {
   try {
-    console.log('🖼️ Processing imageHash:', imageHash);
+    logMessage('🖼️ Processing imageHash:', imageHash);
     const image = figma.getImageByHash(imageHash);
     if (image) {
       // Get image dimensions
       const size = await image.getSizeAsync();
-      console.log('📏 Image dimensions:', size);
+      logMessage('📏 Image dimensions:', size);
       
       // Get file size from bytes
       const bytes = await image.getBytesAsync();
-      console.log('📦 Image file size:', bytes.length, 'bytes');
+      logMessage('📦 Image file size:', bytes.length, 'bytes');
       
       return {
         imageSizeX: size.width,
@@ -344,7 +383,7 @@ async function enhanceImageMetadata(imageHash: string): Promise<{
       };
     }
   } catch (error) {
-    console.log('❌ Failed to get image metadata:', error);
+    logMessage('❌ Failed to get image metadata:', error);
   }
   
   return {};
