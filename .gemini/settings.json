@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "figma": {
+      "command": "node",
+      "args": ["/Users/olivier/Projects/figma-mcp-write-server/dist/index.js"]
+    }
+  }
+}
