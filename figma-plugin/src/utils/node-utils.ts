@@ -736,7 +736,7 @@ export function cleanEmptyProperties(obj: any): any {
     // Hide gradientTransform matrix but add flattened parameters for gradient fills
     if (key === 'gradientTransform') {
       // Check if this is part of a gradient fill (parent object has gradient type)
-      if (enhancedObj.type && enhancedObj.type.startsWith('GRADIENT_')) {
+      if (obj.type && obj.type.startsWith('GRADIENT_')) {
         // Skip the matrix - MCP client only sees flat parameters
         // Try to add flattened parameters instead
         try {
@@ -758,7 +758,7 @@ export function cleanEmptyProperties(obj: any): any {
     // Hide spacing object but add flattened parameters for pattern fills
     if (key === 'spacing') {
       // Check if this is part of a pattern fill (parent object has PATTERN type)
-      if (enhancedObj.type && enhancedObj.type === 'PATTERN') {
+      if (obj.type && obj.type === 'PATTERN') {
         // Skip the spacing object - MCP client only sees flat parameters
         try {
           cleaned['patternSpacingX'] = Number((value.x || 0).toFixed(3));
@@ -774,7 +774,7 @@ export function cleanEmptyProperties(obj: any): any {
     // Hide filters from output, but convert to flattened parameters for image fills
     if (key === 'filters') {
       // Check if this is part of an image fill (parent object has IMAGE type)
-      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+      if (obj.type && obj.type === 'IMAGE') {
         try {
           // Add flattened filter parameters to the cleaned object
           if (value.exposure !== undefined) cleaned['filterExposure'] = Number(value.exposure.toFixed(3));
@@ -803,7 +803,7 @@ export function cleanEmptyProperties(obj: any): any {
     // Hide Figma API implementation details for image fills - flat parameters already extracted above
     if (key === 'imageTransform' || key === 'rotation' || key === 'scalingFactor' || key === 'scaleMode') {
       // Check if this is part of an image fill (parent object has IMAGE type)
-      if (enhancedObj.type && enhancedObj.type === 'IMAGE') {
+      if (obj.type && obj.type === 'IMAGE') {
         // Skip these implementation details - MCP client only sees flat parameters
         continue;
       }

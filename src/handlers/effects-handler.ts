@@ -254,6 +254,4 @@ export class EffectsHandler implements ToolHandler {
 
     return this.unifiedHandler.handle(args, config);
   }
-
-  // Complex transformation logic moved to effects-utils.ts for better maintainability
 }

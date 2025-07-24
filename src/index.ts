@@ -105,15 +105,13 @@ Port Management:
   - Provides clear error messages for port conflicts
 
 Available MCP Tools:
-  - create_node         Create nodes (rectangle, ellipse, text, frame)
-  - update_node         Update node properties
-  - delete_node         Delete nodes
-  - duplicate_node      Duplicate nodes
-  - set_selection       Set node selection
-  - get_selection       Get currently selected nodes
-  - get_page_nodes      Get all nodes on current page
-  - export_node         Export nodes as images
-  - get_plugin_status   Check plugin connection status
+  24 comprehensive tools for Figma automation including:
+  - Node management (create, update, delete, duplicate)
+  - Style operations (fills, strokes, effects, text styles)
+  - Layout and positioning (alignments, transforms)
+  - Export functionality (images, assets)
+  - Variable and component management
+  - Selection and navigation tools
 
 Examples:
   # Start server with default settings

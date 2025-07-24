@@ -352,8 +352,7 @@ describe('NodeHandler', () => {
       expect(actualCall.payload.fillColor).toBe('#FF0000');
       expect(actualCall.payload.strokeColor).toBe('#0000FF');
       
-      // For now, just verify the response includes stroke information
-      // TODO: Fix parameter filtering to include strokeWeight and strokeAlign in payload
+      // Verify the response includes stroke information
       const parsedResult = parseYamlResponse(result);
       expect(parsedResult.strokes).toBeDefined();
       expect(parsedResult.strokeWeight).toBe(4);

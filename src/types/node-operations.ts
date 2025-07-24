@@ -68,7 +68,7 @@ export const BulkCreateNodeSchema = z.object({
   pointCount: z.union([z.number().min(3), z.array(z.number().min(3))]).optional(),
   innerRadius: z.union([z.number().min(0).max(1), z.array(z.number().min(0).max(1))]).optional(),
 }).refine((data) => {
-  // Apply CreateNodeSchema validation for text nodes
+  // Prevent text node creation in figma_nodes tool
   const nodeTypes = Array.isArray(data.nodeType) ? data.nodeType : [data.nodeType];
   const hasTextNode = nodeTypes.some(type => type?.toLowerCase() === 'text');
   return !hasTextNode;

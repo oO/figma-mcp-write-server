@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Mock Figma Plugin WebSocket Server
- * Simulates the Figma plugin WebSocket client for testing
+ * Mock Figma Plugin WebSocket Client
+ * Simulates the Figma plugin connecting to the MCP server for testing
  */
 
 import WebSocket from 'ws';

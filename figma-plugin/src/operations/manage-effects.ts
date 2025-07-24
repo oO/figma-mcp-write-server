@@ -328,8 +328,6 @@ async function getEffectTarget(owner: string): Promise<any> {
     const cleanId = id.replace(/,$/, ''); // Remove trailing comma
     const effectStyles = figma.getLocalEffectStyles();
     const style = effectStyles.find(s => s.id.replace(/,$/, '') === cleanId);
-    console.log(`[DEBUG] Found effect style with ID ${cleanId}:`, style ? `"${style.name}"` : 'not found');
-    console.log(`[DEBUG] Available effect styles:`, effectStyles.map(s => `${s.id.replace(/,$/, '')}:"${s.name}"`));
     if (!style) {
       throw new Error(`Effect style with ID ${cleanId} not found`);
     }

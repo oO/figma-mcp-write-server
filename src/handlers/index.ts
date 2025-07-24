@@ -94,17 +94,6 @@ export class HandlerRegistry {
     return handlerImports;
   }
 
-  /**
-   * Convert file name to class name
-   * alignment-handler -> AlignmentHandler
-   */
-  private fileNameToClassName(fileName: string): string {
-    return fileName
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join('');
-  }
-
 
 
   private registerHandler(handler: ToolHandler): void {

@@ -1,4 +1,4 @@
-// Global test setup  
+// Global test setup - configures mocks and test environment
 import { vi } from 'vitest';
 
 // Mock console to reduce noise in tests

@@ -2,7 +2,7 @@ import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { VariablesHandler } from '@/handlers/variables-handler';
 import * as yaml from 'js-yaml';
 
-describe('VariableHandlers - Updated Architecture', () => {
+describe('VariableHandlers', () => {
   let variablesHandler: VariablesHandler;
   let mockSendToPlugin: ReturnType<typeof vi.fn>;
 

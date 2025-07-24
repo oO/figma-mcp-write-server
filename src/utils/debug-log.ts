@@ -23,12 +23,12 @@ function getDefaultExportPath(): string {
 
 /**
  * Debug logging function for development and troubleshooting
- * Logs to figma-export-debug.log in the default export directory
+ * Logs to figma-mcp-debug.log in the default export directory
  * Automatically filters out large base64 data to keep logs manageable
  */
 export function debugLog(message: string, data?: any): void {
   const defaultExportPath = getDefaultExportPath();
-  const logPath = path.join(defaultExportPath, 'figma-export-debug.log');
+  const logPath = path.join(defaultExportPath, 'figma-mcp-debug.log');
   const timestamp = new Date().toISOString();
   
   // Filter out base64 data to keep logs manageable

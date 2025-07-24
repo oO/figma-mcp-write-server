@@ -515,7 +515,7 @@ async function applyStyle(params: any): Promise<any> {
     const effectStyles = figma.getLocalEffectStyles();
     const gridStyles = figma.getLocalGridStyles();
     const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
-    // Fix: Remove trailing comma from style IDs (Figma API bug)
+    // Clean trailing comma from style IDs for consistent matching
     style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
   } else if (params.name) {
     const paintStyles = figma.getLocalPaintStyles();
@@ -576,7 +576,7 @@ async function deleteStyle(params: any): Promise<any> {
   const gridStyles = figma.getLocalGridStyles();
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
-  // Fix: Remove trailing comma from style IDs (Figma API bug)
+  // Clean trailing comma from style IDs for consistent matching
   const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
   
   if (!style) {
@@ -631,7 +631,7 @@ async function getStyle(params: any): Promise<any> {
   const gridStyles = figma.getLocalGridStyles();
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
-  // Fix: Remove trailing comma from style IDs (Figma API bug)
+  // Clean trailing comma from style IDs for consistent matching
   const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
   
   if (!style) {
@@ -653,7 +653,7 @@ async function duplicateStyle(params: any): Promise<any> {
   const gridStyles = figma.getLocalGridStyles();
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
-  // Fix: Remove trailing comma from style IDs (Figma API bug)
+  // Clean trailing comma from style IDs for consistent matching
   const originalStyle = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId.replace(/,$/, ''));
   
   if (!originalStyle) {
