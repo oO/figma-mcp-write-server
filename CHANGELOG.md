@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.2] - 2025-07-24
+
+### Added
+- **Page-specific selection operations**: Enhanced figma_selection tool with pageId parameter
+  - **pageId parameter**: Optional parameter to target specific pages instead of current page
+  - **Improved error handling**: Clear error messages for page not found and node not found scenarios
+  - **Page-scoped node search**: Search for nodes within specific pages to avoid ID confusion
+  - **Enhanced API clarity**: Renamed includePages to includeAllPages for better semantics
+
+### Fixed
+- **ID confusion resolution**: Clear separation between page IDs and node IDs in selection operations
+- **Error feedback**: Descriptive error messages showing available pages when page not found
+- **Test coverage**: Comprehensive test suite for new pageId functionality and error scenarios
+
 ## [0.32.0] - 2025-07-23
 
 ### Added
