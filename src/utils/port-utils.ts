@@ -1,6 +1,7 @@
 import { createServer } from 'http';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { debugLog } from "../utils/logger.js"
 
 const execAsync = promisify(exec);
 
@@ -29,12 +30,12 @@ export async function findZombieProcesses(port: number): Promise<string[]> {
 export async function killZombieProcesses(pids: string[]): Promise<void> {
   for (const pid of pids) {
     try {
-      console.error(`🧟 Killing zombie process ${pid}`);
+      debugLog(`🧟 Killing zombie process ${pid}`);
       await execAsync(`kill -9 ${pid}`);
       // Wait a bit for process to actually die
       await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
-      console.error(`⚠️ Could not kill process ${pid}:`, error);
+      debugLog(`⚙️ Could not kill process ${pid}:`, 'warning', error);
     }
   }
 }

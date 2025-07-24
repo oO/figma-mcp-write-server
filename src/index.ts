@@ -5,7 +5,7 @@ import { ServerConfig } from './types/index.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createServer } from 'http';
-import { debugLog } from './utils/debug-log.js';
+import { debugLog } from './utils/logger.js';
 
 const execAsync = promisify(exec);
 
@@ -24,9 +24,9 @@ async function checkPortStatus(port: number): Promise<void> {
     });
     
     if (isAvailable) {
-      debugLog(`✅ Port ${port} is available`);
+      debugLog(`🔌 Port ${port} is available`);
     } else {
-      debugLog(`❌ Port ${port} is in use`);
+      debugLog(`Port ${port} is in use`);
       
       // Find what's using the port
       try {
@@ -50,7 +50,7 @@ async function checkPortStatus(port: number): Promise<void> {
       }
     }
   } catch (error) {
-    debugLog(`❌ Error checking port ${port}:`, error);
+    debugLog(`Error checking port ${port}:`, "message", error);
   }
 }
 
@@ -136,12 +136,12 @@ async function main() {
   
   // Handle graceful shutdown
   const shutdown = async (signal: string) => {
-    debugLog(`📡 Received ${signal}, shutting down gracefully...`);
+    debugLog(`📡 Received ${signal}, shutting down gracefully...`, undefined, 'warning');
     try {
       await server.stop();
       process.exit(0);
     } catch (error) {
-      debugLog('❌ Error during shutdown:', error);
+      debugLog('Error during shutdown:', 'error', error);
       process.exit(1);
     }
   };
@@ -149,23 +149,23 @@ async function main() {
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('uncaughtException', (error) => {
-    debugLog('❌ Uncaught Exception:', error);
+    debugLog('Uncaught Exception:', 'error', error);
     shutdown('uncaughtException');
   });
   process.on('unhandledRejection', (reason, promise) => {
-    debugLog('❌ Unhandled Rejection at:', { promise, reason });
+    debugLog('Unhandled Rejection at:', 'error', { promise, reason });
     shutdown('unhandledRejection');
   });
   
   try {
     await server.start();
   } catch (error) {
-    debugLog('❌ Failed to start server:', error);
+    debugLog('Failed to start server:', 'error', error);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  debugLog('❌ Fatal error:', error);
+  debugLog('Fatal error:', 'error', error);
   process.exit(1);
 });

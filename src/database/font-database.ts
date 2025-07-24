@@ -3,6 +3,7 @@ import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { FontResult, FontSource, SortOption } from '../types/font-operations.js';
+import { debugLog } from "../utils/logger.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -267,7 +268,7 @@ export class FontDatabase {
       for (const style of styles) {
         // Validate style
         if (!style || typeof style !== 'string') {
-          console.error(`Skipping invalid style for ${family}:`, style);
+          debugLog(`Skipping invalid style for ${family}:`, 'warning', style);
           continue;
         }
         

@@ -18,6 +18,7 @@ import {
 } from '../utils/color-utils.js';
 import { modifyFills } from '../utils/figma-property-utils.js';
 import { cleanEmptyProperties, cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
+import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
 import { ERROR_MESSAGES } from '../utils/fill-constants.js';
 import { 
   validateNodeForFills, 
@@ -406,7 +407,7 @@ async function addPatternFill(params: any): Promise<OperationResult> {
 
 async function addImageFill(params: any): Promise<OperationResult> {
     // Debug: Log what parameters we received
-    console.log('🔍 addImageFill called with params:', {
+    logMessage('🔍 addImageFill called with params:', {
       hasImageUrl: !!params.imageUrl,
       hasImagePath: !!params.imagePath,
       hasImageHash: !!params.imageHash,
@@ -423,7 +424,7 @@ async function addImageFill(params: any): Promise<OperationResult> {
     // Validate that at least one image source is provided
     validateImageSource(params);
     
-    console.log('✅ addImageFill validation passed');
+    logMessage('✅ addImageFill validation passed');
     
     // Note: nodeId is optional for image fills - if not provided, creates a new node
     if (params.nodeId) {
@@ -465,7 +466,7 @@ async function addImageFill(params: any): Promise<OperationResult> {
       //
       // This architecture is intentional and required for Figma plugin constraints.
       
-      console.log('🔄 Sending Base64 to UI for conversion, length:', typeof params.imageBytes === 'string' ? params.imageBytes.length : 'not string');
+      logMessage('🔄 Sending Base64 to UI for conversion, length:', typeof params.imageBytes === 'string' ? params.imageBytes.length : 'not string');
       
       try {
         const base64String = typeof params.imageBytes === 'string' ? params.imageBytes : params.imageBytes[0];
@@ -481,7 +482,7 @@ async function addImageFill(params: any): Promise<OperationResult> {
               if (msg.error) {
                 reject(new Error(msg.error));
               } else {
-                console.log('✅ Received Uint8Array from UI, length:', msg.result.length);
+                logMessage('✅ Received Uint8Array from UI, length:', msg.result.length);
                 resolve(new Uint8Array(msg.result));
               }
             }
@@ -504,11 +505,11 @@ async function addImageFill(params: any): Promise<OperationResult> {
         });
         
         const result = await createImageFromBytes(bytesArray);
-        console.log('✅ createImageFromBytes successful, hash:', result.imageHash);
+        logMessage('✅ createImageFromBytes successful, hash:', result.imageHash);
         imageHash = result.imageHash;
         imageDimensions = result.dimensions;
       } catch (bytesError) {
-        console.log('❌ Error in imageBytes processing:', bytesError.toString());
+        logMessage('❌ Error in imageBytes processing:', bytesError.toString());
         throw new Error(`Failed to process imageBytes: ${bytesError.toString()}`);
       }
     } else if (params.imagePath) {
@@ -560,7 +561,7 @@ async function addImageFill(params: any): Promise<OperationResult> {
         
         // Log any transform warnings for debugging
         if (warnings.length > 0) {
-          console.log('⚠️ Image transform warnings:', warnings);
+          logMessage('⚠️ Image transform warnings:', warnings);
         }
         
         // Apply image filters if provided
@@ -835,7 +836,7 @@ async function updateImageFill(params: any): Promise<OperationResult> {
         
         // Log warnings if any
         if (warnings.length > 0) {
-          console.warn('Transform warnings:', warnings.join(', '));
+          logWarning('Transform warnings:', warnings.join(', '));
         }
       }
       

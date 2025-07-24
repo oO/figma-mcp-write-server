@@ -1,6 +1,6 @@
 import { ManageStrokesSchema, ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
-import { debugLog } from '../utils/debug-log.js';
+import { debugLog } from "../utils/logger.js"
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -366,7 +366,7 @@ export class StrokesHandler implements ToolHandler {
     // Preprocess args to handle local image loading
     const processedArgs = await this.preprocessImagePaths(args);
     
-    debugLog('StrokesHandler.handle passing to unifiedHandler', {
+    debugLog('StrokesHandler.handle passing to unifiedHandler', 'message', {
       originalKeys: args ? Object.keys(args) : [],
       processedKeys: processedArgs ? Object.keys(processedArgs) : [],
       hasImageBytes: !!processedArgs?.imageBytes,
@@ -387,7 +387,7 @@ export class StrokesHandler implements ToolHandler {
    * DO NOT change this to return byte arrays - it will cause hanging.
    */
   private async preprocessImagePaths(args: any): Promise<any> {
-    debugLog('StrokesHandler.preprocessImagePaths called', { 
+    debugLog('StrokesHandler.preprocessImagePaths called', 'message', { 
       operation: args?.operation, 
       hasImagePath: !!args?.imagePath,
       imagePath: args?.imagePath,
@@ -401,13 +401,13 @@ export class StrokesHandler implements ToolHandler {
 
     // Only process add_image operations that have imagePath
     if (args.operation !== 'add_image' || !args.imagePath) {
-      debugLog('StrokesHandler.preprocessImagePaths skipping', { 
+      debugLog('StrokesHandler.preprocessImagePaths skipping', 'message', { 
         reason: args.operation !== 'add_image' ? 'wrong operation' : 'no imagePath'
       });
       return args;
     }
 
-    debugLog('StrokesHandler.preprocessImagePaths processing imagePath', { imagePath: args.imagePath });
+    debugLog('StrokesHandler.preprocessImagePaths processing imagePath', "message", { imagePath: args.imagePath });
     const processedArgs = { ...args };
     
     // Handle imagePath parameter (single or array)
@@ -449,7 +449,7 @@ export class StrokesHandler implements ToolHandler {
       // Remove imagePath since we're now using imageBytes
       delete processedArgs.imagePath;
       
-      debugLog('StrokesHandler.preprocessImagePaths completed', { 
+      debugLog('StrokesHandler.preprocessImagePaths completed', 'message', { 
         base64Length: imageDataArray.length === 1 ? imageDataArray[0]?.length : imageDataArray.map(b => b?.length),
         imageBytesType: imageDataArray.length === 1 ? typeof imageDataArray[0] : 'array',
         processedKeys: Object.keys(processedArgs)

@@ -7,7 +7,7 @@
 
 import { BulkOperationsParser, ParamConfig, BulkOperationResult, CommonParamConfigs } from './bulk-operations.js';
 import { validateAndParse } from '../types/validation-utils.js';
-import { debugLog } from './debug-log.js';
+import { debugLog } from "../utils/logger.js"
 import * as yaml from 'js-yaml';
 
 export interface UnifiedHandlerConfig {
@@ -58,21 +58,10 @@ export class UnifiedHandler {
    */
   async handle(args: any, config: UnifiedHandlerConfig): Promise<any> {
     try {
-      debugLog('UnifiedHandler.handle called', {
-        toolName: config.toolName,
-        inputKeys: Object.keys(args),
-        hasImageBytes: !!args.imageBytes,
-        imageBytesType: typeof args.imageBytes
-      });
 
       // Apply defensive parsing to handle various MCP client formats
       const normalizedArgs = BulkOperationsParser.parseParameters(args, config.paramConfigs);
       
-      debugLog('UnifiedHandler.handle after parseParameters', {
-        normalizedKeys: Object.keys(normalizedArgs),
-        hasImageBytes: !!normalizedArgs.imageBytes,
-        imageBytesType: typeof normalizedArgs.imageBytes
-      });
       
       // Detect if this should be a bulk operation
       const isBulkOperation = BulkOperationsParser.detectBulkOperation(normalizedArgs, config.bulkParams);
@@ -103,20 +92,10 @@ export class UnifiedHandler {
     // Extract single values from arrays for schema validation
     const singleArgs = this.extractSingleValues(args, config.bulkParams);
     
-    debugLog('UnifiedHandler.handleSingleOperation after extractSingleValues', {
-      singleArgsKeys: Object.keys(singleArgs),
-      hasImageBytes: !!singleArgs.imageBytes,
-      imageBytesType: typeof singleArgs.imageBytes
-    });
     
     // Validate using schema or custom validator
     const validatedArgs = this.validateArgs(singleArgs, config);
     
-    debugLog('UnifiedHandler.handleSingleOperation after validateArgs', {
-      validatedArgsKeys: Object.keys(validatedArgs),
-      hasImageBytes: !!validatedArgs.imageBytes,
-      imageBytesType: typeof validatedArgs.imageBytes
-    });
 
     // Generate parameter warnings (non-blocking)
     const warnings = this.generateParameterWarnings(validatedArgs, config);
@@ -136,13 +115,6 @@ export class UnifiedHandler {
     }
 
     // Send to plugin
-    debugLog('UnifiedHandler.handleSingleOperation sending to plugin', {
-      type: config.pluginMessageType,
-      payloadKeys: Object.keys(validatedArgs),
-      hasImageBytes: !!validatedArgs.imageBytes,
-      imageBytesType: typeof validatedArgs.imageBytes,
-      imageBytesLength: typeof validatedArgs.imageBytes === 'string' ? validatedArgs.imageBytes.length : 'not string'
-    });
 
     const response = await this.sendToPlugin({
       type: config.pluginMessageType,

@@ -1,8 +1,9 @@
 import { PluginMessage, OperationResult, HandlerRegistry } from '../types.js';
+import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
 
 export class MessageRouter {
   private handlers: HandlerRegistry = {};
-  private isConnected = false;
+  private connected = false;
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
@@ -24,8 +25,8 @@ export class MessageRouter {
       this.ws = new WebSocket('ws://localhost:8765');
       
       this.ws.onopen = () => {
-        console.log('🔗 Connected to MCP server');
-        this.isConnected = true;
+        logMessage('🔗 Connected to MCP server');
+        this.connected = true;
         this.reconnectAttempts = 0;
         this.sendHello();
         this.startHeartbeat();
@@ -37,25 +38,25 @@ export class MessageRouter {
           const message = JSON.parse(event.data) as PluginMessage;
           await this.handleMessage(message);
         } catch (error) {
-          console.error('❌ Failed to parse message:', error);
+          logError('Failed to parse message:', error);
         }
       };
 
       this.ws.onclose = () => {
-        console.log('Disconnected from MCP server');
-        this.isConnected = false;
+        logMessage('Disconnected from MCP server');
+        this.connected = false;
         this.stopHeartbeat();
         this.notifyUI('disconnected', 'Disconnected from MCP server');
         this.attemptReconnect();
       };
 
       this.ws.onerror = (error) => {
-        console.error('💥 WebSocket error:', error);
+        logError('WebSocket error:', error);
         this.notifyUI('error', 'Connection error');
       };
 
     } catch (error) {
-      console.error('❌ Failed to connect to server:', error);
+      logError('Failed to connect to server:', error);
       this.attemptReconnect();
     }
   }
@@ -129,9 +130,29 @@ export class MessageRouter {
   }
 
   private sendToServer(message: any): void {
-    if (this.ws && this.isConnected) {
+    if (this.ws && this.connected) {
       this.ws.send(JSON.stringify(message));
     }
+  }
+
+  // Public methods for plugin logger
+  public isConnected(): boolean {
+    return this.connected;
+  }
+
+  public async send(message: any): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (this.ws && this.connected) {
+        try {
+          this.ws.send(JSON.stringify(message));
+          resolve();
+        } catch (error) {
+          reject(error);
+        }
+      } else {
+        reject(new Error('WebSocket not connected'));
+      }
+    });
   }
 
   private setupUIHandlers(): void {
@@ -179,7 +200,7 @@ export class MessageRouter {
 
   getConnectionStatus(): { connected: boolean; attempts: number } {
     return {
-      connected: this.isConnected,
+      connected: this.connected,
       attempts: this.reconnectAttempts
     };
   }
@@ -190,7 +211,7 @@ export class MessageRouter {
       this.ws.close();
       this.ws = null;
     }
-    this.isConnected = false;
+    this.connected = false;
   }
   
   private startHeartbeat(): void {

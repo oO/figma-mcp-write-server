@@ -1,12 +1,13 @@
 import { OperationResult, NodeInfo } from '../types.js';
 import { cleanEmptyProperties } from './node-utils.js';
+import { logMessage, logWarning, logError } from './plugin-logger.js';
 
 /**
  * DEPRECATED: Use direct data return instead
  * KISS: Return data directly, no success wrapper
  */
 export function createSuccessResponse(data?: any): any {
-  console.warn('createSuccessResponse is deprecated - return data directly');
+  logWarning('createSuccessResponse is deprecated - return data directly');
   return data;
 }
 
@@ -15,7 +16,7 @@ export function createSuccessResponse(data?: any): any {
  * KISS: Throw errors directly, no error wrapper
  */
 export function createErrorResponse(error: string | Error): never {
-  console.warn('createErrorResponse is deprecated - throw errors directly');
+  logWarning('createErrorResponse is deprecated - throw errors directly');
   const errorMessage = error instanceof Error ? error.message : error;
   throw new Error(errorMessage);
 }
@@ -27,13 +28,13 @@ export function createErrorResponse(error: string | Error): never {
 export function wrapAsync<T extends any[], R>(
   fn: (...args: T) => Promise<R>
 ): (...args: T) => Promise<R> {
-  console.warn('wrapAsync is deprecated - use direct async calls');
+  logWarning('wrapAsync is deprecated - use direct async calls');
   return async (...args: T): Promise<R> => {
     try {
       const result = await fn(...args);
       return result;
     } catch (error) {
-      console.error('❌ Operation failed:', error);
+      logError('Operation failed:', error);
       throw error;
     }
   };
@@ -95,7 +96,7 @@ export function createOperationResponse(operation: string, data: any): any {
  * Data is valid if it exists, errors are thrown
  */
 export function validateResponse(response: any): boolean {
-  console.warn('validateResponse is deprecated - KISS pattern uses direct data/errors');
+  logWarning('validateResponse is deprecated - KISS pattern uses direct data/errors');
   return response !== undefined && response !== null;
 }
 
@@ -113,9 +114,9 @@ export function sanitizeError(error: unknown): string {
  * DEPRECATED: KISS pattern - operations succeed (return data) or fail (throw)
  */
 export function logOperation(operation: string, params: any, result: any): void {
-  console.warn('logOperation success check is deprecated - KISS pattern');
+  logWarning('logOperation success check is deprecated - KISS pattern');
   const status = '✅'; // If we got here, operation succeeded (otherwise would have thrown)
-  console.log(`${status} ${operation}:`, { params, result });
+  logMessage(`${status} ${operation}:`, { params, result });
 }
 
 export function createPageNodesResponse(nodes: any[], detail: string = 'standard'): any {

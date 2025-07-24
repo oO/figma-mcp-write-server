@@ -1,4 +1,5 @@
 import { RGB, RGBA } from '../types.js';
+import { logMessage, logWarning, logError } from './plugin-logger.js';
 
 export function hexToRgb(hex: string): RGB {
   // Support both 6-digit (#RRGGBB) and 8-digit (#RRGGBBAA) hex colors
@@ -375,28 +376,28 @@ export async function createImageFromUrl(url: string): Promise<{imageHash: strin
  */
 export async function createImageFromBytes(bytes: Uint8Array): Promise<{imageHash: string, dimensions: {width: number, height: number}}> {
   try {
-    console.log('🔄 createImageFromBytes called with bytes length:', bytes.length);
-    console.log('🔄 Checking figma object:', typeof figma);
-    console.log('🔄 Checking figma.createImage:', typeof figma.createImage);
+    logMessage('🔄 createImageFromBytes called with bytes length:', bytes.length);
+    logMessage('🔄 Checking figma object:', typeof figma);
+    logMessage('🔄 Checking figma.createImage:', typeof figma.createImage);
     
     if (typeof figma.createImage !== 'function') {
       throw new Error(`figma.createImage is not a function, it is: ${typeof figma.createImage}`);
     }
     
-    console.log('🔄 About to call figma.createImage...');
+    logMessage('🔄 About to call figma.createImage...');
     const image = figma.createImage(bytes);
-    console.log('🔄 figma.createImage successful, got image:', !!image);
-    console.log('🔄 Image hash:', image.hash);
-    console.log('🔄 About to get size...');
+    logMessage('🔄 figma.createImage successful, got image:', !!image);
+    logMessage('🔄 Image hash:', image.hash);
+    logMessage('🔄 About to get size...');
     const size = await image.getSizeAsync();
-    console.log('🔄 getSizeAsync successful, size:', size);
+    logMessage('🔄 getSizeAsync successful, size:', size);
     
     return {
       imageHash: image.hash,
       dimensions: { width: size.width, height: size.height }
     };
   } catch (error) {
-    console.log('❌ Error in createImageFromBytes:', error.toString());
+    logMessage('❌ Error in createImageFromBytes:', error.toString());
     throw new Error(`Failed to create image from bytes: ${error.toString()}`);
   }
 }

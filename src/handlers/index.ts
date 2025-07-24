@@ -3,6 +3,7 @@ import { ToolHandler, ToolResult } from '../types/index.js';
 import * as path from "path";
 import { readFileSync, readdirSync } from "fs";
 import { fileURLToPath } from "url";
+import { debugLog } from "../utils/logger.js"
 
 // Get version from package.json
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -45,7 +46,7 @@ export class HandlerRegistry {
             }
           } catch (error) {
             // Log error but continue with other handlers
-            console.error(`Failed to load handler: ${error}`);
+            debugLog(`Failed to load handler: ${error}`, 'error', undefined);
           }
         }
         resolve(); // All handlers processed (successfully or with logged errors)

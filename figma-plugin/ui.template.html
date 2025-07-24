@@ -345,6 +345,14 @@
                         connectionAttempts = 0;
                         clearReconnectTimer();
                         ws.send(JSON.stringify({ type: "PLUGIN_HELLO" }));
+                        
+                        // Notify main thread of connection status
+                        parent.postMessage({
+                            pluginMessage: {
+                                type: "CONNECTION_STATUS",
+                                connected: true
+                            }
+                        }, "*");
                     };
 
                     ws.onmessage = (event) => {
@@ -360,6 +368,14 @@
                         log("Connection closed");
                         updateConnectionStatus(false, "Disconnected");
                         scheduleReconnect();
+                        
+                        // Notify main thread of disconnection
+                        parent.postMessage({
+                            pluginMessage: {
+                                type: "CONNECTION_STATUS",
+                                connected: false
+                            }
+                        }, "*");
                     };
 
                     ws.onerror = (error) => {
@@ -500,6 +516,14 @@
                                 error: error.message
                             }
                         }, "*");
+                    }
+                    return;
+                }
+
+                if (msg.type === "LOG_MESSAGE") {
+                    // Forward plugin log messages to WebSocket server
+                    if (ws && isConnected) {
+                        ws.send(JSON.stringify(msg));
                     }
                     return;
                 }

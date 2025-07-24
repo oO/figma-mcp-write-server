@@ -21,7 +21,7 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 - Use `{type: 'OPERATION', payload: parameters}` pattern
 - YAML responses for all tool outputs
 - **JSON-RPC**: Always use `error.toString()` never `error.message`
-- **Debug Logging**: Use `debugLog()` from `src/utils/debug-log.ts` for troubleshooting - it safely ignores errors to avoid breaking JSON-RPC communication
+- **Debug Logging**: Use `debugLog()` from `src/utils/logger.ts` for troubleshooting - it safely ignores errors to avoid breaking JSON-RPC communication
 
 ### Code Standards
 - Follow existing patterns before creating new ones

@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.3] - 2025-07-24
+
+### Fixed
+- **Plugin logging display**: Fixed plugin log messages appearing incorrectly in server logs
+- **LOG_MESSAGE parameter order**: Corrected WebSocket LOG_MESSAGE handler to use proper parameter order (message, logType, data)
+- **Logging consistency**: Unified parameter order across server and plugin logging systems
+- **Emoji spacing**: Ensured proper spacing between emoji icons and log messages
+- **Base64 data filtering**: Enhanced logger to filter large base64 data from log output
+
+### Added
+- **Comprehensive test suite**: Added 20+ tests for both server and plugin logging systems
+- **Parameter validation**: Tests verify consistent (message, logType, data) parameter order
+- **Cross-system compatibility**: Integration tests validate plugin-to-server logging flow
+- **Error resilience testing**: Tests confirm graceful handling of edge cases and malformed data
+
 ## [0.32.2] - 2025-07-24
 
 ### Added

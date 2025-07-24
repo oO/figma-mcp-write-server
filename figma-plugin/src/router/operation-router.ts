@@ -1,4 +1,5 @@
 import { OperationResult, OperationHandler } from '../types.js';
+import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
 
 /**
  * Auto-discovery operation router for the Figma plugin.
@@ -28,12 +29,12 @@ export class OperationRouter {
         this.operations[messageType] = handler;
       }
 
-      console.log(`Auto-discovered ${Object.keys(this.operations).length} operations:`, 
+      logMessage(`Auto-discovered ${Object.keys(this.operations).length} operations:`, 
                   Object.keys(this.operations).sort());
       
       this.initialized = true;
     } catch (error) {
-      console.error('❌ Failed to initialize operation router:', error);
+      logError('Failed to initialize operation router:', error);
       throw error;
     }
   }
@@ -108,12 +109,12 @@ export class OperationRouter {
           if (handler && typeof handler === 'function') {
             operations[messageType] = handler;
           } else {
-            console.warn(`⚠️  Operation ${messageType} handler '${handlerName}' not found in module`);
+            logWarning(`⚠️  Operation ${messageType} handler '${handlerName}' not found in module`);
           }
         }
       } catch (error) {
         // Log warning but continue - some operations might not exist yet
-        console.warn(`⚠️  Failed to import operation module for ${messageTypes.join(', ')}:`, error);
+        logWarning(`⚠️  Failed to import operation module for ${messageTypes.join(', ')}:`, error);
       }
     }
 

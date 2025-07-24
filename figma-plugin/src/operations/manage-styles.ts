@@ -3,6 +3,7 @@ import { BaseOperation } from './base-operation.js';
 import { findNodeById } from '../utils/node-utils.js';
 import { hexToRgb, hexToRgba, createSolidPaint, rgbToHex } from '../utils/color-utils.js';
 import { ensureFontLoaded } from '../utils/font-utils.js';
+import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
 import { formatStyleResponse } from '../utils/response-utils.js';
 
 /**
@@ -342,9 +343,9 @@ async function createEffectStyle(params: any): Promise<any> {
     // Debug: Check if the style is immediately available
     const allEffectStyles = figma.getLocalEffectStyles();
     const foundStyle = allEffectStyles.find(s => s.id.replace(/,$/, '') === style.id.replace(/,$/, ''));
-    console.log(`[DEBUG] Created effect style with ID: ${style.id}`);
-    console.log(`[DEBUG] Style immediately findable via getLocalEffectStyles: ${foundStyle ? 'YES' : 'NO'}`);
-    console.log(`[DEBUG] Total effect styles after creation: ${allEffectStyles.length}`);
+    logMessage(`[DEBUG] Created effect style with ID: ${style.id}`);
+    logMessage(`[DEBUG] Style immediately findable via getLocalEffectStyles: ${foundStyle ? 'YES' : 'NO'}`);
+    logMessage(`[DEBUG] Total effect styles after creation: ${allEffectStyles.length}`);
     
     return {
       id: style.id,
@@ -713,7 +714,7 @@ async function duplicateTextStyle(originalStyle: TextStyle, params: any): Promis
     newStyle.fontName = originalStyle.fontName;
   } catch (e) {
     // Font loading failed, use default
-    console.warn(`Failed to load font for duplicated text style: ${e}`);
+    logWarning(`Failed to load font for duplicated text style: ${e}`);
   }
   
   newStyle.fontSize = originalStyle.fontSize;
