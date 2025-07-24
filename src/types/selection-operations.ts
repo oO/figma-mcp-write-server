@@ -13,7 +13,8 @@ import { caseInsensitiveEnum } from './enum-utils.js';
 export const ManageSelectionSchema = createActionSchema(
   ['get_selection', 'set_selection', 'list_nodes'],
   {
-    // Starting point(s) - single/array pattern
+    // Page and node targeting
+    pageId: z.string().optional(),
     nodeId: z.union([z.string(), z.array(z.string())]).optional(),
     
     // Traversal options
@@ -26,7 +27,7 @@ export const ManageSelectionSchema = createActionSchema(
     
     // Detail and filtering options
     detail: caseInsensitiveEnum(['minimal', 'standard', 'full']).optional(),
-    includePages: z.boolean().optional(),
+    includeAllPages: z.boolean().optional(),
     maxDepth: z.number().min(1).optional(),
     maxResults: z.number().min(1).max(1000).optional(),
     

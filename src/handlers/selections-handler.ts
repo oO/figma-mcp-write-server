@@ -22,6 +22,10 @@ export class SelectionHandler implements ToolHandler {
               enum: ['get_selection', 'set_selection', 'list_nodes'],
               description: 'Selection operation to perform'
             },
+            pageId: {
+              type: 'string',
+              description: 'Specific page ID to search within (default: current page)'
+            },
             nodeId: {
               oneOf: [
                 { type: 'string' },
@@ -39,9 +43,9 @@ export class SelectionHandler implements ToolHandler {
               enum: ['minimal', 'standard', 'full'],
               description: 'Level of detail for node information (default: standard)'
             },
-            includePages: {
+            includeAllPages: {
               type: 'boolean',
-              description: 'Include page nodes in results (default: false)'
+              description: 'Search across all pages in the document - requires loading all pages (default: false)'
             },
             filterByType: {
               oneOf: [
@@ -101,7 +105,10 @@ export class SelectionHandler implements ToolHandler {
           '{"operation": "list_nodes", "detail": "full", "filterByType": ["FRAME", "TEXT"]}',
           '{"operation": "list_nodes", "nodeId": "123:456", "traversal": "ancestors"}',
           '{"operation": "list_nodes", "filterByName": ".*Header.*", "maxDepth": 3}',
-          '{"operation": "list_nodes", "filterByVisibility": "hidden", "includePages": true}'
+          '{"operation": "list_nodes", "filterByVisibility": "hidden", "includeAllPages": true}',
+          '{"operation": "list_nodes", "pageId": "123:0", "filterByType": "TEXT"}',
+          '{"operation": "list_nodes", "pageId": "123:0", "nodeId": "123:456", "traversal": "children"}',
+          '{"operation": "set_selection", "pageId": "123:0", "filterByName": "Button.*"}'
         ]
       }
     ];
@@ -118,6 +125,7 @@ export class SelectionHandler implements ToolHandler {
       bulkParams: [], // Bulk operations not needed: selection management operates on nodeIds array inherently (multi-node by design)
       paramConfigs: {
         ...UnifiedParamConfigs.basic(),
+        pageId: { expectedType: 'string' as const },
         nodeId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         traversal: { expectedType: 'string' as const },
         filterByType: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
@@ -125,7 +133,7 @@ export class SelectionHandler implements ToolHandler {
         filterByVisibility: { expectedType: 'string' as const },
         filterByLockedState: { expectedType: 'boolean' as const },
         detail: { expectedType: 'string' as const },
-        includePages: { expectedType: 'boolean' as const },
+        includeAllPages: { expectedType: 'boolean' as const },
         maxDepth: { expectedType: 'number' as const },
         maxResults: { expectedType: 'number' as const },
         focus: { expectedType: 'boolean' as const }
@@ -134,8 +142,8 @@ export class SelectionHandler implements ToolHandler {
       schema: ManageSelectionSchema,
       operationParameters: {
         get_selection: ['detail', 'focus'],
-        set_selection: ['nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includePages', 'focus', 'failFast'],
-        list_nodes: ['nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includePages', 'detail', 'failFast']
+        set_selection: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'focus', 'failFast'],
+        list_nodes: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'detail', 'failFast']
       }
     };
 
