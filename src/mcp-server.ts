@@ -121,7 +121,10 @@ export class FigmaMCPServer {
     await this.server.connect(transport);
     
     // Font database will be initialized when plugin connects
-    logger.log('🚀 MCP server started, waiting for plugin connection...');
+    logger.log('🚀 MCP server started, waiting for plugin connection...', {
+      pid: process.pid,
+      parentPid: process.ppid
+    });
     
     // Reset health metrics after MCP server starts
     await this.resetHealthMetrics();
@@ -147,7 +150,7 @@ export class FigmaMCPServer {
           }
         );
         
-        logger.log('Font database service ready');
+        logger.log('🔤 Font database service ready');
       } else {
       logger.log('🔤 Font database disabled in configuration');
       }

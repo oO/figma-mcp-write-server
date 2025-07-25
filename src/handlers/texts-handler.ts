@@ -28,6 +28,10 @@ export class TextHandler implements ToolHandler {
               ],
               description: 'Text node ID(s) for update/styling operations - single string or array for bulk operations. For search_text operation, omit this parameter to perform global search across all text nodes in the document.'
             },
+            parentId: {
+              type: 'string',
+              description: 'Optional parent container ID for create operations. When provided, the text node will be created inside this container and coordinates will be relative to the parent.'
+            },
             characters: {
               oneOf: [
                 { type: 'string' },
@@ -567,6 +571,7 @@ export class TextHandler implements ToolHandler {
       paramConfigs: {
         ...UnifiedParamConfigs.withNodeId(),
         ...UnifiedParamConfigs.withPositioning(),
+        parentId: { expectedType: 'string' as const },
         characters: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         name: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         width: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
@@ -637,7 +642,7 @@ export class TextHandler implements ToolHandler {
       pluginMessageType: 'MANAGE_TEXT',
       schema: ManageTextSchema,
       operationParameters: {
-        create: ['characters', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename', 'failFast'],
+        create: ['characters', 'parentId', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename', 'failFast'],
         update: ['nodeId', 'characters', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename', 'failFast'],
         get: ['nodeId', 'failFast'],
         delete: ['nodeId', 'failFast'],

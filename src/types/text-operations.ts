@@ -6,6 +6,7 @@ export const ManageTextSchema = z.object({
   
   // Basic parameters (support arrays for bulk operations)
   nodeId: z.union([z.string(), z.array(z.string())]).optional(),
+  parentId: z.string().optional(),
   characters: z.union([z.string().min(1), z.array(z.string().min(1))]).optional(),
   x: z.union([z.number(), z.array(z.number())]).optional(),
   y: z.union([z.number(), z.array(z.number())]).optional(),

@@ -366,7 +366,7 @@ export class StrokesHandler implements ToolHandler {
     // Preprocess args to handle local image loading
     const processedArgs = await this.preprocessImagePaths(args);
     
-    logger.log('StrokesHandler.handle passing to unifiedHandler', 'message', {
+    logger.log('StrokesHandler.handle passing to unifiedHandler', {
       originalKeys: args ? Object.keys(args) : [],
       processedKeys: processedArgs ? Object.keys(processedArgs) : [],
       hasImageBytes: !!processedArgs?.imageBytes,
@@ -387,7 +387,7 @@ export class StrokesHandler implements ToolHandler {
    * DO NOT change this to return byte arrays - it will cause hanging.
    */
   private async preprocessImagePaths(args: any): Promise<any> {
-    logger.log('StrokesHandler.preprocessImagePaths called', 'message', { 
+    logger.log('StrokesHandler.preprocessImagePaths called', { 
       operation: args?.operation, 
       hasImagePath: !!args?.imagePath,
       imagePath: args?.imagePath,

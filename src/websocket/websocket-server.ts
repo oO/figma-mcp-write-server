@@ -256,6 +256,15 @@ export class FigmaWebSocketServer extends EventEmitter {
     this.recordResponseTime(responseTime);
     
     
+    // Log the response
+    const operation = request.request.payload?.operation || 'unknown';
+    const logData = {
+      operation,
+      requestId: request.id,
+      responseTime: `${responseTime}ms`,
+      success: !message.error
+    };
+    
     if (message.error) {
       // Don't count startup handshake failures in health metrics
       const timeSinceStartup = Date.now() - this.startupTime;
@@ -266,10 +275,12 @@ export class FigmaWebSocketServer extends EventEmitter {
         this.healthMetrics.lastError = message.error;
       }
       
+      logger.error(`📥 Operation failed: ${operation}`, { ...logData, error: message.error });
       request.reject(new Error(message.error));
     } else {
       this.healthMetrics.successCount++;
       this.healthMetrics.lastSuccess = new Date();
+      logger.debug(`📥 Operation completed: ${operation}`, logData);
       request.resolve(message.result);
     }
   }
@@ -280,12 +291,32 @@ export class FigmaWebSocketServer extends EventEmitter {
     
     this.pendingBatches.delete(message.batchId);
     
+    // Log batch completion
+    const operations = batch.requests.map(req => req.request.payload?.operation || 'unknown');
+    const successCount = message.responses.filter((r: any) => !r.error).length;
+    const errorCount = message.responses.length - successCount;
+    
+    logger.debug(`📥 Batch operations completed: ${operations.join(', ')}`, {
+      batchId: message.batchId,
+      totalOperations: message.responses.length,
+      successCount,
+      errorCount
+    });
+    
     // Process each response in the batch
     message.responses.forEach((response: any, index: number) => {
       if (index < batch.requests.length) {
         const request = batch.requests[index]!;
         const responseTime = Date.now() - request.timestamp;
         this.recordResponseTime(responseTime);
+        
+        const operation = request.request.payload?.operation || 'unknown';
+        const logData = {
+          operation,
+          requestId: request.id,
+          responseTime: `${responseTime}ms`,
+          batchIndex: index
+        };
         
         if (response.error) {
           // Don't count startup handshake failures in health metrics
@@ -296,9 +327,11 @@ export class FigmaWebSocketServer extends EventEmitter {
             this.healthMetrics.errorCount++;
           }
           
+          logger.error(`📥 Batch operation failed: ${operation}`, { ...logData, error: response.error });
           request.reject(new Error(response.error));
         } else {
           this.healthMetrics.successCount++;
+          logger.debug(`📥 Batch operation completed: ${operation}`, logData);
           request.resolve(response.result);
         }
       }
@@ -403,6 +436,15 @@ export class FigmaWebSocketServer extends EventEmitter {
     
     this.pendingBatches.set(batchId, batch);
     
+    // Log the batch operations
+    const operations = batchRequests.map(req => req.request.payload?.operation || 'unknown');
+    const logData = {
+      batchSize: batchRequests.length,
+      operations,
+      batchId
+    };
+    logger.debug(`📤 Sending batch operations to plugin: ${operations.join(', ')}`, logData);
+    
     const batchMessage = {
       type: 'BATCH_REQUEST',
       batchId,
@@ -425,6 +467,17 @@ export class FigmaWebSocketServer extends EventEmitter {
     
     // Move request to pending state
     this.pendingRequests.set(request.id, request);
+    
+    // Log the outgoing operation
+    const operation = request.request.payload?.operation || 'unknown';
+    const nodeId = request.request.payload?.nodeId;
+    const logData = {
+      operation,
+      type: request.request.type,
+      requestId: request.id,
+      ...(nodeId && { nodeId: Array.isArray(nodeId) ? `${nodeId.length} nodes` : nodeId })
+    };
+    logger.debug(`📤 Sending operation to plugin: ${operation}`, logData);
     
     try {
       this.pluginConnection.send(JSON.stringify(request.request));

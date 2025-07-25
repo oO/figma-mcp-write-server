@@ -356,7 +356,7 @@ logger.debug('Internal state', { nodeCount: 150 });          // 🐛
 
 ### Plugin Logger  
 ```typescript
-import { logger } from '../utils/plugin-logger.js';
+import { logger } from '../logger.js';
 
 logger.log('Node created successfully');     // ✅ (also to console)
 logger.warn('Invalid node type');            // ⚠️ (also to console) 

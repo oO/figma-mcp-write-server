@@ -253,7 +253,7 @@ export class FontSyncService {
       } catch (error) {
         errors++;
         logger.error(`Failed to store font "${font.family}":`, error);
-        logger.log(`Font data:`, 'message', { 
+        logger.log(`Font data:`, { 
           family: font.family, 
           source: font.source, 
           stylesCount: font.styles.size,

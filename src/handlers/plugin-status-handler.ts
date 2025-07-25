@@ -1,6 +1,7 @@
 import { ToolHandler, Tool } from '../types/index.js';
 import { PluginStatusSchema } from '../types/plugin-status-operations.js';
 import { UnifiedHandler, UnifiedHandlerConfig } from '../utils/unified-handler.js';
+import { logger } from '../utils/logger.js';
 import * as os from 'os';
 import * as path from 'path';
 import { readFileSync } from 'fs';
@@ -77,6 +78,12 @@ export class PluginStatusHandler implements ToolHandler {
         figma: []
       },
       customHandler: async (normalizedArgs) => {
+        // Log the plugin status operation
+        logger.debug(`🔌 Plugin status operation: ${normalizedArgs.operation}`, {
+          operation: normalizedArgs.operation,
+          timeout: normalizedArgs.timeout
+        });
+        
         // Route to appropriate operation
         switch (normalizedArgs.operation) {
           case 'ping':
@@ -137,7 +144,7 @@ export class PluginStatusHandler implements ToolHandler {
       const status = this.wsServer.getConnectionStatus();
       const queueStatus = this.wsServer.getQueueStatus();
       
-      return {
+      const result = {
         version: VERSION,
         connected: status.pluginConnected,
         status: this.mapConnectionStatus(status),
@@ -145,6 +152,14 @@ export class PluginStatusHandler implements ToolHandler {
         queueLength: queueStatus.length,
         port: this.wsServer.getConfig().port
       };
+      
+      logger.debug('🔌 Plugin status result', {
+        connected: result.connected,
+        status: result.status,
+        queueLength: result.queueLength
+      });
+      
+      return result;
     } else {
       return {
         version: VERSION,

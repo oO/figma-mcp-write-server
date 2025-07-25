@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.1] - 2025-07-25
+
+### Fixed
+- **Operation Logging System**: Restored completely broken tool operation logging
+  - **WebSocket operation tracking**: All tool operations now properly logged with full context
+  - **Debug-level routine operations**: Send/complete operations logged at debug level (📤/📥)
+  - **Error-level failures**: Failed operations logged at error level with detailed error info
+  - **Plugin status logging**: Added comprehensive logging for plugin status operations (🔌)
+  - **Request/response correlation**: Operation logs include request IDs and response times
+- **PID Tracking**: Added process ID logging to MCP server startup for debugging
+  - **Cross-platform support**: Works on macOS and Windows
+  - **Parent process tracking**: Logs both process.pid and process.ppid
+
 ## [0.33.0] - 2025-07-25
 
 ### Changed

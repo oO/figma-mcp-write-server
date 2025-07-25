@@ -78,7 +78,7 @@ function writeLog(message: string, type: LogType, data?: any): void {
       )
     : data;
 
-  const logEntry = `${getLogEmoji(type)} ${timestamp}: ${message}${cleanData ? " " + JSON.stringify(cleanData, null, 2) : ""}\n`;
+  const logEntry = `${getLogEmoji(type)} ${timestamp}: ${message}${cleanData ? "\n" + JSON.stringify(cleanData, null, 2) : ""}\n`;
   try {
     // Ensure directory exists
     fs.mkdirSync(path.dirname(logPath), { recursive: true });

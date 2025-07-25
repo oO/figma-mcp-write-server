@@ -183,6 +183,9 @@ export const UnifiedNodeOperationsSchema = z.object({
   // Core identification
   nodeId: z.union([z.string(), z.array(z.string())]).optional(),
   
+  // Parent container for create operations
+  parentId: z.string().optional(),
+  
   // Create-specific
   nodeType: z.union([FigmaCreateNodeTypes, z.array(FigmaCreateNodeTypes)]).optional(),
   

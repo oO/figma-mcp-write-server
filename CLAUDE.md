@@ -74,25 +74,21 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 
 ## Implementation Standards
 
-### Handler Pattern
+### Operation Handler Pattern
+Operations are automatically discovered from `figma-plugin/src/operations/` directory. Each operation file exports a handler function:
+
 ```typescript
-export class NewHandler extends BaseHandler {
-  getHandlerName(): string { return 'NewHandler'; }
-  getOperations(): Record<string, OperationHandler> {
-    return { 'OPERATION_NAME': (payload) => this.methodName(payload) };
-  }
-  private async methodName(payload: any): Promise<OperationResult> {
-    return this.executeOperation('methodName', payload, async () => {
-      // Implementation
-    });
-  }
+// figma-plugin/src/operations/example-operation.ts
+export async function EXAMPLE_OPERATION(payload: any): Promise<any> {
+  // Implementation
+  return result;
 }
 ```
 
 ### Key Requirements
-- Extend `BaseHandler` with `getOperations()` method
+- Place operation files in `figma-plugin/src/operations/` directory
+- Export functions named exactly as the operation (e.g., `MANAGE_NODES`)
 - Use flat parameters, convert to objects internally if needed
-- Don't use `async handle(type, payload)` patterns
 
 ### Figma Property Management
 ```typescript

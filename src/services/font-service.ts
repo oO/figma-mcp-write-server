@@ -212,7 +212,7 @@ export class FontService {
           logger.error('Background font sync failed:', error);
         });
       } else {
-        logger.log('Font database is up to date, no sync needed');
+        logger.log('🔤 Font database is up to date, no sync needed');
       }
     } catch (error) {
       logger.warn('Failed to initialize font database:', error);

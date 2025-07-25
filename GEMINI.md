@@ -135,7 +135,7 @@ target.effects[0] = newEffect;      // Will not work properly
 ## 6. Project Architecture
 
 - **MCP Server:** A Node.js application that exposes Figma tools via the Model Context Protocol. It uses a 1:1 handler-to-tool architecture, with handlers located in `/src/handlers/`.
-- **Figma Plugin:** The TypeScript-based plugin that executes commands sent from the server. It uses a dynamic operation router (`/figma-plugin/src/router/operation-router.ts`) to call the appropriate logic in `/figma-plugin/src/operations/`.
+- **Figma Plugin:** The TypeScript-based plugin that executes commands sent from the server. It uses a dynamic operation router (`/figma-plugin/src/operation-router.ts`) to call the appropriate logic in `/figma-plugin/src/operations/`.
 - **Communication:** The server and plugin communicate via a WebSocket connection.
 
 ## 7. Critical Reminders

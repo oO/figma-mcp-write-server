@@ -475,7 +475,7 @@ export class FillsHandler implements ToolHandler {
     // Preprocess args to handle local image loading
     const processedArgs = await this.preprocessImagePaths(args);
     
-    logger.log('FillsHandler.handle passing to unifiedHandler', 'message', {
+    logger.log('FillsHandler.handle passing to unifiedHandler', {
       originalKeys: args ? Object.keys(args) : [],
       processedKeys: processedArgs ? Object.keys(processedArgs) : [],
       hasImageBytes: !!processedArgs?.imageBytes,
@@ -496,7 +496,7 @@ export class FillsHandler implements ToolHandler {
    * DO NOT change this to return byte arrays - it will cause hanging.
    */
   private async preprocessImagePaths(args: any): Promise<any> {
-    logger.log('FillsHandler.preprocessImagePaths called', 'message', { 
+    logger.log('FillsHandler.preprocessImagePaths called', { 
       operation: args?.operation, 
       hasImagePath: !!args?.imagePath,
       imagePath: args?.imagePath,

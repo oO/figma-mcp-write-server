@@ -36,6 +36,10 @@ export class NodeHandler implements ToolHandler {
               ],
               description: 'Node type(s) for creation (case-insensitive: rectangle, ellipse, frame, star, polygon, line) - single value or array for bulk operations. Note: Use figma_text tool for text node creation.'
             },
+            parentId: {
+              type: 'string',
+              description: 'Optional parent container ID for create operations. When provided, the node will be created inside this container and coordinates will be relative to the parent.'
+            },
             name: {
               oneOf: [
                 { type: 'string' },
@@ -315,6 +319,7 @@ export class NodeHandler implements ToolHandler {
       paramConfigs: {
         ...UnifiedParamConfigs.basic(),
         nodeId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
+        parentId: { expectedType: 'string' as const },
         name: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         x: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         y: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
@@ -354,7 +359,13 @@ export class NodeHandler implements ToolHandler {
       },
       pluginMessageType: 'MANAGE_NODES',
       schema: UnifiedNodeOperationsSchema,
-      
+      operationParameters: {
+        create: ['nodeType', 'parentId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'startX', 'startY', 'endX', 'endY', 'startCap', 'endCap', 'length', 'rotation', 'failFast'],
+        get: ['nodeId', 'failFast'],
+        update: ['nodeId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'rotation', 'failFast'],
+        delete: ['nodeId', 'failFast'],
+        duplicate: ['nodeId', 'offsetX', 'offsetY', 'count', 'failFast']
+      }
     };
 
     return this.unifiedHandler.handle(args, config);
