@@ -1,5 +1,5 @@
 import { PluginMessage, OperationResult, HandlerRegistry } from '../types.js';
-import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
+import { logger } from '../utils/plugin-logger.js';
 
 export class MessageRouter {
   private handlers: HandlerRegistry = {};
@@ -25,7 +25,7 @@ export class MessageRouter {
       this.ws = new WebSocket('ws://localhost:8765');
       
       this.ws.onopen = () => {
-        logMessage('🔗 Connected to MCP server');
+        logger.log('🔗 Connected to MCP server');
         this.connected = true;
         this.reconnectAttempts = 0;
         this.sendHello();
@@ -38,12 +38,12 @@ export class MessageRouter {
           const message = JSON.parse(event.data) as PluginMessage;
           await this.handleMessage(message);
         } catch (error) {
-          logError('Failed to parse message:', error);
+          logger.error('Failed to parse message:', error);
         }
       };
 
       this.ws.onclose = () => {
-        logMessage('Disconnected from MCP server');
+        logger.log('Disconnected from MCP server');
         this.connected = false;
         this.stopHeartbeat();
         this.notifyUI('disconnected', 'Disconnected from MCP server');
@@ -51,12 +51,12 @@ export class MessageRouter {
       };
 
       this.ws.onerror = (error) => {
-        logError('WebSocket error:', error);
+        logger.error('WebSocket error:', error);
         this.notifyUI('error', 'Connection error');
       };
 
     } catch (error) {
-      logError('Failed to connect to server:', error);
+      logger.error('Failed to connect to server:', error);
       this.attemptReconnect();
     }
   }

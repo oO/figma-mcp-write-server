@@ -339,6 +339,39 @@ npm run test:unit           # Run unit tests only
 # Test manually: manage_nodes(operation: "rotate", nodeId: "123:456", rotation: 45)
 ```
 
+## 🔍 Logging System
+
+Both server and plugin use unified console-style logging interfaces:
+
+### Server Logger
+```typescript
+import { logger } from '../utils/logger.js';
+
+logger.log('Plugin connected', { connectionId: 'abc123' });    // ✅ 
+logger.info('Same as log');                                   // ✅
+logger.warn('Font loading failed', { fontName: 'Inter' });    // ⚠️
+logger.error('Database connection failed', error);            // ❌
+logger.debug('Internal state', { nodeCount: 150 });          // 🐛
+```
+
+### Plugin Logger  
+```typescript
+import { logger } from '../utils/plugin-logger.js';
+
+logger.log('Node created successfully');     // ✅ (also to console)
+logger.warn('Invalid node type');            // ⚠️ (also to console) 
+logger.error('Operation failed', error);     // ❌ (also to console)
+logger.debug('Processing step complete');    // 🐛 (also to console)
+```
+
+### Log Location
+Server logs write to platform-specific cache directories:
+- **macOS**: `~/Library/Caches/figma-mcp-write-server/server.log`
+- **Windows**: `%LOCALAPPDATA%/figma-mcp-write-server/server.log`  
+- **Linux**: `~/.cache/figma-mcp-write-server/server.log`
+
+Plugin logs appear in browser console (F12 → Console tab).
+
 ## ⚙️ Configuration
 
 The server creates a configuration file on first run with these key settings:

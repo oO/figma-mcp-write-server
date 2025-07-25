@@ -1,6 +1,6 @@
 import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
 import { imageMatrixToFlattened, extractFlattenedImageParams } from './color-utils.js';
-import { logMessage, logWarning, logError } from './plugin-logger.js';
+import { logger } from './plugin-logger.js';
 
 export function findNodeById(nodeId: string): SceneNode | null {
   try {
@@ -365,16 +365,16 @@ async function enhanceImageMetadata(imageHash: string): Promise<{
   imageFileSize?: number;
 }> {
   try {
-    logMessage('🖼️ Processing imageHash:', imageHash);
+    logger.log('🖼️ Processing imageHash:', imageHash);
     const image = figma.getImageByHash(imageHash);
     if (image) {
       // Get image dimensions
       const size = await image.getSizeAsync();
-      logMessage('📏 Image dimensions:', size);
+      logger.log('📏 Image dimensions:', size);
       
       // Get file size from bytes
       const bytes = await image.getBytesAsync();
-      logMessage('📦 Image file size:', bytes.length, 'bytes');
+      logger.log('📦 Image file size:', bytes.length, 'bytes');
       
       return {
         imageSizeX: size.width,
@@ -383,7 +383,7 @@ async function enhanceImageMetadata(imageHash: string): Promise<{
       };
     }
   } catch (error) {
-    logMessage('❌ Failed to get image metadata:', error);
+    logger.log('❌ Failed to get image metadata:', error);
   }
   
   return {};

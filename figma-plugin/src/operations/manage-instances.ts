@@ -83,7 +83,7 @@ async function createInstance(params: any): Promise<any> {
         }
       }
     } catch (error) {
-      logWarning(`Failed to apply some overrides: ${error}`);
+      logger.warn(`Failed to apply some overrides: ${error}`);
     }
   }
 
@@ -144,7 +144,7 @@ async function updateInstance(params: any): Promise<any> {
         }
       }
     } catch (error) {
-      logWarning(`Failed to apply some overrides: ${error}`);
+      logger.warn(`Failed to apply some overrides: ${error}`);
     }
   }
 

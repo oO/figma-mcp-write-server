@@ -2,7 +2,7 @@ import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { findNodeById, findNodeInPage, formatNodeResponse, selectAndFocus, getAllNodes, getNodesByIds, createNodeData } from '../utils/node-utils.js';
 import { formatSelection, createPageNodesResponse } from '../utils/response-utils.js';
-import { logMessage } from '../utils/plugin-logger.js';
+import { logger } from '../utils/plugin-logger.js';
 
 /**
  * Shared function to get nodes based on unified parameters
@@ -68,7 +68,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
         }
       }
       
-      // logMessage('🔍 Processing starting node', {
+      // logger.log('🔍 Processing starting node', {
       //   nodeId: id,
       //   nodeType: startNode.type,
       //   nodeName: startNode.name,
@@ -80,7 +80,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
         // Load page content if it's a page node (critical for non-current pages)
         if (startNode.type === 'PAGE') {
           await (startNode as PageNode).loadAsync();
-          // logMessage('📄 Page loaded for children traversal', {
+          // logger.log('📄 Page loaded for children traversal', {
           //   pageId: startNode.id,
           //   pageName: startNode.name,
           //   isCurrentPage: startNode.id === figma.currentPage.id
@@ -89,7 +89,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
         
         if ('children' in startNode) {
           const children = (startNode as any).children;
-          // logMessage('👶 Adding children', { 
+          // logger.log('👶 Adding children', { 
           //   childCount: children.length,
           //   nodeType: startNode.type 
           // });
@@ -112,14 +112,14 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
         
         // Special handling for PAGE nodes - get children, not the page itself
         if (startNode.type === 'PAGE') {
-          // logMessage('📄 Special PAGE handling - getting children only', {
+          // logger.log('📄 Special PAGE handling - getting children only', {
           //   pageId: startNode.id,
           //   pageName: startNode.name
           // });
           
           // Load the page content first (critical for non-current pages)
           await (startNode as PageNode).loadAsync();
-          // logMessage('📄 Page loaded successfully', {
+          // logger.log('📄 Page loaded successfully', {
           //   pageId: startNode.id,
           //   pageName: startNode.name,
           //   isCurrentPage: startNode.id === figma.currentPage.id,
@@ -142,7 +142,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
     // Start from current page or all pages
     const includeHidden = filterByVisibility !== 'visible';
     
-    // logMessage('📄 Processing pages', { 
+    // logger.log('📄 Processing pages', { 
     //   includeAllPages, 
     //   includeHidden, 
     //   detail,
@@ -156,7 +156,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
         if (page.type === 'PAGE') {
           await (page as PageNode).loadAsync();
           const pageNodes = getAllNodes(page, detail, includeHidden, maxDepth);
-          // logMessage('📑 Processed page', {
+          // logger.log('📑 Processed page', {
           //   pageName: page.name,
           //   pageId: page.id,
           //   nodeCount: pageNodes.length
@@ -170,7 +170,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
     }
   }
   
-  // logMessage('🔍 Before filtering', { 
+  // logger.log('🔍 Before filtering', { 
   //   nodeCount: allNodes.length,
   //   filterByVisibility,
   //   includeAllPages,
@@ -181,7 +181,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
   if (filterByVisibility === 'visible') {
     const beforeCount = allNodes.length;
     allNodes = allNodes.filter(node => node.visible);
-    // logMessage('👁️ After visibility filter (visible)', { 
+    // logger.log('👁️ After visibility filter (visible)', { 
     //   beforeCount, 
     //   afterCount: allNodes.length,
     //   filtered: beforeCount - allNodes.length
@@ -189,7 +189,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
   } else if (filterByVisibility === 'hidden') {
     const beforeCount = allNodes.length;
     allNodes = allNodes.filter(node => !node.visible);
-    // logMessage('🫥 After visibility filter (hidden)', { 
+    // logger.log('🫥 After visibility filter (hidden)', { 
     //   beforeCount, 
     //   afterCount: allNodes.length,
     //   filtered: beforeCount - allNodes.length
@@ -202,7 +202,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
   if (!includeAllPages) {
     const beforeCount = allNodes.length;
     allNodes = allNodes.filter(node => node.type !== 'PAGE');
-    // logMessage('📄 After page filter', { 
+    // logger.log('📄 After page filter', { 
     //   beforeCount, 
     //   afterCount: allNodes.length,
     //   filtered: beforeCount - allNodes.length
@@ -309,7 +309,7 @@ async function setSelection(params: any): Promise<any> {
 
 async function listNodes(params: any = {}): Promise<any> {
   return BaseOperation.executeOperation('listNodes', params, async () => {
-    // logMessage('🚀 Starting listNodes operation', { params });
+    // logger.log('🚀 Starting listNodes operation', { params });
     // Check if any filters are applied (excluding maxDepth)
     const nodeIdFilter = (params && params.nodeId !== null && params.nodeId !== undefined);
     const traversalFilter = (params && params.traversal !== null && params.traversal !== undefined);
@@ -323,7 +323,7 @@ async function listNodes(params: any = {}): Promise<any> {
     const hasFilters = nodeIdFilter || traversalFilter || typeFilter || nameFilter || visibilityFilter || lockedFilter || maxResultsFilter || includeAllPagesFilter;
     
     // Debug logging for filter detection
-    // logMessage('🔍 Filter detection for list_nodes', {
+    // logger.log('🔍 Filter detection for list_nodes', {
     //   nodeIdFilter,
     //   traversalFilter,
     //   typeFilter,
@@ -341,12 +341,12 @@ async function listNodes(params: any = {}): Promise<any> {
       ? params.detail 
       : (hasFilters ? 'standard' : 'minimal');
     
-    // logMessage('📋 Detail level selected for list_nodes', { detail, hasFilters });
+    // logger.log('📋 Detail level selected for list_nodes', { detail, hasFilters });
     
     // Get nodes using shared traversal/filtering logic
     const allNodes = await getNodesFromParams(params, detail);
     
-    // logMessage('📊 Nodes retrieved from getNodesFromParams', { 
+    // logger.log('📊 Nodes retrieved from getNodesFromParams', { 
     //   nodeCount: allNodes.length, 
     //   detail,
     //   firstNodeId: allNodes.length > 0 ? allNodes[0].id : 'none'
@@ -355,7 +355,7 @@ async function listNodes(params: any = {}): Promise<any> {
     // Create response with proper detail level
     const pageData = createPageNodesResponse(allNodes, detail);
     
-    // logMessage('📋 Final response created', { 
+    // logger.log('📋 Final response created', { 
     //   totalCount: pageData.totalCount, 
     //   topLevelCount: pageData.topLevelCount,
     //   detail: pageData.detail

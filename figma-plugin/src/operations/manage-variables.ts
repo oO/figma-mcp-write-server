@@ -235,7 +235,7 @@ async function createVariable(params: any): Promise<any> {
         if (error.toString().includes('Limited to 1 modes only')) {
           throw new Error('Cannot set variable value for multiple modes: Your Figma plan is limited to 1 mode per collection. Upgrade to a paid plan to use multiple modes.');
         }
-        logWarning(`Failed to set value for mode ${modeKey}:`, error);
+        logger.warn(`Failed to set value for mode ${modeKey}:`, error);
       }
     }
   }
@@ -303,7 +303,7 @@ async function updateVariable(params: any): Promise<any> {
           if (error.toString().includes('Limited to 1 modes only')) {
             throw new Error('Cannot update variable value for multiple modes: Your Figma plan is limited to 1 mode per collection. Upgrade to a paid plan to use multiple modes.');
           }
-          logWarning(`Failed to update value for mode ${modeKey}:`, error);
+          logger.warn(`Failed to update value for mode ${modeKey}:`, error);
         }
       }
     }
@@ -358,7 +358,7 @@ async function getVariable(params: any): Promise<any> {
       const value = getVariable.valuesByMode[mode.modeId];
       valuesByMode[mode.name] = value;
     } catch (error) {
-      logWarning(`Failed to get value for mode ${mode.name}:`, error);
+      logger.warn(`Failed to get value for mode ${mode.name}:`, error);
     }
   }
 
@@ -1335,7 +1335,7 @@ async function duplicateCollection(params: any): Promise<any> {
           try {
             newVariable.setValueForMode(targetModeId, sourceValue);
           } catch (error) {
-            logWarning(`Failed to copy value for mode ${sourceModeId}:`, error);
+            logger.warn(`Failed to copy value for mode ${sourceModeId}:`, error);
           }
         }
       }

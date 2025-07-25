@@ -293,7 +293,7 @@ async function getTextContent(params: TextParams): Promise<any> {
   // Helper function to safely serialize mixed values
   const safeMixed = (value: any, propName?: string) => {
     if (value === figma.mixed) {
-      logMessage(`DEBUG: Property ${propName} is figma.mixed (symbol)`);
+      logger.log(`DEBUG: Property ${propName} is figma.mixed (symbol)`);
       return 'MIXED';
     }
     return value;
@@ -434,14 +434,14 @@ function getCharacterRangeStyling(textNode: TextNode, start: number, end: number
   try {
     rangeHyperlink = textNode.getRangeHyperlink(start, end);
   } catch (error) {
-    logWarning(`Failed to get hyperlink for range ${start}-${end}: ${error.toString()}`);
+    logger.warn(`Failed to get hyperlink for range ${start}-${end}: ${error.toString()}`);
     rangeHyperlink = null;
   }
   
   // Helper function to safely serialize mixed values and handle hyperlinks
   const safeMixed = (value: any, propName?: string) => {
     if (value === figma.mixed) {
-      logMessage(`DEBUG: Property ${propName} is figma.mixed (symbol) in range ${start}-${end}`);
+      logger.log(`DEBUG: Property ${propName} is figma.mixed (symbol) in range ${start}-${end}`);
       return 'MIXED';
     }
     return value;
@@ -465,7 +465,7 @@ function getCharacterRangeStyling(textNode: TextNode, start: number, end: number
     }
     
     // Log unexpected hyperlink structure for debugging
-    logWarning(`Unexpected hyperlink structure: ${JSON.stringify(hyperlink)}`);
+    logger.warn(`Unexpected hyperlink structure: ${JSON.stringify(hyperlink)}`);
     return hyperlink;
   };
   
@@ -493,7 +493,7 @@ function getCharacterRangeStyling(textNode: TextNode, start: number, end: number
     try {
       segmentHyperlink = textNode.getRangeHyperlink(segment.start, segment.end);
     } catch (error) {
-      logWarning(`Failed to get hyperlink for segment ${segment.start}-${segment.end}: ${error.toString()}`);
+      logger.warn(`Failed to get hyperlink for segment ${segment.start}-${segment.end}: ${error.toString()}`);
       segmentHyperlink = null;
     }
     return {
@@ -526,7 +526,7 @@ function analyzeAllCharacterStyling(textNode: TextNode): any {
   // Helper function to safely serialize mixed values
   const safeMixed = (value: any, propName?: string) => {
     if (value === figma.mixed) {
-      logMessage(`DEBUG: Property ${propName} is figma.mixed (symbol) in segments`);
+      logger.log(`DEBUG: Property ${propName} is figma.mixed (symbol) in segments`);
       return 'MIXED';
     }
     return value;
@@ -550,7 +550,7 @@ function analyzeAllCharacterStyling(textNode: TextNode): any {
     }
     
     // Log unexpected hyperlink structure for debugging
-    logWarning(`Unexpected hyperlink structure: ${JSON.stringify(hyperlink)}`);
+    logger.warn(`Unexpected hyperlink structure: ${JSON.stringify(hyperlink)}`);
     return hyperlink;
   };
   
@@ -560,7 +560,7 @@ function analyzeAllCharacterStyling(textNode: TextNode): any {
     try {
       segmentHyperlink = textNode.getRangeHyperlink(segment.start, segment.end);
     } catch (error) {
-      logWarning(`Failed to get hyperlink for segment ${segment.start}-${segment.end}: ${error.toString()}`);
+      logger.warn(`Failed to get hyperlink for segment ${segment.start}-${segment.end}: ${error.toString()}`);
       segmentHyperlink = null;
     }
     return {
@@ -669,7 +669,7 @@ async function loadAllFontsInRange(textNode: TextNode, start: number, end: numbe
     const fontNames = textNode.getRangeAllFontNames(start, end);
     await Promise.all(fontNames.map(figma.loadFontAsync));
   } catch (error) {
-    logWarning(`Could not load fonts for range ${start}-${end}: ${error}`);
+    logger.warn(`Could not load fonts for range ${start}-${end}: ${error}`);
     // Fallback: try to load fonts individually if batch loading fails
     await loadFontsIndividually(textNode, start, end);
   }
@@ -688,7 +688,7 @@ async function loadFontsIndividually(textNode: TextNode, start: number, end: num
       }
     } catch (error) {
       // Skip if we can't read the font for this character
-      logWarning(`Could not read font for character ${i}: ${error}`);
+      logger.warn(`Could not read font for character ${i}: ${error}`);
     }
   }
   
@@ -698,7 +698,7 @@ async function loadFontsIndividually(textNode: TextNode, start: number, end: num
     try {
       await figma.loadFontAsync({ family, style });
     } catch (error) {
-      logWarning(`Could not load font ${family} ${style}: ${error}`);
+      logger.warn(`Could not load font ${family} ${style}: ${error}`);
     }
   });
   
@@ -1549,7 +1549,7 @@ async function applyTextProperties(textNode: TextNode, params: TextParams): Prom
       });
     } catch (error) {
       // If setRangeListOptions fails, try alternative approach or log warning
-      logWarning(`Failed to set list options: ${error.toString()}`);
+      logger.warn(`Failed to set list options: ${error.toString()}`);
       throw new Error(`Failed to set list type '${validatedListType}': ${error.toString()}`);
     }
   }

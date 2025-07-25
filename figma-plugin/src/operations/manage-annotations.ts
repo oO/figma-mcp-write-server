@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { logMessage, logWarning, logError } from '../utils/plugin-logger.js';
+import { logger } from '../utils/plugin-logger.js';
 
 /**
  * Utility function to resolve label/labelMarkdown conflicts according to Figma's validation rules
@@ -133,7 +133,7 @@ export async function handleAnnotationOperation(params: any): Promise<OperationR
               throw error;
             }
             // If we can't get categories, proceed but with warning
-            logWarning('Could not validate categoryId:', error.message);
+            logger.warn('Could not validate categoryId:', error.message);
             newAnnotation.categoryId = params.categoryId;
           }
         }
@@ -154,7 +154,7 @@ export async function handleAnnotationOperation(params: any): Promise<OperationR
           const errorMessage = error.message || error.toString();
           
           // Log detailed error info for debugging
-          logError('Annotation creation failed:', {
+          logger.error('Annotation creation failed:', {
             error: errorMessage,
             newAnnotation,
             existingCount: existingAnnotations.length,

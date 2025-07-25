@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { homedir, platform } from "os";
 
-export type LogType = "message" | "warning" | "error";
+export type LogType = "message" | "warning" | "error" | "debug";
 
 // Default log path that doesn't depend on config
 function getDefaultLogPath(): string {
@@ -25,16 +25,14 @@ function getDefaultLogPath(): string {
 }
 
 /**
- * Debug logging function for development and troubleshooting
- * Logs to platform-specific cache directory
- * Automatically filters out large base64 data to keep logs manageable
+ * Internal logging function - used by logger interface
  * @param message - The message to log
- * @param type - Log type (message, warning, error) - defaults to message
+ * @param type - Log type
  * @param data - Optional data to include in the log
  */
-export function debugLog(
+function writeLog(
   message: string,
-  type: LogType = "message",
+  type: LogType,
   data?: any,
 ): void {
   const logPath = getDefaultLogPath();
@@ -49,6 +47,8 @@ export function debugLog(
         return "⚠️";
       case "error":
         return "❌";
+      case "debug":
+        return "🐛";
       default:
         return "💬";
     }
@@ -89,4 +89,41 @@ export function debugLog(
   } catch (e) {
     // Ignore logging errors to avoid breaking JSON-RPC communication
   }
+}
+
+/**
+ * Server logger with console-style interface
+ */
+class ServerLogger {
+  log(message: string, data?: any): void {
+    writeLog(message, "message", data);
+  }
+
+  info(message: string, data?: any): void {
+    writeLog(message, "message", data);
+  }
+
+  warn(message: string, data?: any): void {
+    writeLog(message, "warning", data);
+  }
+
+  error(message: string, data?: any): void {
+    writeLog(message, "error", data);
+  }
+
+  debug(message: string, data?: any): void {
+    writeLog(message, "debug", data);
+  }
+}
+
+// Export singleton logger instance
+export const logger = new ServerLogger();
+
+// Export legacy function for backward compatibility
+export function debugLog(
+  message: string,
+  type: LogType = "message",
+  data?: any,
+): void {
+  writeLog(message, type, data);
 }

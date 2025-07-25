@@ -6,7 +6,7 @@
  * for transmission when connection is restored.
  */
 
-export type LogType = 'message' | 'warning' | 'error';
+export type LogType = 'message' | 'warning' | 'error' | 'debug';
 
 interface LogMessage {
   message: string;
@@ -37,7 +37,9 @@ class PluginLogger {
    */
   log(message: string, type: LogType = 'message', data?: any) {
     // Always log to console for immediate developer visibility
-    const emoji = type === 'error' ? '❌' : type === 'warning' ? '⚠️' : '💬';
+    const emoji = type === 'error' ? '❌' : 
+                  type === 'warning' ? '⚠️' : 
+                  type === 'debug' ? '🐛' : '✅';
     const consoleMethod = type === 'error' ? console.error : 
                          type === 'warning' ? console.warn : console.log;
     
@@ -54,16 +56,16 @@ class PluginLogger {
   }
 
   /**
-   * Log a regular message
+   * Log a regular message (alias for log)
    */
-  message(message: string, data?: any) {
+  info(message: string, data?: any) {
     this.log(message, 'message', data);
   }
 
   /**
    * Log a warning
    */
-  warning(message: string, data?: any) {
+  warn(message: string, data?: any) {
     this.log(message, 'warning', data);
   }
 
@@ -72,6 +74,13 @@ class PluginLogger {
    */
   error(message: string, data?: any) {
     this.log(message, 'error', data);
+  }
+
+  /**
+   * Log debug information
+   */
+  debug(message: string, data?: any) {
+    this.log(message, 'debug', data);
   }
 
   /**
@@ -129,22 +138,10 @@ class PluginLogger {
   }
 }
 
-// Export singleton instance
-export const pluginLogger = new PluginLogger();
+// Export singleton logger instance
+export const logger = new PluginLogger();
 
-// Export convenience functions  
+// Export legacy function for backward compatibility
 export function pluginLog(message: string, type: LogType = 'message', data?: any) {
-  pluginLogger.log(message, type, data);
-}
-
-export function logMessage(message: string, data?: any) {
-  pluginLogger.message(message, data);
-}
-
-export function logWarning(message: string, data?: any) {
-  pluginLogger.warning(message, data);
-}
-
-export function logError(message: string, data?: any) {
-  pluginLogger.error(message, data);
+  logger.log(message, type, data);
 }

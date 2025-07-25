@@ -1,7 +1,7 @@
 // Figma MCP Write Plugin - Main Entry Point
 import { operationRouter } from './router/operation-router.js';
 import { HandlerRegistry } from './types.js';
-import { pluginLogger, logMessage, logWarning, logError } from './utils/plugin-logger.js';
+import { logger } from './utils/plugin-logger.js';
 
 // Create a message router bridge for the plugin logger
 class UIMessageBridge {
@@ -30,7 +30,7 @@ class UIMessageBridge {
   setConnected(connected: boolean) {
     this.connected = connected;
     if (connected) {
-      pluginLogger.onConnectionRestored();
+      logger.onConnectionRestored();
     }
   }
 }
@@ -43,8 +43,8 @@ class FigmaPlugin {
 
   constructor() {
     // Initialize plugin logger with UI bridge
-    pluginLogger.initialize(uiMessageBridge);
-    logMessage('Figma MCP Write Plugin starting...');
+    logger.initialize(uiMessageBridge);
+    logger.log('Figma MCP Write Plugin starting...');
     
     this.initializePlugin();
     this.setupUIMessageHandler();
@@ -52,7 +52,7 @@ class FigmaPlugin {
 
   private async initializePlugin(): Promise<void> {
     try {
-      logMessage('Initializing plugin with auto-discovery router...');
+      logger.log('Initializing plugin with auto-discovery router...');
       
       // Initialize the operation router
       await operationRouter.initialize();
@@ -60,29 +60,29 @@ class FigmaPlugin {
       // Get all discovered operations
       this.handlers = operationRouter.getOperations();
       
-      logMessage(`Plugin initialized with ${Object.keys(this.handlers).length} operations`);
+      logger.log(`Plugin initialized with ${Object.keys(this.handlers).length} operations`);
       this.initialized = true;
       
       // Debug: Log discovered operations
       this.logDiscoveredOperations();
     } catch (error) {
-      logError('Failed to initialize plugin:', error);
+      logger.error('Failed to initialize plugin:', error);
       // Fallback to legacy initialization
       this.initializeLegacyHandlers();
     }
   }
 
   private initializeLegacyHandlers(): void {
-    logMessage('Legacy handler initialization disabled - using auto-discovery only');
-    logMessage('Legacy handlers moved to /legacy-handlers-deprecated/ for reference');
-    logMessage('Current operations located in /src/operations/ with auto-discovery');
+    logger.log('Legacy handler initialization disabled - using auto-discovery only');
+    logger.log('Legacy handlers moved to /legacy-handlers-deprecated/ for reference');
+    logger.log('Current operations located in /src/operations/ with auto-discovery');
     this.initialized = false;
   }
   
   private logDiscoveredOperations(): void {
     const operations = Object.keys(this.handlers).sort();
     
-    logMessage('Discovered operations by category:');
+    logger.log('Discovered operations by category:');
     
     const categories = {
       'Node Operations': operations.filter(op => op.includes('NODE') || op.includes('CREATE_') || op.includes('UPDATE_') || op.includes('DELETE_') || op.includes('DUPLICATE_') || op.includes('MOVE_')),
@@ -99,29 +99,29 @@ class FigmaPlugin {
     
     for (const [category, ops] of Object.entries(categories)) {
       if (ops.length > 0) {
-        logMessage(`  ${category}: ${ops.length} operations`);
-        ops.forEach(op => logMessage(`    - ${op}`));
+        logger.log(`  ${category}: ${ops.length} operations`);
+        ops.forEach(op => logger.log(`    - ${op}`));
       }
     }
     
     const uncategorized = operations.filter(op => !Object.values(categories).flat().includes(op));
     if (uncategorized.length > 0) {
-      logMessage(`  Other Operations: ${uncategorized.length} operations`);
-      uncategorized.forEach(op => logMessage(`    - ${op}`));
+      logger.log(`  Other Operations: ${uncategorized.length} operations`);
+      uncategorized.forEach(op => logger.log(`    - ${op}`));
     }
     // Debug logging handled by logDiscoveredOperations()
-    logMessage('SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
-    logMessage('PING_TEST handler exists:', !!this.handlers['PING_TEST']);
+    logger.log('SYNC_FONTS handler exists:', !!this.handlers['SYNC_FONTS']);
+    logger.log('PING_TEST handler exists:', !!this.handlers['PING_TEST']);
   }
 
   private setupUIMessageHandler(): void {
     // Handle messages from UI thread (which manages WebSocket connection)
     figma.ui.onmessage = async (msg) => {
-      logMessage('📨 Received from UI:', msg.type);
+      logger.log('📨 Received from UI:', msg.type);
       
       // Handle special plugin control messages
       if (msg.type === 'CLOSE') {
-        logMessage('👋 Closing plugin');
+        logger.log('👋 Closing plugin');
         figma.closePlugin();
         return;
       }
@@ -137,7 +137,7 @@ class FigmaPlugin {
       if (message.type && message.id && this.handlers[message.type]) {
         await this.handlePluginOperation(message.type, message.payload, message.id);
       } else {
-        logError('Unknown message or missing handler:', message.type);
+        logger.error('Unknown message or missing handler:', message.type);
         
         // Send error response
         figma.ui.postMessage({
@@ -181,10 +181,10 @@ class FigmaPlugin {
         result
       });
       
-      logMessage(`${operation} completed successfully`);
+      logger.log(`${operation} completed successfully`);
       
     } catch (error) {
-      logError(`${operation} failed:`, error.toString());
+      logger.error(`${operation} failed:`, error.toString());
       
       // Send error response back to UI thread
       figma.ui.postMessage({
@@ -205,9 +205,9 @@ class FigmaPlugin {
       // Set up plugin lifecycle handlers
       this.setupLifecycleHandlers();
 
-      logMessage('🚀 Plugin initialization complete');
+      logger.log('🚀 Plugin initialization complete');
     } catch (error) {
-      logError('Plugin initialization failed:', error);
+      logger.error('Plugin initialization failed:', error);
       figma.notify('Plugin initialization failed', { error: true });
     }
   }
@@ -215,13 +215,13 @@ class FigmaPlugin {
   private setupLifecycleHandlers(): void {
     // Handle plugin close
     figma.on('close', () => {
-      logMessage('👋 Plugin closing...');
+      logger.log('👋 Plugin closing...');
     });
 
     // Handle selection changes (optional - for debugging)
     figma.on('selectionchange', () => {
       const selection = figma.currentPage.selection;
-      logMessage(`Selection changed: ${selection.length} nodes selected`);
+      logger.log(`Selection changed: ${selection.length} nodes selected`);
     });
   }
 
@@ -263,7 +263,7 @@ class FigmaPlugin {
 // Initialize and start the plugin
 const plugin = new FigmaPlugin();
 plugin.start().catch(error => {
-  logError('Fatal error starting plugin:', error);
+  logger.error('Fatal error starting plugin:', error);
   figma.notify('Failed to start plugin', { error: true });
 });
 

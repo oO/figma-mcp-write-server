@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.32.4] - 2025-07-25
+
+### Refactored
+- **Logger Interface Unification**: Consolidated server and plugin loggers to console-style API
+  - **Console-style methods**: `logger.log()`, `logger.info()`, `logger.warn()`, `logger.error()`, `logger.debug()`
+  - **Consistent emojis**: ✅ (log/info), ⚠️ (warn), ❌ (error), 🐛 (debug) across both loggers
+  - **Unified developer experience**: Same interface for server and plugin logging
+  - **Removed convenience functions**: Eliminated `logMessage()`, `logError()`, `logWarning()` wrapper functions
+  - **Backward compatibility**: Legacy `debugLog()` function preserved for existing code
+  - **Updated documentation**: Added logging system guide to `docs/development.md`
+
 ## [0.32.3] - 2025-07-24
 
 ### Fixed

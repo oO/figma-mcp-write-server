@@ -448,7 +448,7 @@ function extractVariantPropertiesFromSet(componentSet: ComponentSetNode): Record
     }
   } catch (error) {
     // If extraction fails, return empty object
-    logWarning('Failed to extract variant properties:', error);
+    logger.warn('Failed to extract variant properties:', error);
   }
   
   return variantProperties;
@@ -546,7 +546,7 @@ function findVariantComponent(
     
     return null;
   } catch (error) {
-    logWarning('Error finding variant component:', error);
+    logger.warn('Error finding variant component:', error);
     return null;
   }
 }
