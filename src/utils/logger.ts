@@ -7,21 +7,22 @@ export type LogType = "message" | "warning" | "error" | "debug";
 // Default log path that doesn't depend on config
 function getDefaultLogPath(): string {
   const platformType = platform();
-  const appName = 'figma-mcp-write-server';
-  
+  const appName = "figma-mcp-write-server";
+
   let cacheDir: string;
   switch (platformType) {
-    case 'win32':
-      cacheDir = process.env.LOCALAPPDATA || path.join(homedir(), 'AppData', 'Local');
+    case "win32":
+      cacheDir =
+        process.env.LOCALAPPDATA || path.join(homedir(), "AppData", "Local");
       break;
-    case 'darwin':
-      cacheDir = path.join(homedir(), 'Library', 'Caches');
+    case "darwin":
+      cacheDir = path.join(homedir(), "Library", "Caches");
       break;
     default:
-      cacheDir = process.env.XDG_CACHE_HOME || path.join(homedir(), '.cache');
+      cacheDir = process.env.XDG_CACHE_HOME || path.join(homedir(), ".cache");
   }
-  
-  return path.join(cacheDir, appName, 'server.log');
+
+  return path.join(cacheDir, appName, "server.log");
 }
 
 /**
@@ -30,11 +31,7 @@ function getDefaultLogPath(): string {
  * @param type - Log type
  * @param data - Optional data to include in the log
  */
-function writeLog(
-  message: string,
-  type: LogType,
-  data?: any,
-): void {
+function writeLog(message: string, type: LogType, data?: any): void {
   const logPath = getDefaultLogPath();
   const timestamp = new Date().toISOString();
 
@@ -118,12 +115,3 @@ class ServerLogger {
 
 // Export singleton logger instance
 export const logger = new ServerLogger();
-
-// Export legacy function for backward compatibility
-export function debugLog(
-  message: string,
-  type: LogType = "message",
-  data?: any,
-): void {
-  writeLog(message, type, data);
-}

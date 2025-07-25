@@ -1,6 +1,6 @@
 import { FontDatabase } from '../database/font-database.js';
 import { FontSource } from '../types/font-operations.js';
-import { debugLog } from "../utils/logger.js"
+import { logger } from "../utils/logger.js"
 
 export interface SyncProgress {
   phase: 'starting' | 'fetching' | 'processing' | 'storing' | 'completed' | 'failed';
@@ -46,7 +46,7 @@ export class FontSyncService {
       const lastSync = metadata?.last_sync_time ? new Date(metadata.last_sync_time) : null;
       const timeSinceSync = lastSync ? Math.round((Date.now() - lastSync.getTime()) / (1000 * 60 * 60)) : 0;
       
-      debugLog(`📦 Font database is fresh (${stats.totalFonts} families, last sync ${timeSinceSync}h ago), skipping sync`);
+      logger.log(`📦 Font database is fresh (${stats.totalFonts} families, last sync ${timeSinceSync}h ago), skipping sync`);
       
       // KISS: Return data directly
       return {
@@ -75,24 +75,24 @@ export class FontSyncService {
 
       // Phase 1: Fetch fonts from Figma API
       this.updateProgress('fetching', 0, 0, 'Fetching fonts from Figma API');
-      debugLog('FontSync: Fetching fonts from Figma API...');
+      logger.log('FontSync: Fetching fonts from Figma API...');
       
       const figmaFonts = await this.fetchFontsFromFigma();
-      debugLog(`FontSync: Retrieved ${figmaFonts.length} fonts from Figma API`);
+      logger.log(`FontSync: Retrieved ${figmaFonts.length} fonts from Figma API`);
       
       // Phase 2: Process and categorize fonts
       this.updateProgress('processing', 0, figmaFonts.length, 'Processing font data');
-      debugLog(`FontSync: Processing ${figmaFonts.length} fonts...`);
+      logger.log(`FontSync: Processing ${figmaFonts.length} fonts...`);
       
       const processedFonts = this.processFigmaFonts(figmaFonts);
-      debugLog(`FontSync: Processed ${processedFonts.length} font families`);
+      logger.log(`FontSync: Processed ${processedFonts.length} font families`);
       
       // Phase 3: Store in database
       this.updateProgress('storing', 0, processedFonts.length, 'Storing fonts in database');
-      debugLog(`FontSync: Storing ${processedFonts.length} font families in database...`);
+      logger.log(`FontSync: Storing ${processedFonts.length} font families in database...`);
       
       await this.storeFontsInDatabase(processedFonts);
-      debugLog('FontSync: Database storage completed');
+      logger.log('FontSync: Database storage completed');
       
       // Complete sync
       const endTime = new Date();
@@ -114,7 +114,7 @@ export class FontSyncService {
       });
 
       const stats = this.db.getStats();
-      debugLog(`FontSync: Sync completed successfully! ${stats.totalFonts} families, ${stats.totalStyles} styles (${duration}ms)`);
+      logger.log(`FontSync: Sync completed successfully! ${stats.totalFonts} families, ${stats.totalStyles} styles (${duration}ms)`);
       
       // KISS: Return data directly
       return {
@@ -128,7 +128,7 @@ export class FontSyncService {
       const duration = endTime.getTime() - startTime.getTime();
       const errorMessage = error instanceof Error ? error.toString() : 'Unknown error';
       
-      debugLog(`FontSync: Sync failed after ${duration}ms:`, 'error', errorMessage);
+      logger.error(`FontSync: Sync failed after ${duration}ms:`, errorMessage);
       
       this.currentSync = {
         ...this.currentSync!,
@@ -175,7 +175,7 @@ export class FontSyncService {
         payload: {}
       });
     } catch (error) {
-      debugLog('FontSync: Error calling plugin:', 'error', error);
+      logger.error('FontSync: Error calling plugin:', error);
       throw error;
     }
 
@@ -186,12 +186,12 @@ export class FontSyncService {
     } else if (Array.isArray(result)) {
       fonts = result;
     } else {
-      debugLog('FontSync: Invalid result structure:', 'error', result);
+      logger.error('FontSync: Invalid result structure:', result);
       throw new Error('Invalid font data received from Figma API');
     }
     
     if (!Array.isArray(fonts)) {
-      debugLog('FontSync: Fonts is not an array:', 'error', fonts);
+      logger.error('FontSync: Fonts is not an array:', fonts);
       throw new Error('Invalid font data received from Figma API');
     }
 
@@ -252,8 +252,8 @@ export class FontSyncService {
         stored++;
       } catch (error) {
         errors++;
-        debugLog(`Failed to store font "${font.family}":`, 'error', error);
-        debugLog(`Font data:`, 'message', { 
+        logger.error(`Failed to store font "${font.family}":`, error);
+        logger.log(`Font data:`, 'message', { 
           family: font.family, 
           source: font.source, 
           stylesCount: font.styles.size,
@@ -274,7 +274,7 @@ export class FontSyncService {
     }
     
     if (errors > 0) {
-      debugLog(`FontSync: Storage completed with ${errors} errors out of ${fonts.length} fonts`, 'warning', undefined);
+      logger.warn(`FontSync: Storage completed with ${errors} errors out of ${fonts.length} fonts`);
     }
   }
 

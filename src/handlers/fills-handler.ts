@@ -1,6 +1,6 @@
 import { ManageFillsSchema, ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
-import { debugLog } from "../utils/logger.js"
+import { logger } from "../utils/logger.js"
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -475,7 +475,7 @@ export class FillsHandler implements ToolHandler {
     // Preprocess args to handle local image loading
     const processedArgs = await this.preprocessImagePaths(args);
     
-    debugLog('FillsHandler.handle passing to unifiedHandler', 'message', {
+    logger.log('FillsHandler.handle passing to unifiedHandler', 'message', {
       originalKeys: args ? Object.keys(args) : [],
       processedKeys: processedArgs ? Object.keys(processedArgs) : [],
       hasImageBytes: !!processedArgs?.imageBytes,
@@ -496,7 +496,7 @@ export class FillsHandler implements ToolHandler {
    * DO NOT change this to return byte arrays - it will cause hanging.
    */
   private async preprocessImagePaths(args: any): Promise<any> {
-    debugLog('FillsHandler.preprocessImagePaths called', 'message', { 
+    logger.log('FillsHandler.preprocessImagePaths called', 'message', { 
       operation: args?.operation, 
       hasImagePath: !!args?.imagePath,
       imagePath: args?.imagePath,
@@ -510,13 +510,13 @@ export class FillsHandler implements ToolHandler {
 
     // Only process add_image operations that have imagePath
     if (args.operation !== 'add_image' || !args.imagePath) {
-      debugLog('FillsHandler.preprocessImagePaths skipping', 'message', { 
+      logger.log('FillsHandler.preprocessImagePaths skipping', { 
         reason: args.operation !== 'add_image' ? 'wrong operation' : 'no imagePath'
       });
       return args;
     }
 
-    debugLog('FillsHandler.preprocessImagePaths processing imagePath', "message", { imagePath: args.imagePath });
+    logger.log('FillsHandler.preprocessImagePaths processing imagePath', { imagePath: args.imagePath });
     const processedArgs = { ...args };
     
     // Handle imagePath parameter (single or array)
@@ -558,7 +558,7 @@ export class FillsHandler implements ToolHandler {
       // Remove imagePath since we're now using imageBytes
       delete processedArgs.imagePath;
       
-      debugLog('FillsHandler.preprocessImagePaths completed', 'message', { 
+      logger.log('FillsHandler.preprocessImagePaths completed', { 
         base64Length: imageDataArray.length === 1 ? imageDataArray[0]?.length : imageDataArray.map(b => b?.length),
         imageBytesType: imageDataArray.length === 1 ? typeof imageDataArray[0] : 'array',
         processedKeys: Object.keys(processedArgs)

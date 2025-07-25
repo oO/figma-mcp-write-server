@@ -13,7 +13,7 @@ import { ServerConfig, LegacyServerConfig, DEFAULT_WS_CONFIG, loadConfig } from 
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
 import { HandlerRegistry } from './handlers/index.js';
 import { FontService } from './services/font-service.js';
-import { debugLog } from './utils/logger.js';
+import { logger } from './utils/logger.js';
 
 // Get package version dynamically
 const __filename = fileURLToPath(import.meta.url);
@@ -60,7 +60,7 @@ export class FigmaMCPServer {
 
     // Listen for plugin connection to initialize font database
     this.wsServer.on('pluginConnected', () => {
-      debugLog('🔌 Plugin connected, initializing font database...');
+      logger.log('🔌 Plugin connected, initializing font database...');
       this.initializeFontDatabase();
     });
 
@@ -121,7 +121,7 @@ export class FigmaMCPServer {
     await this.server.connect(transport);
     
     // Font database will be initialized when plugin connects
-    debugLog('🚀 MCP server started, waiting for plugin connection...');
+    logger.log('🚀 MCP server started, waiting for plugin connection...');
     
     // Reset health metrics after MCP server starts
     await this.resetHealthMetrics();
@@ -130,13 +130,13 @@ export class FigmaMCPServer {
   private async initializeFontDatabase(): Promise<void> {
     // Prevent multiple initializations
     if (this.fontService) {
-      debugLog('🗄️ Font database already initialized', 'warning', undefined);
+      logger.log('🔤 Font database already initialized');
       return;
     }
 
     try {
       if (this.config.fontDatabase?.enabled !== false) {
-        debugLog('🔤 Checking font database status...');
+        logger.log('🔤 Checking font database status...');
         
         // Create FontService which will handle database initialization and sync
         this.fontService = new FontService(
@@ -147,12 +147,12 @@ export class FigmaMCPServer {
           }
         );
         
-        debugLog('Font database service ready');
+        logger.log('Font database service ready');
       } else {
-        debugLog('🗄️ Font database disabled in configuration', 'warning', undefined);
+      logger.log('🔤 Font database disabled in configuration');
       }
     } catch (error) {
-      debugLog('Failed to initialize font database:', 'error', error);
+      logger.error('Failed to initialize font database:', error);
     }
   }
 
@@ -163,7 +163,7 @@ export class FigmaMCPServer {
         this.wsServer.resetHealthMetrics();
       }, 500); // Short delay to allow any pending operations to complete
     } catch (error) {
-      debugLog('Failed to reset health metrics:', 'error', error);
+      logger.error('Failed to reset health metrics:', error);
     }
   }
 

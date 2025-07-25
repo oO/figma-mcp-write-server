@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { LegacyServerConfig, QueuedRequest, RequestBatch, RequestPriority, ConnectionStatus, HealthMetrics, validateAndParse, TypedPluginMessage, TypedPluginResponse } from '../types/index.js';
 import { checkPortAvailable, findZombieProcesses, killZombieProcesses, findAvailablePort } from '../utils/port-utils.js';
 import { EventEmitter } from 'events';
-import { debugLog } from "../utils/logger.js"
+import { logger } from "../utils/logger.js"
 
 export class FigmaWebSocketServer extends EventEmitter {
   private wsServer: WebSocketServer | null = null;
@@ -207,7 +207,18 @@ export class FigmaWebSocketServer extends EventEmitter {
     // Handle plugin log messages
     if (message.type === 'LOG_MESSAGE' && message.payload) {
       const { message: logMessage, data, type } = message.payload;
-      debugLog(`🔌 ${logMessage}`, type || 'message', data);
+      const logType = type || 'message';
+      if (logType === 'message') {
+        logger.log(`🔌 ${logMessage}`, data);
+      } else if (logType === 'warning') {
+        logger.warn(`🔌 ${logMessage}`, data);
+      } else if (logType === 'error') {
+        logger.error(`🔌 ${logMessage}`, data);
+      } else if (logType === 'debug') {
+        logger.debug(`🔌 ${logMessage}`, data);
+      } else {
+        logger.log(`🔌 ${logMessage}`, data);
+      }
       return;
     }
     

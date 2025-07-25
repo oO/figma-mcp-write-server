@@ -7,7 +7,7 @@
 
 import { BulkOperationsParser, ParamConfig, BulkOperationResult, CommonParamConfigs } from './bulk-operations.js';
 import { validateAndParse } from '../types/validation-utils.js';
-import { debugLog } from "../utils/logger.js"
+import { logger } from "../utils/logger.js"
 import * as yaml from 'js-yaml';
 
 export interface UnifiedHandlerConfig {

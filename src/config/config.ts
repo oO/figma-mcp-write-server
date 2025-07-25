@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
 import { join, dirname } from 'path';
 import { homedir, platform } from 'os';
 import * as yaml from 'js-yaml';
+import { logger } from '../utils/logger.js';
 
 export interface FontDatabaseConfig {
   enabled: boolean;
@@ -114,16 +115,16 @@ export function loadConfig(configPath?: string): ServerConfig {
       // Deep merge configuration
       config = mergeConfig(config, fileConfig);
     } catch (error) {
-      console.warn(`Failed to load config from ${configFile}:`, error);
-      console.warn('Using default configuration');
+      logger.warn(`Failed to load config from ${configFile}:`, error);
+      logger.warn('Using default configuration');
     }
   } else {
     // Create default config file
     try {
       saveConfig(config, configFile);
-      console.info(`Created default config file at ${configFile}`);
+      logger.log(`Created default config file at ${configFile}`);
     } catch (error) {
-      console.warn(`Failed to create config file at ${configFile}:`, error);
+      logger.warn(`Failed to create config file at ${configFile}:`, error);
     }
   }
   
@@ -192,13 +193,13 @@ function normalizeConfig(config: ServerConfig): ServerConfig {
   
   // Validate port range
   if (config.port < 1 || config.port > 65535) {
-    console.warn(`Invalid port ${config.port}, using default 8765`);
+    logger.warn(`Invalid port ${config.port}, using default 8765`);
     config.port = 8765;
   }
   
   // Validate max age hours
   if (config.fontDatabase.maxAgeHours < 1) {
-    console.warn(`Invalid maxAgeHours ${config.fontDatabase.maxAgeHours}, using default 24`);
+    logger.warn(`Invalid maxAgeHours ${config.fontDatabase.maxAgeHours}, using default 24`);
     config.fontDatabase.maxAgeHours = 24;
   }
   

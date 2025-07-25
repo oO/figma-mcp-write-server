@@ -1,6 +1,8 @@
 # Claude Code Project Context
 
-## Commit Message Format
+## MANDATORY Commit Message Format
+
+**ALWAYS USE THIS EXACT FORMAT FOR EVERY COMMIT - NO EXCEPTIONS:**
 
 ```
 type: brief description (vX.X.X)
@@ -13,6 +15,8 @@ Co-authored-by: Claude.AI <noreply@anthropic.com>
 ```
 
 **Types**: `feat:` `fix:` `docs:` `refactor:` `test:` `chore:`
+
+**CRITICAL**: This format is MANDATORY. Git template is configured at `.gitmessage`. Never use any other commit format.
 
 ## Core Development Principles
 

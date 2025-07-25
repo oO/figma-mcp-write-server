@@ -1,7 +1,7 @@
 import { FontInfo, FontFamily, FontOperations, SearchFontsResponse, ProjectFontsResponse, FontCountResponse, FontSource, SortOption } from '../types/font-operations.js';
 import { FontDatabase, ensureDatabaseDirectory } from '../database/index.js';
 import { FontSyncService } from './font-sync-service.js';
-import { debugLog } from "../utils/logger.js"
+import { logger } from "../utils/logger.js"
 
 /**
  * Shared service for font operations that can be used by both
@@ -43,7 +43,7 @@ export class FontService {
       try {
         return await this.searchFontsFromDatabase(options);
       } catch (error) {
-        debugLog('Database search failed, falling back to API:', 'error', error);
+        logger.error('Database search failed, falling back to API:', error);
       }
     }
 
@@ -78,7 +78,7 @@ export class FontService {
       try {
         return await this.getFontCountFromDatabase(options);
       } catch (error) {
-        debugLog('Database count failed, falling back to API:', 'error', error);
+        logger.error('Database count failed, falling back to API:', error);
       }
     }
 
@@ -206,16 +206,16 @@ export class FontService {
       
       // Trigger initial sync if database is empty or stale
       if (this.syncService.isSyncNeeded()) {
-        debugLog('🔄 Database is empty or stale, triggering background sync...');
+        logger.log('🔄 Database is empty or stale, triggering background sync...');
         // Don't await - let it run in background
         this.syncService.syncFonts().catch(error => {
-          debugLog('Background font sync failed:', 'error', error);
+          logger.error('Background font sync failed:', error);
         });
       } else {
-        debugLog('Font database is up to date, no sync needed');
+        logger.log('Font database is up to date, no sync needed');
       }
     } catch (error) {
-      debugLog('Failed to initialize font database:', 'warning', error);
+      logger.warn('Failed to initialize font database:', error);
       this.db = null;
       this.syncService = null;
     }
@@ -362,7 +362,7 @@ export class FontService {
       try {
         return this.db!.getFontStyles(fontFamily);
       } catch (error) {
-        debugLog('Database font styles failed, falling back to API:', 'error', error);
+        logger.error('Database font styles failed, falling back to API:', error);
       }
     }
 

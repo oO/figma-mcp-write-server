@@ -5,13 +5,13 @@ import { ServerConfig } from './types/index.js';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { createServer } from 'http';
-import { debugLog } from './utils/logger.js';
+import { logger } from './utils/logger.js';
 
 const execAsync = promisify(exec);
 
 // Utility function to check port status
 async function checkPortStatus(port: number): Promise<void> {
-  debugLog(`🔍 Checking port ${port} status...`);
+  logger.log(`🔍 Checking port ${port} status...`);
   
   try {
     // Check if port is available
@@ -24,9 +24,9 @@ async function checkPortStatus(port: number): Promise<void> {
     });
     
     if (isAvailable) {
-      debugLog(`🔌 Port ${port} is available`);
+      logger.log(`🔌 Port ${port} is available`);
     } else {
-      debugLog(`Port ${port} is in use`);
+      logger.log(`Port ${port} is in use`);
       
       // Find what's using the port
       try {
@@ -34,23 +34,23 @@ async function checkPortStatus(port: number): Promise<void> {
         const pids = stdout.trim().split('\n').filter(pid => pid);
         
         if (pids.length > 0) {
-          debugLog(`📋 Process(es) using port ${port}:`);
+          logger.log(`📋 Process(es) using port ${port}:`);
           for (const pid of pids) {
             try {
               const { stdout: processInfo } = await execAsync(`ps -p ${pid} -o pid,comm,args --no-headers`);
-              debugLog(`   PID ${pid}: ${processInfo.trim()}`);
+              logger.log(`   PID ${pid}: ${processInfo.trim()}`);
             } catch (error) {
-              debugLog(`   PID ${pid}: (process info unavailable)`);
+              logger.log(`   PID ${pid}: (process info unavailable)`);
             }
           }
-          debugLog(`💡 To kill these processes: kill -9 ${pids.join(' ')}`);
+          logger.log(`💡 To kill these processes: kill -9 ${pids.join(' ')}`);
         }
       } catch (error) {
-        debugLog('   (Unable to identify processes using this port)');
+        logger.log('   (Unable to identify processes using this port)');
       }
     }
   } catch (error) {
-    debugLog(`Error checking port ${port}:`, "message", error);
+    logger.log(`Error checking port ${port}:`, error);
   }
 }
 
@@ -75,7 +75,7 @@ async function parseArgs(): Promise<Partial<ServerConfig>> {
         break;
       case '--help':
       case '-h':
-        debugLog(`
+        logger.log(`
 Figma MCP Write Server - Model Context Protocol server with Figma write access
 
 Usage: figma-mcp-write-server [options]
@@ -136,12 +136,12 @@ async function main() {
   
   // Handle graceful shutdown
   const shutdown = async (signal: string) => {
-    debugLog(`📡 Received ${signal}, shutting down gracefully...`, undefined, 'warning');
+    logger.warn(`📡 Received ${signal}, shutting down gracefully...\n`);
     try {
       await server.stop();
       process.exit(0);
     } catch (error) {
-      debugLog('Error during shutdown:', 'error', error);
+      logger.error('Error during shutdown:', error);
       process.exit(1);
     }
   };
@@ -149,23 +149,23 @@ async function main() {
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('uncaughtException', (error) => {
-    debugLog('Uncaught Exception:', 'error', error);
+    logger.error('Uncaught Exception:', error);
     shutdown('uncaughtException');
   });
   process.on('unhandledRejection', (reason, promise) => {
-    debugLog('Unhandled Rejection at:', 'error', { promise, reason });
+    logger.error('Unhandled Rejection at:', { promise, reason }); 
     shutdown('unhandledRejection');
   });
   
   try {
     await server.start();
   } catch (error) {
-    debugLog('Failed to start server:', 'error', error);
+    logger.error('Failed to start server:', error);
     process.exit(1);
   }
 }
 
 main().catch((error) => {
-  debugLog('Fatal error:', 'error', error);
+  logger.error('Fatal error:', error);
   process.exit(1);
 });
