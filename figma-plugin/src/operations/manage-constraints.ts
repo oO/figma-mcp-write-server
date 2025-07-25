@@ -1,8 +1,9 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
+import { unwrapArrayParam } from '../utils/parameter-utils.js';
 
-export async function handleManageConstraints(params: any): Promise<OperationResult> {
+export async function MANAGE_CONSTRAINTS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageConstraints', params, async () => {
     BaseOperation.validateParams(params, ['operation', 'nodeId']);
     
@@ -12,7 +13,7 @@ export async function handleManageConstraints(params: any): Promise<OperationRes
       ['get', 'set', 'reset']
     );
 
-    const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+    const nodeId = unwrapArrayParam(params.nodeId);
     const node = findNodeById(nodeId);
     if (!node) {
       throw new Error(`Node ${nodeId} not found`);
@@ -38,8 +39,8 @@ async function setConstraints(node: SceneNode, params: any): Promise<any> {
   
   const constraints: any = Object.assign({}, (node as any).constraints);
   
-  const horizontal = Array.isArray(params.horizontalConstraint) ? params.horizontalConstraint[0] : params.horizontalConstraint;
-  const vertical = Array.isArray(params.verticalConstraint) ? params.verticalConstraint[0] : params.verticalConstraint;
+  const horizontal = unwrapArrayParam(params.horizontalConstraint);
+  const vertical = unwrapArrayParam(params.verticalConstraint);
   
   if (horizontal) {
     const validHorizontal = ['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE'];

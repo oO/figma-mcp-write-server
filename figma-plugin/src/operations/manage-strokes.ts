@@ -4,12 +4,12 @@ import {
   SharedPaintOperations,
   PaintOperationsConfig
 } from '../utils/shared-paint-operations.js';
-import { modifyStrokes } from '../utils/figma-property-utils.js';
+import { modifyStrokes, clone } from '../utils/figma-property-utils.js';
 import { cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
-import { ERROR_MESSAGES } from '../utils/stroke-constants.js';
-import { 
-  validateNodeForStrokes, 
-  resolvePaintIndex, 
+import {
+  ERROR_MESSAGES,
+  validateNodeForStrokes,
+  resolvePaintIndex,
   validatePaintType,
   validateImageSource,
   validateGradientStops,
@@ -17,16 +17,14 @@ import {
   validateStrokeAlign,
   validateStrokeCap,
   validateStrokeJoin,
-  validateStrokeMiterLimit
-} from '../utils/stroke-validation.js';
-import { 
+  validateStrokeMiterLimit,
   createStrokeOperationResponse,
   createStrokeListResponse,
   createStrokeAddResponse,
   createStrokeUpdateResponse,
   createStrokeDeleteResponse,
   extractStrokeProperties
-} from '../utils/stroke-response.js';
+} from '../utils/stroke-utils.js';
 import { createPatternPaint } from '../utils/color-utils.js';
 import { applyCommonPaintProperties } from '../utils/paint-properties.js';
 
@@ -99,7 +97,7 @@ function applyScaleModeAwareTransforms(
   
   // If updating existing paint, preserve non-transform properties
   if (existingPaint) {
-    const updatedPaint = clonePaint(existingPaint) as ImagePaint;
+    const updatedPaint = clone(existingPaint) as ImagePaint;
     
     // Apply scale mode and transform properties from scale mode-aware processing
     updatedPaint.scaleMode = transformedPaint.scaleMode;
@@ -158,7 +156,7 @@ function applyStrokeProperties(node: any, params: any): void {
  * @param params - Operation parameters
  * @returns Operation result
  */
-export async function handleManageStrokes(params: any): Promise<OperationResult> {
+export async function MANAGE_STROKES(params: any): Promise<OperationResult> {
   try {
     const { operation, nodeId } = params;
     
@@ -639,7 +637,7 @@ async function handleDuplicateStrokes(params: any): Promise<OperationResult> {
     
     // Add copied paints
     for (const paint of paintsToCopy) {
-      const clonedPaint = clonePaint(paint);
+      const clonedPaint = clone(paint);
       if (overwrite === 'SINGLE' && params.paintIndex !== undefined) {
         manager.insert(params.paintIndex, clonedPaint);
       } else {

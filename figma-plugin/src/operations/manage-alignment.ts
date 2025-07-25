@@ -4,7 +4,7 @@ import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
 import { BaseOperation } from './base-operation.js';
 
 // Top-level operation handler
-export async function handleManageAlignment(payload: AlignmentParams): Promise<OperationResult> {
+export async function MANAGE_ALIGNMENT(payload: AlignmentParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageAlignment', payload, async () => {
     BaseOperation.validateParams(payload, ['nodeIds']);
     

@@ -6,7 +6,7 @@ import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-
  * Handle MANAGE_COMPONENTS operation
  * Supports: create, create_set, update, delete, publish, list, get
  */
-export async function handleManageComponents(params: any): Promise<OperationResult> {
+export async function MANAGE_COMPONENTS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageComponents', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

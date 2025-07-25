@@ -5,7 +5,7 @@ import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-
 /**
  * Handle VECTOR_OPERATION - perform operations on vector paths
  */
-export async function handleVectorOperation(params: any): Promise<OperationResult> {
+export async function VECTOR_OPERATION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('vectorOperation', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

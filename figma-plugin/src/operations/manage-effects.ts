@@ -1,5 +1,6 @@
 import { OperationResult, Effect, RGBA, Vector2 } from '../types.js';
 import { BaseOperation } from './base-operation.js';
+import { cleanStyleId } from '../utils/parameter-utils.js';
 import { hexToRgb, parseHexColor } from '../utils/color-utils.js';
 import { findNodeById, formatNodeResponse } from '../utils/node-utils.js';
 import { modifyEffects } from '../utils/figma-property-utils.js';
@@ -42,7 +43,7 @@ export interface EffectParams {
 /**
  * Handle CREATE_EFFECT operation
  */
-export async function handleCreateEffect(params: EffectParams): Promise<OperationResult> {
+export async function CREATE_EFFECT(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('createEffect', params, async () => {
     BaseOperation.validateParams(params, ['owner', 'effectType']);
     
@@ -72,7 +73,7 @@ export async function handleCreateEffect(params: EffectParams): Promise<Operatio
 /**
  * Handle UPDATE_EFFECT operation
  */
-export async function handleUpdateEffect(params: EffectParams): Promise<OperationResult> {
+export async function UPDATE_EFFECT(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('updateEffect', params, async () => {
     BaseOperation.validateParams(params, ['owner', 'effectIndex']);
     
@@ -110,7 +111,7 @@ export async function handleUpdateEffect(params: EffectParams): Promise<Operatio
 /**
  * Handle DELETE_EFFECT operation
  */
-export async function handleDeleteEffect(params: EffectParams): Promise<OperationResult> {
+export async function DELETE_EFFECT(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('deleteEffect', params, async () => {
     BaseOperation.validateParams(params, ['owner', 'effectIndex']);
     
@@ -147,7 +148,7 @@ export async function handleDeleteEffect(params: EffectParams): Promise<Operatio
 /**
  * Handle GET_EFFECTS operation
  */
-export async function handleGetEffects(params: EffectParams): Promise<OperationResult> {
+export async function GET_EFFECTS(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('getEffects', params, async () => {
     BaseOperation.validateParams(params, ['owner']);
     
@@ -237,7 +238,7 @@ export async function handleGetEffects(params: EffectParams): Promise<OperationR
 /**
  * Handle REORDER_EFFECT operation
  */
-export async function handleReorderEffect(params: EffectParams): Promise<OperationResult> {
+export async function REORDER_EFFECT(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('reorderEffect', params, async () => {
     BaseOperation.validateParams(params, ['owner', 'effectIndex', 'newIndex']);
     
@@ -275,7 +276,7 @@ export async function handleReorderEffect(params: EffectParams): Promise<Operati
 /**
  * Handle DUPLICATE_EFFECT operation
  */
-export async function handleDuplicateEffect(params: EffectParams): Promise<OperationResult> {
+export async function DUPLICATE_EFFECT(params: EffectParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('duplicateEffect', params, async () => {
     BaseOperation.validateParams(params, ['owner', 'effectIndex', 'newIndex']);
     
@@ -325,9 +326,9 @@ async function getEffectTarget(owner: string): Promise<any> {
     return node;
   } else if (ownerType === 'style') {
     // Use getLocalEffectStyles instead of deprecated getStyleById
-    const cleanId = id.replace(/,$/, ''); // Remove trailing comma
+    const cleanId = cleanStyleId(id); // Remove trailing comma
     const effectStyles = figma.getLocalEffectStyles();
-    const style = effectStyles.find(s => s.id.replace(/,$/, '') === cleanId);
+    const style = effectStyles.find(s => cleanStyleId(s.id) === cleanId);
     if (!style) {
       throw new Error(`Effect style with ID ${cleanId} not found`);
     }

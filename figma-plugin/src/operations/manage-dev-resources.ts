@@ -5,7 +5,7 @@ import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
 /**
  * Handle DEV_RESOURCE_OPERATION - manage dev mode resources and CSS generation
  */
-export async function handleDevResourceOperation(params: any): Promise<OperationResult> {
+export async function DEV_RESOURCE_OPERATION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('devResourceOperation', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

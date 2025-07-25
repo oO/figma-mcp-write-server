@@ -4,12 +4,40 @@ import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-
 import { loadFont, getFontFromParams, ensureFontLoaded, loadDefaultFont } from '../utils/font-utils.js';
 import { hexToRgb, createSolidPaint } from '../utils/color-utils.js';
 import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';
+import { unwrapArrayParam, cleanStyleId } from '../utils/parameter-utils.js';
+
+/**
+ * Add a text node to the specified parent container or page
+ * Validates parent container type and throws descriptive errors
+ */
+function addTextNodeToParent(node: TextNode, parentId?: string): BaseNode & ChildrenMixin {
+  if (parentId) {
+    const parentNode = findNodeById(parentId);
+    if (!parentNode) {
+      throw new Error(`Parent node with ID ${parentId} not found`);
+    }
+    
+    // Validate that the parent can contain children
+    const containerTypes = ['DOCUMENT', 'PAGE', 'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'SLIDE', 'SLIDE_ROW', 'SECTION', 'STICKY', 'SHAPE_WITH_TEXT', 'TABLE', 'CODE_BLOCK'];
+    if (!containerTypes.includes(parentNode.type)) {
+      throw new Error(`Parent node type '${parentNode.type}' cannot contain child nodes. Valid container types: ${containerTypes.join(', ')}`);
+    }
+    
+    // Add to parent container
+    (parentNode as BaseNode & ChildrenMixin).appendChild(node);
+    return parentNode as BaseNode & ChildrenMixin;
+  } else {
+    // Add to current page
+    figma.currentPage.appendChild(node);
+    return figma.currentPage;
+  }
+}
 
 /**
  * Handle MANAGE_TEXT operation
  * Supports: create, update, get, delete, set_range, get_range, delete_range, insert_text, delete_text, search_text, apply_text_style, create_text_style
  */
-export async function handleManageText(params: TextParams): Promise<OperationResult> {
+export async function MANAGE_TEXT(params: TextParams): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageText', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     
@@ -52,16 +80,16 @@ export async function handleManageText(params: TextParams): Promise<OperationRes
 
 async function createTextNode(params: TextParams): Promise<any> {
   // Handle array parameters - extract first value for single operations
-  const characters = Array.isArray(params.characters) ? params.characters[0] : params.characters;
-  const fontFamily = Array.isArray(params.fontFamily) ? params.fontFamily[0] : params.fontFamily;
-  const fontStyle = Array.isArray(params.fontStyle) ? params.fontStyle[0] : params.fontStyle;
-  const x = Array.isArray(params.x) ? params.x[0] : params.x;
-  const y = Array.isArray(params.y) ? params.y[0] : params.y;
-  const name = Array.isArray(params.name) ? params.name[0] : params.name;
-  const width = Array.isArray(params.width) ? params.width[0] : params.width;
-  const height = Array.isArray(params.height) ? params.height[0] : params.height;
-  const fontSize = Array.isArray(params.fontSize) ? params.fontSize[0] : params.fontSize;
-  const autoRename = Array.isArray(params.autoRename) ? params.autoRename[0] : params.autoRename;
+  const characters = unwrapArrayParam(params.characters);
+  const fontFamily = unwrapArrayParam(params.fontFamily);
+  const fontStyle = unwrapArrayParam(params.fontStyle);
+  const x = unwrapArrayParam(params.x);
+  const y = unwrapArrayParam(params.y);
+  const name = unwrapArrayParam(params.name);
+  const width = unwrapArrayParam(params.width);
+  const height = unwrapArrayParam(params.height);
+  const fontSize = unwrapArrayParam(params.fontSize);
+  const autoRename = unwrapArrayParam(params.autoRename);
   
   // Additional validation for non-empty characters
   if (!characters || characters.trim() === '') {
@@ -80,7 +108,10 @@ async function createTextNode(params: TextParams): Promise<any> {
     // STEP 1: Create text node with minimal properties (font must be loaded first)
     text.characters = characters;
     
-    // Handle positioning with smart placement and overlap detection
+    // Add to parent container first (creates the coordinate context)
+    const parentContainer = addTextNodeToParent(text, unwrapArrayParam(params.parentId));
+    
+    // Handle positioning with smart placement and overlap detection (parent-aware)
     let finalX: number;
     let finalY: number;
     let positionReason: string | undefined;
@@ -90,22 +121,22 @@ async function createTextNode(params: TextParams): Promise<any> {
     const textHeight = (fontSize || 16) * 1.2; // Rough text height estimation
     
     if (x !== undefined || y !== undefined) {
-      // Explicit position provided - use it but check for overlaps
+      // Explicit position provided - coordinates are relative to parent container
       finalX = x || 0;
       finalY = y || 0;
       
-      // Check for overlaps with existing nodes
+      // Check for overlaps with sibling nodes in the same parent container
       const overlapInfo = checkForOverlaps(
         { x: finalX, y: finalY, width: estimatedWidth, height: textHeight },
-        figma.currentPage
+        parentContainer
       );
       
       if (overlapInfo.hasOverlap) {
         warning = createOverlapWarning(overlapInfo, { x: finalX, y: finalY });
       }
     } else {
-      // No explicit position - use smart placement
-      const smartPosition = findSmartPosition({ width: estimatedWidth, height: textHeight }, figma.currentPage);
+      // No explicit position - use smart placement within the parent container
+      const smartPosition = findSmartPosition({ width: estimatedWidth, height: textHeight }, parentContainer);
       finalX = smartPosition.x;
       finalY = smartPosition.y;
       positionReason = smartPosition.reason;
@@ -140,7 +171,7 @@ async function createTextNode(params: TextParams): Promise<any> {
     if (params.textStyleId) {
       // Check if the style actually exists
       const allTextStyles = figma.getLocalTextStyles();
-      const targetStyle = allTextStyles.find(s => s.id.replace(/,$/, '') === params.textStyleId);
+      const targetStyle = allTextStyles.find(s => cleanStyleId(s.id) === params.textStyleId);
       if (targetStyle) {
         // Use the actual Figma style ID for setTextStyleIdAsync
         await text.setTextStyleIdAsync(targetStyle.id);
@@ -167,8 +198,7 @@ async function createTextNode(params: TextParams): Promise<any> {
       });
     }
     
-    // Only add to page after all operations succeed
-    figma.currentPage.appendChild(text);
+    // Node already added to parent container during positioning
     
     const response = {
       ...formatNodeResponse(text, 'created'),
@@ -206,7 +236,7 @@ async function updateTextNode(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+  const nodeId = unwrapArrayParam(params.nodeId);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -221,16 +251,16 @@ async function updateTextNode(params: TextParams): Promise<any> {
   }
   
   // Handle array parameters - extract first value for single operations
-  const characters = Array.isArray(params.characters) ? params.characters[0] : params.characters;
-  const name = Array.isArray(params.name) ? params.name[0] : params.name;
-  const x = Array.isArray(params.x) ? params.x[0] : params.x;
-  const y = Array.isArray(params.y) ? params.y[0] : params.y;
-  const fontFamily = Array.isArray(params.fontFamily) ? params.fontFamily[0] : params.fontFamily;
-  const fontStyle = Array.isArray(params.fontStyle) ? params.fontStyle[0] : params.fontStyle;
-  const fontSize = Array.isArray(params.fontSize) ? params.fontSize[0] : params.fontSize;
-  const width = Array.isArray(params.width) ? params.width[0] : params.width;
-  const height = Array.isArray(params.height) ? params.height[0] : params.height;
-  const autoRename = Array.isArray(params.autoRename) ? params.autoRename[0] : params.autoRename;
+  const characters = unwrapArrayParam(params.characters);
+  const name = unwrapArrayParam(params.name);
+  const x = unwrapArrayParam(params.x);
+  const y = unwrapArrayParam(params.y);
+  const fontFamily = unwrapArrayParam(params.fontFamily);
+  const fontStyle = unwrapArrayParam(params.fontStyle);
+  const fontSize = unwrapArrayParam(params.fontSize);
+  const width = unwrapArrayParam(params.width);
+  const height = unwrapArrayParam(params.height);
+  const autoRename = unwrapArrayParam(params.autoRename);
   
   // Update content
   if (characters !== undefined) {
@@ -281,7 +311,7 @@ async function getTextContent(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+  const nodeId = unwrapArrayParam(params.nodeId);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -341,7 +371,7 @@ async function deleteTextNode(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+  const nodeId = unwrapArrayParam(params.nodeId);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -362,7 +392,7 @@ async function handleSetRange(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+  const nodeId = unwrapArrayParam(params.nodeId);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -399,9 +429,9 @@ async function handleGetRange(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
-  const rangeStart = Array.isArray(params.rangeStart) ? params.rangeStart[0] : params.rangeStart;
-  const rangeEnd = Array.isArray(params.rangeEnd) ? params.rangeEnd[0] : params.rangeEnd;
+  const nodeId = unwrapArrayParam(params.nodeId);
+  const rangeStart = unwrapArrayParam(params.rangeStart);
+  const rangeEnd = unwrapArrayParam(params.rangeEnd);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -590,9 +620,9 @@ async function handleDeleteRange(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
-  const rangeStart = Array.isArray(params.rangeStart) ? params.rangeStart[0] : params.rangeStart;
-  const rangeEnd = Array.isArray(params.rangeEnd) ? params.rangeEnd[0] : params.rangeEnd;
+  const nodeId = unwrapArrayParam(params.nodeId);
+  const rangeStart = unwrapArrayParam(params.rangeStart);
+  const rangeEnd = unwrapArrayParam(params.rangeEnd);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -707,14 +737,14 @@ async function loadFontsIndividually(textNode: TextNode, start: number, end: num
 
 async function applyAdvancedTextDecoration(textNode: TextNode, params: TextParams): Promise<void> {
   // Handle array parameters - extract first value for single operations
-  const textDecorationStyle = Array.isArray(params.textDecorationStyle) ? params.textDecorationStyle[0] : params.textDecorationStyle;
-  const textDecorationOffset = Array.isArray(params.textDecorationOffset) ? params.textDecorationOffset[0] : params.textDecorationOffset;
-  const textDecorationOffsetUnit = Array.isArray(params.textDecorationOffsetUnit) ? params.textDecorationOffsetUnit[0] : params.textDecorationOffsetUnit;
-  const textDecorationThickness = Array.isArray(params.textDecorationThickness) ? params.textDecorationThickness[0] : params.textDecorationThickness;
-  const textDecorationThicknessUnit = Array.isArray(params.textDecorationThicknessUnit) ? params.textDecorationThicknessUnit[0] : params.textDecorationThicknessUnit;
-  const textDecorationColor = Array.isArray(params.textDecorationColor) ? params.textDecorationColor[0] : params.textDecorationColor;
-  const textDecorationColorAuto = Array.isArray(params.textDecorationColorAuto) ? params.textDecorationColorAuto[0] : params.textDecorationColorAuto;
-  const textDecorationSkipInk = Array.isArray(params.textDecorationSkipInk) ? params.textDecorationSkipInk[0] : params.textDecorationSkipInk;
+  const textDecorationStyle = unwrapArrayParam(params.textDecorationStyle);
+  const textDecorationOffset = unwrapArrayParam(params.textDecorationOffset);
+  const textDecorationOffsetUnit = unwrapArrayParam(params.textDecorationOffsetUnit);
+  const textDecorationThickness = unwrapArrayParam(params.textDecorationThickness);
+  const textDecorationThicknessUnit = unwrapArrayParam(params.textDecorationThicknessUnit);
+  const textDecorationColor = unwrapArrayParam(params.textDecorationColor);
+  const textDecorationColorAuto = unwrapArrayParam(params.textDecorationColorAuto);
+  const textDecorationSkipInk = unwrapArrayParam(params.textDecorationSkipInk);
 
   // Apply text decoration style
   if (textDecorationStyle !== undefined) {
@@ -1185,10 +1215,10 @@ async function handleSearchText(params: TextParams): Promise<any> {
  * Perform global search across all text nodes in the document
  */
 async function performGlobalSearch(params: TextParams): Promise<any> {
-  const searchQuery = Array.isArray(params.searchQuery) ? params.searchQuery[0] : params.searchQuery;
-  const searchCaseSensitive = Array.isArray(params.searchCaseSensitive) ? params.searchCaseSensitive[0] : params.searchCaseSensitive;
-  const searchWholeWord = Array.isArray(params.searchWholeWord) ? params.searchWholeWord[0] : params.searchWholeWord;
-  const searchMaxResults = Array.isArray(params.searchMaxResults) ? params.searchMaxResults[0] : params.searchMaxResults;
+  const searchQuery = unwrapArrayParam(params.searchQuery);
+  const searchCaseSensitive = unwrapArrayParam(params.searchCaseSensitive);
+  const searchWholeWord = unwrapArrayParam(params.searchWholeWord);
+  const searchMaxResults = unwrapArrayParam(params.searchMaxResults);
   
   // Find all text nodes in the document
   const textNodes = figma.root.findAllWithCriteria({ types: ['TEXT'] }) as TextNode[];
@@ -1361,7 +1391,7 @@ async function handleApplyTextStyle(params: TextParams): Promise<any> {
   BaseOperation.validateParams(params, ['nodeId']);
   
   // Handle array parameters - extract first value for single operations
-  const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+  const nodeId = unwrapArrayParam(params.nodeId);
   
   const node = findNodeById(nodeId!);
   if (!node || node.type !== 'TEXT') {
@@ -1372,7 +1402,7 @@ async function handleApplyTextStyle(params: TextParams): Promise<any> {
   
   if (params.textStyleId) {
     const allTextStyles = figma.getLocalTextStyles();
-    const targetStyle = allTextStyles.find(s => s.id.replace(/,$/, '') === params.textStyleId);
+    const targetStyle = allTextStyles.find(s => cleanStyleId(s.id) === params.textStyleId);
     if (targetStyle) {
       await textNode.setTextStyleIdAsync(targetStyle.id);
     } else {
@@ -1390,7 +1420,7 @@ async function handleCreateTextStyle(params: TextParams): Promise<any> {
   
   if (params.nodeId) {
     // Handle array parameters - extract first value for single operations
-    const nodeId = Array.isArray(params.nodeId) ? params.nodeId[0] : params.nodeId;
+    const nodeId = unwrapArrayParam(params.nodeId);
     
     const node = findNodeById(nodeId);
     if (!node || node.type !== 'TEXT') {
@@ -1409,20 +1439,20 @@ async function handleCreateTextStyle(params: TextParams): Promise<any> {
 
 async function applyTextProperties(textNode: TextNode, params: TextParams): Promise<void> {
   // Handle array parameters - extract first value for single operations
-  const textCase = Array.isArray(params.textCase) ? params.textCase[0] : params.textCase;
-  const textDecoration = Array.isArray(params.textDecoration) ? params.textDecoration[0] : params.textDecoration;
-  const letterSpacing = Array.isArray(params.letterSpacing) ? params.letterSpacing[0] : params.letterSpacing;
-  const lineHeight = Array.isArray(params.lineHeight) ? params.lineHeight[0] : params.lineHeight;
-  const textAlignHorizontal = Array.isArray(params.textAlignHorizontal) ? params.textAlignHorizontal[0] : params.textAlignHorizontal;
-  const textAlignVertical = Array.isArray(params.textAlignVertical) ? params.textAlignVertical[0] : params.textAlignVertical;
-  const textAutoResize = Array.isArray(params.textAutoResize) ? params.textAutoResize[0] : params.textAutoResize;
-  const paragraphSpacing = Array.isArray(params.paragraphSpacing) ? params.paragraphSpacing[0] : params.paragraphSpacing;
-  const paragraphIndent = Array.isArray(params.paragraphIndent) ? params.paragraphIndent[0] : params.paragraphIndent;
-  const listSpacing = Array.isArray(params.listSpacing) ? params.listSpacing[0] : params.listSpacing;
-  const hangingPunctuation = Array.isArray(params.hangingPunctuation) ? params.hangingPunctuation[0] : params.hangingPunctuation;
-  const hangingList = Array.isArray(params.hangingList) ? params.hangingList[0] : params.hangingList;
-  const leadingTrim = Array.isArray(params.leadingTrim) ? params.leadingTrim[0] : params.leadingTrim;
-  const autoRename = Array.isArray(params.autoRename) ? params.autoRename[0] : params.autoRename;
+  const textCase = unwrapArrayParam(params.textCase);
+  const textDecoration = unwrapArrayParam(params.textDecoration);
+  const letterSpacing = unwrapArrayParam(params.letterSpacing);
+  const lineHeight = unwrapArrayParam(params.lineHeight);
+  const textAlignHorizontal = unwrapArrayParam(params.textAlignHorizontal);
+  const textAlignVertical = unwrapArrayParam(params.textAlignVertical);
+  const textAutoResize = unwrapArrayParam(params.textAutoResize);
+  const paragraphSpacing = unwrapArrayParam(params.paragraphSpacing);
+  const paragraphIndent = unwrapArrayParam(params.paragraphIndent);
+  const listSpacing = unwrapArrayParam(params.listSpacing);
+  const hangingPunctuation = unwrapArrayParam(params.hangingPunctuation);
+  const hangingList = unwrapArrayParam(params.hangingList);
+  const leadingTrim = unwrapArrayParam(params.leadingTrim);
+  const autoRename = unwrapArrayParam(params.autoRename);
   
   // Apply text case
   if (textCase !== undefined) {
@@ -1463,13 +1493,13 @@ async function applyTextProperties(textNode: TextNode, params: TextParams): Prom
   
   // Apply text color - handle both single values and arrays
   if (params.fillColor) {
-    const fillColor = Array.isArray(params.fillColor) ? params.fillColor[0] : params.fillColor;
+    const fillColor = unwrapArrayParam(params.fillColor);
     textNode.fills = [createSolidPaint(fillColor)];
   }
   
   // Apply text truncation
   if (params.textTruncation !== undefined) {
-    const textTruncation = Array.isArray(params.textTruncation) ? params.textTruncation[0] : params.textTruncation;
+    const textTruncation = unwrapArrayParam(params.textTruncation);
     const validatedTruncation = BaseOperation.validateStringParam(
       textTruncation,
       'textTruncation',
@@ -1480,7 +1510,7 @@ async function applyTextProperties(textNode: TextNode, params: TextParams): Prom
   
   // Apply max lines
   if (params.maxLines !== undefined) {
-    const maxLines = Array.isArray(params.maxLines) ? params.maxLines[0] : params.maxLines;
+    const maxLines = unwrapArrayParam(params.maxLines);
     textNode.maxLines = BaseOperation.validateNumericParam(maxLines, 'maxLines', 1, 1000);
   }
   
@@ -1530,7 +1560,7 @@ async function applyTextProperties(textNode: TextNode, params: TextParams): Prom
   
   // Apply text list options
   if (params.listType && textNode.characters.length > 0) {
-    const listType = Array.isArray(params.listType) ? params.listType[0] : params.listType;
+    const listType = unwrapArrayParam(params.listType);
     const validatedListType = BaseOperation.validateStringParam(
       listType,
       'listType',

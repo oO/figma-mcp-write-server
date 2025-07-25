@@ -5,7 +5,7 @@ import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
 /**
  * Handle MANAGE_HIERARCHY operation
  */
-export async function handleManageHierarchy(params: any): Promise<OperationResult> {
+export async function MANAGE_HIERARCHY(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageHierarchy', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

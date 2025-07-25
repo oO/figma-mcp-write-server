@@ -7,7 +7,6 @@ import {
   createImageFromUrl,
   createImageFromBytes,
   validatePaint,
-  clonePaint,
   isPaintType,
   applyImageFilters,
   convertStopArrays,
@@ -21,7 +20,8 @@ import {
   normalizeToArray,
   createBasePaint
 } from './paint-properties.js';
-import { validateGradientStops, validateImageSource } from './fill-validation.js';
+import { clone } from './figma-property-utils.js';
+import { validateGradientStops, validateImageSource } from './fill-utils.js';
 
 /**
  * Configuration interface for paint operations
@@ -467,7 +467,7 @@ export class SharedPaintOperations<TNode, TPaint extends Paint> {
     
     // If updating existing paint, preserve non-transform properties
     if (existingPaint) {
-      const updatedPaint = clonePaint(existingPaint) as ImagePaint;
+      const updatedPaint = clone(existingPaint) as ImagePaint;
       
       // Apply scale mode and transform properties from scale mode-aware processing
       updatedPaint.scaleMode = transformedPaint.scaleMode;

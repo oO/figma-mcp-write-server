@@ -2,7 +2,7 @@ import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { findNodeById, findNodeInPage, formatNodeResponse, selectAndFocus, getAllNodes, getNodesByIds, createNodeData } from '../utils/node-utils.js';
 import { formatSelection, createPageNodesResponse } from '../utils/response-utils.js';
-import { logger } from '../utils/plugin-logger.js';
+import { logger } from '../logger.js';
 
 /**
  * Shared function to get nodes based on unified parameters
@@ -236,7 +236,7 @@ async function getNodesFromParams(params: any, detail: string = 'standard'): Pro
  * Handle MANAGE_SELECTION operation
  * Supports: get, set, clear, get_page_nodes, select_all, select_by_type, select_by_name, get_ancestors, get_children, select_siblings, find_nodes
  */
-export async function handleManageSelection(params: any): Promise<OperationResult> {
+export async function MANAGE_SELECTION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageSelection', params, async () => {
     // Comprehensive null safety
     if (!params || typeof params !== 'object') {

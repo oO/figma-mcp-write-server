@@ -5,7 +5,7 @@ import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-
 /**
  * Handle BOOLEAN_OPERATION - perform boolean operations on vector nodes
  */
-export async function handleBooleanOperation(params: any): Promise<OperationResult> {
+export async function BOOLEAN_OPERATION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('booleanOperation', params, async () => {
     BaseOperation.validateParams(params, ['operation', 'nodeIds']);
     

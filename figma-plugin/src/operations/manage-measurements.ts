@@ -5,7 +5,7 @@ import { findNodeById, formatNodeResponse } from '../utils/node-utils.js';
 /**
  * Handle MEASUREMENT_OPERATION - manage dev-mode measurement annotations
  */
-export async function handleMeasurementOperation(params: any): Promise<OperationResult> {
+export async function MEASUREMENT_OPERATION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('measurementOperation', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

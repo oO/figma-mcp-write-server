@@ -4,7 +4,34 @@ import { hexToRgb, createSolidPaint, parseHexColor } from '../utils/color-utils.
 import { findNodeById, formatNodeResponse, selectAndFocus, moveNodeToPosition, resizeNode } from '../utils/node-utils.js';
 import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';
 
-export async function handleManageNodes(payload: any): Promise<any> {
+/**
+ * Add a node to the specified parent container or page
+ * Validates parent container type and throws descriptive errors
+ */
+function addNodeToParent(node: SceneNode, parentId?: string): BaseNode & ChildrenMixin {
+  if (parentId) {
+    const parentNode = findNodeById(parentId);
+    if (!parentNode) {
+      throw new Error(`Parent node with ID ${parentId} not found`);
+    }
+    
+    // Validate that the parent can contain children
+    const containerTypes = ['DOCUMENT', 'PAGE', 'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'SLIDE', 'SLIDE_ROW', 'SECTION', 'STICKY', 'SHAPE_WITH_TEXT', 'TABLE', 'CODE_BLOCK'];
+    if (!containerTypes.includes(parentNode.type)) {
+      throw new Error(`Parent node type '${parentNode.type}' cannot contain child nodes. Valid container types: ${containerTypes.join(', ')}`);
+    }
+    
+    // Add to parent container
+    (parentNode as BaseNode & ChildrenMixin).appendChild(node);
+    return parentNode as BaseNode & ChildrenMixin;
+  } else {
+    // Add to current page
+    figma.currentPage.appendChild(node);
+    return figma.currentPage;
+  }
+}
+
+export async function MANAGE_NODES(payload: any): Promise<any> {
   const operation = BaseOperation.validateStringParam(
     payload.operation,
     'operation',
@@ -197,13 +224,14 @@ async function createRectangle(payload: any): Promise<any> {
   // Resize first to get proper dimensions for positioning calculations
   resizeNode(rect, width, height);
   
-  // Handle positioning with smart placement and overlap detection
-  const positionResult = handleNodePositioning(rect, payload, { width, height });
+  // Add to parent container first (creates the coordinate context)
+  const parentContainer = addNodeToParent(rect, payload.parentId);
+  
+  // Handle positioning with smart placement and overlap detection (parent-aware)
+  const positionResult = handleNodePositioning(rect, payload, { width, height }, parentContainer);
   
   await applyVisualProperties(rect, payload);
   
-  // Add to current page/frame
-  figma.currentPage.appendChild(rect);
   selectAndFocus([rect]);
   
   const response = formatNodeResponse(rect);
@@ -230,12 +258,14 @@ async function createEllipse(payload: any): Promise<any> {
   // Resize first to get proper dimensions for positioning calculations
   resizeNode(ellipse, width, height);
   
-  // Handle positioning with smart placement and overlap detection
-  const positionResult = handleNodePositioning(ellipse, payload, { width, height });
+  // Add to parent container first (creates the coordinate context)
+  const parentContainer = addNodeToParent(ellipse, payload.parentId);
+  
+  // Handle positioning with smart placement and overlap detection (parent-aware)
+  const positionResult = handleNodePositioning(ellipse, payload, { width, height }, parentContainer);
   
   await applyVisualProperties(ellipse, payload);
   
-  figma.currentPage.appendChild(ellipse);
   selectAndFocus([ellipse]);
   
   const response = formatNodeResponse(ellipse);
@@ -262,12 +292,14 @@ async function createFrame(payload: any): Promise<any> {
   // Resize first to get proper dimensions for positioning calculations
   resizeNode(frame, width, height);
   
-  // Handle positioning with smart placement and overlap detection
-  const positionResult = handleNodePositioning(frame, payload, { width, height });
+  // Add to parent container first (creates the coordinate context)
+  const parentContainer = addNodeToParent(frame, payload.parentId);
+  
+  // Handle positioning with smart placement and overlap detection (parent-aware)
+  const positionResult = handleNodePositioning(frame, payload, { width, height }, parentContainer);
   
   await applyVisualProperties(frame, payload);
   
-  figma.currentPage.appendChild(frame);
   selectAndFocus([frame]);
   
   const response = formatNodeResponse(frame);
@@ -302,12 +334,14 @@ async function createStar(payload: any): Promise<any> {
   // Resize first to get proper dimensions for positioning calculations
   resizeNode(star, width, height);
   
-  // Handle positioning with smart placement and overlap detection
-  const positionResult = handleNodePositioning(star, payload, { width, height });
+  // Add to parent container first (creates the coordinate context)
+  const parentContainer = addNodeToParent(star, payload.parentId);
+  
+  // Handle positioning with smart placement and overlap detection (parent-aware)
+  const positionResult = handleNodePositioning(star, payload, { width, height }, parentContainer);
   
   await applyVisualProperties(star, payload);
   
-  figma.currentPage.appendChild(star);
   selectAndFocus([star]);
   
   const response = formatNodeResponse(star);
@@ -338,12 +372,14 @@ async function createPolygon(payload: any): Promise<any> {
   // Resize first to get proper dimensions for positioning calculations
   resizeNode(polygon, width, height);
   
-  // Handle positioning with smart placement and overlap detection
-  const positionResult = handleNodePositioning(polygon, payload, { width, height });
+  // Add to parent container first (creates the coordinate context)
+  const parentContainer = addNodeToParent(polygon, payload.parentId);
+  
+  // Handle positioning with smart placement and overlap detection (parent-aware)
+  const positionResult = handleNodePositioning(polygon, payload, { width, height }, parentContainer);
   
   await applyVisualProperties(polygon, payload);
   
-  figma.currentPage.appendChild(polygon);
   selectAndFocus([polygon]);
   
   const response = formatNodeResponse(polygon);
@@ -427,7 +463,8 @@ async function createSimpleLine(payload: any): Promise<any> {
   
   await applyVisualProperties(line, payload);
   
-  figma.currentPage.appendChild(line);
+  // Add to parent container
+  const parentContainer = addNodeToParent(line, payload.parentId);
   selectAndFocus([line]);
   
   const response = formatNodeResponse(line);
@@ -436,7 +473,7 @@ async function createSimpleLine(payload: any): Promise<any> {
   if (payload.x !== undefined || payload.y !== undefined) {
     const overlapInfo = checkForOverlaps(
       { x: startX, y: startY, width: length, height: 4 },
-      figma.currentPage
+      parentContainer
     );
     if (overlapInfo.hasOverlap) {
       response.warning = createOverlapWarning(overlapInfo, { x: startX, y: startY });
@@ -496,7 +533,8 @@ async function createConnectorLine(payload: any): Promise<any> {
   
   await applyVisualProperties(connector, payload);
   
-  figma.currentPage.appendChild(connector);
+  // Add to parent container
+  addNodeToParent(connector, payload.parentId);
   selectAndFocus([connector]);
   
   return formatNodeResponse(connector);
@@ -549,11 +587,13 @@ async function applyVisualProperties(node: any, params: any) {
 
 /**
  * Handle positioning for a node with smart placement and overlap detection
+ * Now supports parent-aware positioning with relative coordinates
  */
 function handleNodePositioning(
   node: SceneNode,
   payload: any,
-  size: { width: number; height: number }
+  size: { width: number; height: number },
+  parentContainer: BaseNode & ChildrenMixin
 ): { warning?: string; positionReason?: string } {
   let finalX: number;
   let finalY: number;
@@ -561,28 +601,28 @@ function handleNodePositioning(
   let warning: string | undefined;
   
   if ((payload.x !== undefined && payload.x !== null) || (payload.y !== undefined && payload.y !== null)) {
-    // Explicit position provided - use it but check for overlaps
+    // Explicit position provided - coordinates are relative to parent container
     finalX = payload.x || 0;
     finalY = payload.y || 0;
     
-    // Check for overlaps with existing nodes
+    // Check for overlaps with sibling nodes in the same parent container
     const overlapInfo = checkForOverlaps(
       { x: finalX, y: finalY, width: size.width, height: size.height },
-      figma.currentPage
+      parentContainer
     );
     
     if (overlapInfo.hasOverlap) {
       warning = createOverlapWarning(overlapInfo, { x: finalX, y: finalY });
     }
   } else {
-    // No explicit position - use smart placement
-    const smartPosition = findSmartPosition(size, figma.currentPage);
+    // No explicit position - use smart placement within the parent container
+    const smartPosition = findSmartPosition(size, parentContainer);
     finalX = smartPosition.x;
     finalY = smartPosition.y;
     positionReason = smartPosition.reason;
   }
   
-  // Apply the final position
+  // Apply the final position (coordinates are relative to parent)
   moveNodeToPosition(node, finalX, finalY);
   
   return { warning, positionReason };

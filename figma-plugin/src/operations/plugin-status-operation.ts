@@ -7,7 +7,7 @@ import { BaseOperation } from './base-operation.js';
 /**
  * Handle PLUGIN_STATUS operation - get Figma API environment information
  */
-export async function handlePluginStatus(params: any): Promise<OperationResult> {
+export async function PLUGIN_STATUS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('pluginStatus', params, async () => {
     const { operation } = params;
     

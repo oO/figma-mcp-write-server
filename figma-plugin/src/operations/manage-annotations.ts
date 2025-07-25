@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { logger } from '../utils/plugin-logger.js';
+import { logger } from '../logger.js';
 
 /**
  * Utility function to resolve label/labelMarkdown conflicts according to Figma's validation rules
@@ -33,7 +33,7 @@ function resolveAnnotationLabelConflict(annotation: any): any {
 /**
  * Handle ANNOTATION_OPERATION - manage dev mode annotations
  */
-export async function handleAnnotationOperation(params: any): Promise<OperationResult> {
+export async function ANNOTATION_OPERATION(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('annotationOperation', params, async () => {
     
     BaseOperation.validateParams(params, ['operation']);

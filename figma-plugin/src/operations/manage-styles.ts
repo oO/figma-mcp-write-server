@@ -3,14 +3,15 @@ import { BaseOperation } from './base-operation.js';
 import { findNodeById } from '../utils/node-utils.js';
 import { hexToRgb, hexToRgba, createSolidPaint, rgbToHex } from '../utils/color-utils.js';
 import { ensureFontLoaded } from '../utils/font-utils.js';
-import { logger } from '../utils/plugin-logger.js';
+import { logger } from '../logger.js';
 import { formatStyleResponse } from '../utils/response-utils.js';
+import { unwrapArrayParam, cleanStyleId } from '../utils/parameter-utils.js';
 
 /**
  * Handle MANAGE_STYLES operation
  * Supports: create, update, list, apply, delete, get operations for paint, text, effect, and grid styles
  */
-export async function handleManageStyles(params: any): Promise<OperationResult> {
+export async function MANAGE_STYLES(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageStyles', params, async () => {
     if (!params.operation) {
       throw new Error('operation parameter is required');
@@ -71,7 +72,7 @@ async function updateStyle(params: any): Promise<any> {
     throw new Error('styleId parameter is required for update operation');
   }
   
-  const styleId = params.styleId.replace(/,$/, ''); // Remove trailing comma
+  const styleId = cleanStyleId(params.styleId); // Remove trailing comma
   
   // Get all styles and find the one to update
   const paintStyles = figma.getLocalPaintStyles();
@@ -80,7 +81,7 @@ async function updateStyle(params: any): Promise<any> {
   const gridStyles = figma.getLocalGridStyles();
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
-  const style = allStyles.find(s => s.id.replace(/,$/, '') === styleId);
+  const style = allStyles.find(s => cleanStyleId(s.id) === styleId);
   if (!style) {
     throw new Error(`Style with ID ${styleId} not found`);
   }
@@ -92,7 +93,7 @@ async function updateStyle(params: any): Promise<any> {
   
   // Update style description if provided
   if (params.description !== undefined) {
-    style.description = Array.isArray(params.description) ? params.description[0] : params.description;
+    style.description = unwrapArrayParam(params.description);
   }
   
   // Update style properties based on type
@@ -126,13 +127,13 @@ async function updatePaintStyle(style: PaintStyle, params: any): Promise<void> {
     const paintParams = {
       ...params,
       color: params.color ? 
-        (Array.isArray(params.color) ? params.color[0] : params.color) :
+        (unwrapArrayParam(params.color)) :
         (isCurrentSolid && currentPaint.color ? rgbToHex(currentPaint.color) : '#000000'),
       opacity: params.opacity !== undefined ? 
-        (Array.isArray(params.opacity) ? params.opacity[0] : params.opacity) :
+        (unwrapArrayParam(params.opacity)) :
         (currentPaint?.opacity !== undefined ? currentPaint.opacity : 1),
       paintType: params.paintType ? 
-        (Array.isArray(params.paintType) ? params.paintType[0] : params.paintType) :
+        (unwrapArrayParam(params.paintType)) :
         'SOLID'
     };
     
@@ -143,37 +144,37 @@ async function updatePaintStyle(style: PaintStyle, params: any): Promise<void> {
 
 async function updateTextStyle(style: TextStyle, params: any): Promise<void> {
   if (params.fontFamily && params.fontStyle) {
-    const fontFamily = Array.isArray(params.fontFamily) ? params.fontFamily[0] : params.fontFamily;
-    const fontStyle = Array.isArray(params.fontStyle) ? params.fontStyle[0] : params.fontStyle;
+    const fontFamily = unwrapArrayParam(params.fontFamily);
+    const fontStyle = unwrapArrayParam(params.fontStyle);
     const fontName = { family: fontFamily, style: fontStyle };
     await ensureFontLoaded(fontName);
     style.fontName = fontName;
   }
   
   if (params.fontSize !== undefined) {
-    style.fontSize = Array.isArray(params.fontSize) ? params.fontSize[0] : params.fontSize;
+    style.fontSize = unwrapArrayParam(params.fontSize);
   }
   
   if (params.letterSpacing !== undefined) {
-    const letterSpacing = Array.isArray(params.letterSpacing) ? params.letterSpacing[0] : params.letterSpacing;
+    const letterSpacing = unwrapArrayParam(params.letterSpacing);
     style.letterSpacing = { unit: 'PIXELS', value: letterSpacing };
   }
   
   if (params.lineHeight !== undefined) {
-    const lineHeight = Array.isArray(params.lineHeight) ? params.lineHeight[0] : params.lineHeight;
+    const lineHeight = unwrapArrayParam(params.lineHeight);
     style.lineHeight = { unit: 'PIXELS', value: lineHeight };
   }
   
   if (params.paragraphSpacing !== undefined) {
-    style.paragraphSpacing = Array.isArray(params.paragraphSpacing) ? params.paragraphSpacing[0] : params.paragraphSpacing;
+    style.paragraphSpacing = unwrapArrayParam(params.paragraphSpacing);
   }
   
   if (params.textCase !== undefined) {
-    style.textCase = Array.isArray(params.textCase) ? params.textCase[0] : params.textCase;
+    style.textCase = unwrapArrayParam(params.textCase);
   }
   
   if (params.textDecoration !== undefined) {
-    style.textDecoration = Array.isArray(params.textDecoration) ? params.textDecoration[0] : params.textDecoration;
+    style.textDecoration = unwrapArrayParam(params.textDecoration);
   }
 }
 
@@ -196,16 +197,16 @@ async function createPaintStyle(params: any): Promise<any> {
   style.name = params.name;
   
   if (params.description) {
-    style.description = Array.isArray(params.description) ? params.description[0] : params.description;
+    style.description = unwrapArrayParam(params.description);
   }
   
   if (params.color) {
     // Handle case where UnifiedHandler might wrap single values in arrays
     const paintParams = {
       ...params,
-      color: Array.isArray(params.color) ? params.color[0] : params.color,
-      opacity: Array.isArray(params.opacity) ? params.opacity[0] : params.opacity,
-      paintType: Array.isArray(params.paintType) ? params.paintType[0] : params.paintType
+      color: unwrapArrayParam(params.color),
+      opacity: unwrapArrayParam(params.opacity),
+      paintType: unwrapArrayParam(params.paintType)
     };
     
     const paint = await createPaint(paintParams);
@@ -236,13 +237,13 @@ async function createTextStyle(params: any): Promise<any> {
     style.name = params.name;
     
     if (params.description) {
-      style.description = Array.isArray(params.description) ? params.description[0] : params.description;
+      style.description = unwrapArrayParam(params.description);
     }
     
     // Apply text properties with array handling and error checking
     if (params.fontFamily && params.fontStyle) {
-      const fontFamily = Array.isArray(params.fontFamily) ? params.fontFamily[0] : params.fontFamily;
-      const fontStyle = Array.isArray(params.fontStyle) ? params.fontStyle[0] : params.fontStyle;
+      const fontFamily = unwrapArrayParam(params.fontFamily);
+      const fontStyle = unwrapArrayParam(params.fontStyle);
       const fontName = { family: fontFamily, style: fontStyle };
       
       try {
@@ -254,7 +255,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.fontSize !== undefined) {
-      const fontSize = Array.isArray(params.fontSize) ? params.fontSize[0] : params.fontSize;
+      const fontSize = unwrapArrayParam(params.fontSize);
       if (typeof fontSize !== 'number' || fontSize <= 0) {
         throw new Error(`Invalid fontSize: ${fontSize}. Must be a positive number.`);
       }
@@ -262,7 +263,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.letterSpacing !== undefined) {
-      const letterSpacing = Array.isArray(params.letterSpacing) ? params.letterSpacing[0] : params.letterSpacing;
+      const letterSpacing = unwrapArrayParam(params.letterSpacing);
       if (typeof letterSpacing !== 'number') {
         throw new Error(`Invalid letterSpacing: ${letterSpacing}. Must be a number.`);
       }
@@ -270,7 +271,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.lineHeight !== undefined) {
-      const lineHeight = Array.isArray(params.lineHeight) ? params.lineHeight[0] : params.lineHeight;
+      const lineHeight = unwrapArrayParam(params.lineHeight);
       if (typeof lineHeight !== 'number' || lineHeight <= 0) {
         throw new Error(`Invalid lineHeight: ${lineHeight}. Must be a positive number.`);
       }
@@ -278,7 +279,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.paragraphSpacing !== undefined) {
-      const paragraphSpacing = Array.isArray(params.paragraphSpacing) ? params.paragraphSpacing[0] : params.paragraphSpacing;
+      const paragraphSpacing = unwrapArrayParam(params.paragraphSpacing);
       if (typeof paragraphSpacing !== 'number' || paragraphSpacing < 0) {
         throw new Error(`Invalid paragraphSpacing: ${paragraphSpacing}. Must be a non-negative number.`);
       }
@@ -286,7 +287,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.textCase !== undefined) {
-      const textCase = Array.isArray(params.textCase) ? params.textCase[0] : params.textCase;
+      const textCase = unwrapArrayParam(params.textCase);
       const validCases = ['ORIGINAL', 'UPPER', 'LOWER', 'TITLE'];
       if (!validCases.includes(textCase)) {
         throw new Error(`Invalid textCase: ${textCase}. Must be one of: ${validCases.join(', ')}`);
@@ -295,7 +296,7 @@ async function createTextStyle(params: any): Promise<any> {
     }
     
     if (params.textDecoration !== undefined) {
-      const textDecoration = Array.isArray(params.textDecoration) ? params.textDecoration[0] : params.textDecoration;
+      const textDecoration = unwrapArrayParam(params.textDecoration);
       const validDecorations = ['NONE', 'UNDERLINE', 'STRIKETHROUGH'];
       if (!validDecorations.includes(textDecoration)) {
         throw new Error(`Invalid textDecoration: ${textDecoration}. Must be one of: ${validDecorations.join(', ')}`);
@@ -326,7 +327,7 @@ async function createEffectStyle(params: any): Promise<any> {
     style.name = params.name;
     
     if (params.description) {
-      style.description = Array.isArray(params.description) ? params.description[0] : params.description;
+      style.description = unwrapArrayParam(params.description);
     }
     
     // Create empty effect style - effects should be added using figma_effects tool
@@ -342,7 +343,7 @@ async function createEffectStyle(params: any): Promise<any> {
     
     // Debug: Check if the style is immediately available
     const allEffectStyles = figma.getLocalEffectStyles();
-    const foundStyle = allEffectStyles.find(s => s.id.replace(/,$/, '') === style.id.replace(/,$/, ''));
+    const foundStyle = allEffectStyles.find(s => cleanStyleId(s.id) === cleanStyleId(style.id));
     logger.log(`[DEBUG] Created effect style with ID: ${style.id}`);
     logger.log(`[DEBUG] Style immediately findable via getLocalEffectStyles: ${foundStyle ? 'YES' : 'NO'}`);
     logger.log(`[DEBUG] Total effect styles after creation: ${allEffectStyles.length}`);
@@ -365,7 +366,7 @@ async function createGridStyle(params: any): Promise<any> {
     style.name = params.name;
     
     if (params.description) {
-      style.description = Array.isArray(params.description) ? params.description[0] : params.description;
+      style.description = unwrapArrayParam(params.description);
     }
     
     if (params.layoutGrids && params.layoutGrids.length > 0) {
@@ -517,7 +518,7 @@ async function applyStyle(params: any): Promise<any> {
     const gridStyles = figma.getLocalGridStyles();
     const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles] as any[];
     // Clean trailing comma from style IDs for consistent matching
-    style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
+    style = allStyles.find(s => cleanStyleId(s.id) === params.styleId);
   } else if (params.name) {
     const paintStyles = figma.getLocalPaintStyles();
     const textStyles = figma.getLocalTextStyles();
@@ -578,7 +579,7 @@ async function deleteStyle(params: any): Promise<any> {
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
   // Clean trailing comma from style IDs for consistent matching
-  const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
+  const style = allStyles.find(s => cleanStyleId(s.id) === params.styleId);
   
   if (!style) {
     throw new Error(`Style not found with ID: ${params.styleId}. Found ${allStyles.length} total styles in file.`);
@@ -586,7 +587,7 @@ async function deleteStyle(params: any): Promise<any> {
   
   // Capture style info BEFORE deletion
   const styleInfo: any = {
-    id: style.id.replace(/,$/, ''), // Clean ID for response
+    id: cleanStyleId(style.id), // Clean ID for response
     name: style.name,
     type: style.type
   };
@@ -633,7 +634,7 @@ async function getStyle(params: any): Promise<any> {
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
   // Clean trailing comma from style IDs for consistent matching
-  const style = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId);
+  const style = allStyles.find(s => cleanStyleId(s.id) === params.styleId);
   
   if (!style) {
     throw new Error(`Style not found with ID: ${params.styleId}`);
@@ -655,7 +656,7 @@ async function duplicateStyle(params: any): Promise<any> {
   const allStyles = [...paintStyles, ...textStyles, ...effectStyles, ...gridStyles];
   
   // Clean trailing comma from style IDs for consistent matching
-  const originalStyle = allStyles.find(s => s.id.replace(/,$/, '') === params.styleId.replace(/,$/, ''));
+  const originalStyle = allStyles.find(s => cleanStyleId(s.id) === cleanStyleId(params.styleId));
   
   if (!originalStyle) {
     throw new Error(`Style not found with ID: ${params.styleId}`);

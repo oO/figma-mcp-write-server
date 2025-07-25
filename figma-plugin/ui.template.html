@@ -333,14 +333,14 @@
                 }
 
                 connectionAttempts++;
-                log(`Connecting to MCP server (attempt ${connectionAttempts})`);
+                // Silent connection attempt
                 updateConnectionStatus(false, "Connecting...", true);
 
                 try {
                     ws = new WebSocket("ws://localhost:{{PORT}}");
 
                     ws.onopen = () => {
-                        log("Connected to MCP server");
+                        // Silent connection success
                         updateConnectionStatus(true, "Connected to localhost:{{PORT}}");
                         connectionAttempts = 0;
                         clearReconnectTimer();
@@ -434,7 +434,7 @@
                         pluginMessage: message
                     }, "*");
                 } else if (message.type === "CONNECTED") {
-                    log("Server acknowledged connection");
+                    // Silent server acknowledgment
                 } else if (message.type === "HEARTBEAT") {
                     if (debugMode) {
                         console.log("[DEBUG] Heartbeat received");
@@ -504,6 +504,7 @@
                         // Send back as regular array (Uint8Array doesn't serialize well)
                         parent.postMessage({
                             pluginMessage: {
+                                type: "CONVERT_BASE64_TO_UINT8ARRAY_RESPONSE",
                                 id: msg.id,
                                 result: Array.from(uint8Array)
                             }
@@ -512,6 +513,7 @@
                         console.log('❌ UI: Base64 conversion failed:', error.message);
                         parent.postMessage({
                             pluginMessage: {
+                                type: "CONVERT_BASE64_TO_UINT8ARRAY_RESPONSE",
                                 id: msg.id,
                                 error: error.message
                             }
@@ -551,7 +553,7 @@
             });
 
             // Initialize
-            log("Plugin UI loaded");
+            // Silent UI load
             setTimeout(connect, 1000);
         </script>
     </body>

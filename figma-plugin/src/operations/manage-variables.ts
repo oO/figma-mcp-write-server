@@ -7,7 +7,7 @@ import { bindingValidator } from '../utils/variable-binding-validator.js';
  * Handle MANAGE_VARIABLES operation
  * Supports: create, update, delete, get, list, bind, unbind, get_bindings
  */
-export async function handleManageVariables(params: any): Promise<OperationResult> {
+export async function MANAGE_VARIABLES(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageVariables', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     
@@ -1497,3 +1497,6 @@ async function renameMode(params: any): Promise<any> {
     message: `Successfully renamed mode from "${oldModeName}" to "${newModeName}"`
   };
 }
+
+// Alias for collection operations - both MANAGE_VARIABLES and MANAGE_COLLECTIONS use the same handler
+export const MANAGE_COLLECTIONS = MANAGE_VARIABLES;

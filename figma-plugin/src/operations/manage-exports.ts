@@ -1,12 +1,11 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { findNodeById, getNodesByIds } from '../utils/node-utils.js';
-import { formatExportResponse } from '../utils/response-utils.js';
 
 /**
  * Handle EXPORT_SINGLE operation
  */
-export async function handleExportSingle(params: any): Promise<OperationResult> {
+export async function EXPORT_SINGLE(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('exportSingle', params, async () => {
     // Use 'id' parameter (standard naming)
     const nodeId = params.id;
@@ -63,7 +62,7 @@ export async function handleExportSingle(params: any): Promise<OperationResult> 
 /**
  * Handle EXPORT_NODE operation - uses 'id' parameter instead of 'nodeId'
  */
-export async function handleExportNode(params: any): Promise<OperationResult> {
+export async function EXPORT_NODE(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('exportNode', params, async () => {
     // Use 'id' parameter (standard naming)
     const nodeId = params.id;
@@ -120,7 +119,7 @@ export async function handleExportNode(params: any): Promise<OperationResult> {
 /**
  * Handle EXPORT_BULK operation
  */
-export async function handleExportBulk(params: any): Promise<OperationResult> {
+export async function EXPORT_BULK(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('exportBulk', params, async () => {
     // Use 'id' parameter (standard naming)
     const nodeIds = params.id;

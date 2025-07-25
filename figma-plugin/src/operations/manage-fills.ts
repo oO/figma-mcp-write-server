@@ -8,7 +8,6 @@ import {
   createImageFromUrl,
   createImageFromBytes,
   validatePaint,
-  clonePaint,
   isPaintType,
   applyImageFilters,
   convertStopArrays,
@@ -17,17 +16,9 @@ import {
   createDefaultGradientStops,
   flattenedToImageMatrix
 } from '../utils/color-utils.js';
-import { modifyFills } from '../utils/figma-property-utils.js';
+import { modifyFills, clone } from '../utils/figma-property-utils.js';
 import { cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
-import { logger } from '../utils/plugin-logger.js';
-import { ERROR_MESSAGES } from '../utils/fill-constants.js';
-import { 
-  validateNodeForFills, 
-  resolveFillIndex, 
-  validateFillType,
-  validateImageSource,
-  validateGradientStops
-} from '../utils/fill-validation.js';
+import { logger } from '../logger.js';
 import { 
   applyCommonPaintProperties,
   normalizeToArray,
@@ -38,13 +29,19 @@ import {
   createBulkSummary,
   distributeBulkParams
 } from '../utils/bulk-operations.js';
-import { 
+import {
+  ERROR_MESSAGES,
+  validateNodeForFills,
+  resolveFillIndex,
+  validateFillType,
+  validateImageSource,
+  validateGradientStops,
   createFillOperationResponse,
   createFillListResponse,
   createFillAddResponse,
   createFillUpdateResponse,
   createFillDeleteResponse
-} from '../utils/fill-response.js';
+} from '../utils/fill-utils.js';
 
 /**
  * Clean and format fill response data with compact YAML formatting
@@ -85,7 +82,7 @@ function applyScaleModeAwareTransforms(
   
   // If updating existing paint, preserve non-transform properties
   if (existingPaint) {
-    const updatedPaint = clonePaint(existingPaint) as ImagePaint;
+    const updatedPaint = clone(existingPaint) as ImagePaint;
     
     // Apply scale mode and transform properties from scale mode-aware processing
     updatedPaint.scaleMode = transformedPaint.scaleMode;
@@ -121,7 +118,7 @@ function applyScaleModeAwareTransforms(
  * Handle MANAGE_FILLS operation
  * Supports: get, list, add_solid, add_gradient, add_image, update, delete, reorder, clear, duplicate
  */
-export async function handleManageFills(params: any): Promise<OperationResult> {
+export async function MANAGE_FILLS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageFills', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     
@@ -640,7 +637,7 @@ async function updateFillCommon(params: any): Promise<OperationResult> {
     
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clonePaint(currentFill);
+      const updatedFill = clone(currentFill);
       applyCommonPaintProperties(updatedFill, params);
       manager.update(fillIndex, updatedFill);
     });
@@ -665,7 +662,7 @@ async function updateSolidFill(params: any): Promise<OperationResult> {
     
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clonePaint(currentFill) as SolidPaint;
+      const updatedFill = clone(currentFill) as SolidPaint;
       
       // Update solid-specific properties
       if (params.color) {
@@ -699,7 +696,7 @@ async function updateGradientFill(params: any): Promise<OperationResult> {
     
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clonePaint(currentFill) as GradientPaint;
+      const updatedFill = clone(currentFill) as GradientPaint;
       
       // Update gradient-specific properties
       if (params.stopColors) {
@@ -806,7 +803,7 @@ async function updateImageFill(params: any): Promise<OperationResult> {
     
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clonePaint(currentFill) as ImagePaint;
+      const updatedFill = clone(currentFill) as ImagePaint;
       
       // Update image-specific properties
       if (params.imageScaleMode) {
@@ -881,7 +878,7 @@ async function updatePatternFill(params: any): Promise<OperationResult> {
     
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clonePaint(currentFill) as PatternPaint;
+      const updatedFill = clone(currentFill) as PatternPaint;
       
       // Update pattern-specific properties
       if (params.sourceNodeId) {
@@ -1158,7 +1155,7 @@ async function duplicateFills(params: any): Promise<OperationResult> {
         }
         
         // Deep clone the fills to duplicate
-        const clonedFills = fillsToCopy.map(fill => clonePaint(fill));
+        const clonedFills = fillsToCopy.map(fill => clone(fill));
         
         let finalFills: Paint[];
         let originalFillsCount = targetFills.length;

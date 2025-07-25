@@ -43,6 +43,31 @@ export function getNodeBounds(node: SceneNode): NodeBounds {
 }
 
 /**
+ * Get bounds for a scene node relative to its parent container's coordinate system
+ * For page-level nodes, this is the same as getNodeBounds
+ * For container children, coordinates are relative to the container
+ */
+export function getNodeBoundsRelativeToParent(node: SceneNode, container: BaseNode & ChildrenMixin): NodeBounds {
+  if (!('x' in node && 'y' in node && 'width' in node && 'height' in node)) {
+    return { x: 0, y: 0, width: 0, height: 0 };
+  }
+  
+  // If the container is the page, coordinates are already absolute
+  if (container === figma.currentPage) {
+    return getNodeBounds(node);
+  }
+  
+  // For other containers, coordinates are already relative to the parent
+  // since Figma stores child coordinates relative to their immediate parent
+  return {
+    x: node.x,
+    y: node.y,
+    width: node.width,
+    height: node.height
+  };
+}
+
+/**
  * Check if two rectangular bounds overlap with optional buffer
  */
 export function boundsOverlap(bounds1: NodeBounds, bounds2: NodeBounds, buffer: number = 0): boolean {
@@ -128,6 +153,34 @@ export function findMostRecentNode(): SceneNode | null {
 }
 
 /**
+ * Find the most recently created node within a specific container
+ */
+export function findMostRecentNodeInContainer(container: BaseNode & ChildrenMixin): SceneNode | null {
+  if (!('children' in container) || !container.children.length) {
+    return null;
+  }
+  
+  // Check if any selected nodes are direct children of this container
+  const selection = figma.currentPage.selection;
+  for (let i = selection.length - 1; i >= 0; i--) {
+    const selectedNode = selection[i];
+    if (selectedNode.parent === container && 'x' in selectedNode && 'y' in selectedNode) {
+      return selectedNode as SceneNode;
+    }
+  }
+  
+  // Fallback: get the last child in the container that's a scene node
+  for (let i = container.children.length - 1; i >= 0; i--) {
+    const child = container.children[i];
+    if ('x' in child && 'y' in child) {
+      return child as SceneNode;
+    }
+  }
+  
+  return null;
+}
+
+/**
  * Generate candidate positions around a reference node
  */
 export function generatePositionCandidates(
@@ -189,22 +242,27 @@ export function findSmartPosition(
   parent: BaseNode & ChildrenMixin = figma.currentPage,
   spacing: number = 20
 ): SmartPositionResult {
-  // Try to find the most recent node to position near
-  const recentNode = findMostRecentNode();
+  // Use container-specific recent node finder
+  const recentNode = parent === figma.currentPage 
+    ? findMostRecentNode() 
+    : findMostRecentNodeInContainer(parent);
   
   if (!recentNode) {
-    // No existing nodes, place at origin
+    // No existing nodes in this container, place at origin (relative to container)
     return {
       x: 0,
       y: 0,
-      reason: "No existing nodes found, placed at origin"
+      reason: parent === figma.currentPage 
+        ? "No existing nodes found, placed at origin"
+        : `No existing nodes in container "${parent.name}", placed at container origin`
     };
   }
   
-  const referenceBounds = getNodeBounds(recentNode);
+  // Get bounds relative to the container's coordinate system
+  const referenceBounds = getNodeBoundsRelativeToParent(recentNode, parent);
   const candidates = generatePositionCandidates(referenceBounds, newNodeSize, spacing);
   
-  // Test each candidate position for overlaps
+  // Test each candidate position for overlaps within the container
   for (const candidate of candidates) {
     const proposedBounds: NodeBounds = {
       x: candidate.x,
@@ -216,7 +274,12 @@ export function findSmartPosition(
     const overlapInfo = checkForOverlaps(proposedBounds, parent, 0); // No buffer for finding free space
     
     if (!overlapInfo.hasOverlap) {
-      return candidate;
+      return {
+        ...candidate,
+        reason: parent === figma.currentPage 
+          ? candidate.reason 
+          : candidate.reason.replace("most recent node", `most recent node in "${parent.name}"`)
+      };
     }
   }
   
@@ -255,10 +318,11 @@ function findGridBasedPosition(
         const overlapInfo = checkForOverlaps(proposedBounds, parent, 0);
         
         if (!overlapInfo.hasOverlap) {
+          const containerName = parent === figma.currentPage ? "page" : `"${parent.name}"`;
           return {
             x: pos.x,
             y: pos.y,
-            reason: `Grid-based positioning (${ring + 1} rings from origin)`
+            reason: `Grid-based positioning in ${containerName} (${ring + 1} rings from origin)`
           };
         }
       }
@@ -266,10 +330,11 @@ function findGridBasedPosition(
   }
   
   // Ultimate fallback - place at a large offset
+  const containerName = parent === figma.currentPage ? "page" : `"${parent.name}"`;
   return {
     x: 1000,
     y: 1000,
-    reason: "Fallback position - all nearby positions were occupied"
+    reason: `Fallback position in ${containerName} - all nearby positions were occupied`
   };
 }
 

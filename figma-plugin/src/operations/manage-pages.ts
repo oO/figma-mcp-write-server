@@ -6,7 +6,7 @@ import { modifyBackgrounds, modifyPrototypeBackgrounds } from '../utils/figma-pr
 /**
  * Handle MANAGE_PAGES operation
  */
-export async function handleManagePages(params: any): Promise<OperationResult> {
+export async function MANAGE_PAGES(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('managePages', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

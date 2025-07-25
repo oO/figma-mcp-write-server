@@ -1,5 +1,6 @@
 import { RGB, RGBA } from '../types.js';
-import { logger } from './plugin-logger.js';
+import { logger } from '../logger.js';
+import { clone } from './figma-property-utils.js';
 
 export function hexToRgb(hex: string): RGB {
   // Support both 6-digit (#RRGGBB) and 8-digit (#RRGGBBAA) hex colors
@@ -425,12 +426,6 @@ export function validatePaint(paint: Paint): boolean {
   }
 }
 
-/**
- * Deep clone a Paint object
- */
-export function clonePaint(paint: Paint): Paint {
-  return JSON.parse(JSON.stringify(paint));
-}
 
 /**
  * Check if paint is of specific type
@@ -457,7 +452,7 @@ export async function getImageDimensions(imageHash: string): Promise<{width: num
  * Apply image filters to ImagePaint
  */
 export function applyImageFilters(paint: ImagePaint, filterValues: any): ImagePaint {
-  const clonedPaint = clonePaint(paint) as ImagePaint;
+  const clonedPaint = clone(paint) as ImagePaint;
   
   if (filterValues) {
     clonedPaint.filters = {

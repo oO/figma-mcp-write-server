@@ -6,7 +6,7 @@ import { modifyExportSettings } from '../utils/figma-property-utils.js';
 /**
  * Handle MANAGE_EXPORTS operation - manages export settings and performs exports
  */
-export async function handleManageExports(params: any): Promise<OperationResult> {
+export async function MANAGE_EXPORTS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageExports', params, async () => {
     const { operation, id, nodeId, exportIndex, newIndex, fromNodeId, toNodeId, fromId, toId } = params;
   

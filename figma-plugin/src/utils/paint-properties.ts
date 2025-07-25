@@ -1,4 +1,4 @@
-import { FILL_DEFAULTS } from './fill-constants.js';
+import { FILL_DEFAULTS } from './fill-utils.js';
 
 /**
  * Applies common paint properties (opacity, visible, blendMode) to a paint object

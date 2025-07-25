@@ -27,7 +27,7 @@ interface FontFamily {
  * Handle MANAGE_FONTS operation
  * Supports: search_fonts, check_availability, get_missing, get_font_styles, validate_font, get_font_info, preload_fonts, get_project_fonts, get_font_count
  */
-export async function handleManageFonts(params: any): Promise<OperationResult> {
+export async function MANAGE_FONTS(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageFonts', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

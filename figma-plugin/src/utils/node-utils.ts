@@ -1,6 +1,19 @@
 import { NodeInfo, SimpleNodeInfo, DetailedNodeInfo } from '../types.js';
 import { imageMatrixToFlattened, extractFlattenedImageParams } from './color-utils.js';
-import { logger } from './plugin-logger.js';
+import { logger } from '../logger.js';
+
+// Exportable node types for scene node validation
+const EXPORTABLE_NODE_TYPES = [
+  'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
+  'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION', 'SLICE', 'SECTION'
+] as const;
+
+/**
+ * Check if a node is a scene node (can be rendered/exported)
+ */
+function isSceneNode(node: BaseNode): node is SceneNode {
+  return EXPORTABLE_NODE_TYPES.includes(node.type as any);
+}
 
 export function findNodeById(nodeId: string): SceneNode | null {
   try {
@@ -9,17 +22,7 @@ export function findNodeById(nodeId: string): SceneNode | null {
       return null;
     }
     
-    // Check if this is a scene node (can be rendered/exported)
-    const exportableTypes = [
-      'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
-      'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION', 'SLICE', 'SECTION'
-    ];
-    
-    if (!exportableTypes.includes(node.type)) {
-      return null;
-    }
-    
-    return node as SceneNode;
+    return isSceneNode(node) ? node : null;
   } catch (error) {
     // figma.getNodeById can throw if nodeId is invalid format
     return null;
@@ -32,7 +35,7 @@ export function findNodeById(nodeId: string): SceneNode | null {
 export function findNodeInPage(page: PageNode, nodeId: string): SceneNode | null {
   try {
     const node = figma.getNodeById(nodeId);
-    if (!node) {
+    if (!node || !isSceneNode(node)) {
       return null;
     }
     
@@ -40,16 +43,7 @@ export function findNodeInPage(page: PageNode, nodeId: string): SceneNode | null
     let current = node;
     while (current.parent) {
       if (current.parent.id === page.id) {
-        // Node is within this page, check if it's a scene node
-        const exportableTypes = [
-          'FRAME', 'GROUP', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'RECTANGLE', 'ELLIPSE', 
-          'POLYGON', 'STAR', 'VECTOR', 'TEXT', 'LINE', 'BOOLEAN_OPERATION', 'SLICE', 'SECTION'
-        ];
-        
-        if (exportableTypes.includes(node.type)) {
-          return node as SceneNode;
-        }
-        return null;
+        return node; // Already validated as scene node above
       }
       current = current.parent;
     }

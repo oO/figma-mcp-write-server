@@ -7,7 +7,7 @@ import { BaseOperation } from './base-operation.js';
 /**
  * Handle PING_TEST operation - simple connectivity test
  */
-export async function handlePingTest(params: any): Promise<OperationResult> {
+export async function PING_TEST(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('pingTest', params, async () => {
     const startTime = params.timestamp || Date.now();
     const responseTime = Date.now() - startTime;

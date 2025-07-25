@@ -6,7 +6,7 @@ import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-
  * Handle MANAGE_INSTANCES operation
  * Supports: create, update, duplicate, detach, swap, reset_overrides, get, list
  */
-export async function handleManageInstances(params: any): Promise<OperationResult> {
+export async function MANAGE_INSTANCES(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageInstances', params, async () => {
     BaseOperation.validateParams(params, ['operation']);
     

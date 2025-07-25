@@ -5,7 +5,7 @@ import { findNodeById, selectAndFocus, validateNodeType } from '../utils/node-ut
 /**
  * Handle MANAGE_AUTO_LAYOUT operation
  */
-export async function handleManageAutoLayout(params: any): Promise<OperationResult> {
+export async function MANAGE_AUTO_LAYOUT(params: any): Promise<OperationResult> {
   return BaseOperation.executeOperation('manageAutoLayout', params, async () => {
     BaseOperation.validateParams(params, ['operation', 'nodeId']);
     

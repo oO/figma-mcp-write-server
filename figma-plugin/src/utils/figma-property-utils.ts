@@ -7,7 +7,7 @@
 /**
  * Deep clone function following Figma API documentation
  */
-function clone(val: any): any {
+export function clone(val: any): any {
   if (val === null || typeof val !== 'object') return val;
   if (val instanceof Array) return val.map(clone);
   if (typeof val === 'object') {

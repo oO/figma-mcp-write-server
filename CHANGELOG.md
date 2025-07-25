@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.33.0] - 2025-07-25
+
+### Changed
+- **Plugin Architecture Refactoring**: Complete overhaul of plugin operation discovery and logging systems
+  - **Build-time operation discovery**: Operations auto-discovered at build time instead of runtime
+  - **Synchronous initialization**: Plugin initialization now synchronous with pre-generated operation registry
+  - **Unified logging system**: Consolidated plugin logger with reduced console verbosity during startup
+  - **Operation naming standardization**: All operation handlers renamed from `handleXXX` to direct operation names
+  - **Code cleanup**: Removed 1,200+ lines of redundant/legacy code across 46 files
+  - **Simplified architecture**: Streamlined main.ts from 270 to 130 lines, improved maintainability
+
+### Removed
+- **Legacy utility files**: Deleted obsolete fill/stroke validation, response, and constants files
+- **WebSocket message router**: Removed deprecated websocket/message-router.ts
+- **Redundant logger**: Removed plugin-logger.ts in favor of unified logger system
+- **Verbose initialization logging**: Reduced plugin startup console output while preserving essential messages
+
 ## [0.32.4] - 2025-07-25
 
 ### Refactored
