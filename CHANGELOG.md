@@ -5,6 +5,32 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.0] - 2025-07-25
+
+### Added
+- **Auto Layout System Refactor**: 7-operation structure with cross-parent bulk operations
+  - **7-operation structure**: `get`, `set_horizontal`, `set_vertical`, `set_grid`, `set_freeform`, `set_child`, `reorder_children`
+  - **Cross-parent bulk child operations**: Set child properties across different containers in single operation
+  - **Auto-index lookup**: Use `nodeId` instead of manual `childIndex` calculation for child operations
+  - **Semantic parameter design**: User-friendly property names (`horizontalAlignment`, `fixedWidth`, etc.)
+  - **Grid layout support**: Full coverage of Figma's grid auto layout API with row/column spanning
+  - **Flexible schema validation**: Operation-specific validation supporting both single-container and cross-parent modes
+- **Documentation Updates**: Documentation updates across all docs
+  - **Technical deep dive**: Added 150+ line technical section in development.md covering implementation details
+  - **Updated examples**: Updated examples.md with all 7 operations and cross-parent bulk scenarios
+  - **README updates**: Updated tool descriptions with current capabilities
+
+### Changed
+- **Auto Layout API Redesign**: Redesign for better usability and semantic clarity
+  - **Container operations**: Use `nodeId` parameter for targeting container frames
+  - **Child operations**: Use `containerId` + `childIndex`/`nodeId` for clear parent-child relationships
+  - **Bulk operation patterns**: Arrays supported for all child properties matched by index
+  - **Handler architecture**: Child operations bypass unified handler for cross-parent bulk processing
+
+### Fixed
+- **Bulk operation validation**: Fixed schema validation conflicts for child operations with array parameters
+- **Test coverage**: Added comprehensive tests for cross-parent functionality and auto-index lookup
+
 ## [0.33.1] - 2025-07-25
 
 ### Fixed

@@ -289,26 +289,60 @@ Practical examples showing how to use the Figma MCP Write Server through natural
 
 ## 🏗️ Auto Layout & Responsive Design
 
-### Auto Layout Setup
+### Container Layout Operations
 
 - **"Make this frame arrange its children vertically with 16px spacing"**
-  - AI uses `figma_auto_layout` to enable auto layout with vertical direction and spacing
+  - AI uses `figma_auto_layout` with operation `set_vertical`, `verticalSpacing: 16`, and appropriate padding
 
 - **"Create a horizontal button group with even spacing"**
-  - AI applies horizontal auto layout with space-between distribution
+  - AI uses operation `set_horizontal` with `horizontalAlignment: 'AUTO'` for space-between distribution
 
-- **"Make this card resize to fit its content"**
-  - AI enables auto layout with hug contents sizing
+- **"Set up a grid layout with 3 columns and 2 rows"**
+  - AI uses operation `set_grid` with `columns: 3`, `rows: 2`, and specified spacing
 
-### Responsive Behavior
+- **"Remove auto layout and use freeform positioning"**
+  - AI uses operation `set_freeform` to disable layout constraints
 
-- **"Set up this navigation to expand horizontally but maintain fixed height"**
-  1. AI configures auto layout with fill container width
-  2. Sets fixed height constraint
-  3. Applies appropriate padding and spacing
+### Layout Properties and Sizing
 
-- **"Create a responsive grid that wraps content to new rows"**
-  - AI uses auto layout with wrap enabled and appropriate spacing
+- **"Make this card resize to fit its content horizontally but stay fixed height"**
+  - AI uses `set_horizontal` with `fixedWidth: false` and `fixedHeight: true`
+
+- **"Add 20px padding around the content and 12px spacing between items"**
+  - AI applies `paddingTop: 20`, `paddingRight: 20`, `paddingBottom: 20`, `paddingLeft: 20`, `horizontalSpacing: 12`
+
+- **"Create a responsive layout that wraps to new rows when space is tight"**
+  - AI uses `set_horizontal` with `wrapLayout: true` and `verticalSpacing` for row gaps
+
+### Child Layout Management
+
+- **"Make the middle button fill the available space"**
+  - AI uses operation `set_child` with `containerId`, `childIndex: 1`, `layoutGrow: 1`, `horizontalSizing: 'fill'`
+
+- **"Set all buttons to hug their content width"**
+  - AI uses `set_child` with child nodeIds array and `horizontalSizing: ['hug', 'hug', 'hug']`
+
+- **"Move the last item to the beginning of the layout"**
+  - AI uses operation `reorder_children` with appropriate `fromIndex` and `toIndex: 0`
+
+### Cross-Parent Bulk Operations
+
+- **"Make these elements from different containers all fill horizontally"**
+  - AI uses `set_child` with `nodeId: ['child1', 'child2', 'child3']` and `horizontalSizing: ['fill', 'fill', 'fill']` (no containerId needed)
+
+- **"Set different layout behaviors for children across multiple containers"**
+  - AI applies individual child properties across parents in a single operation
+
+### Grid Layout Specifics
+
+- **"Create a 2x3 product grid with 16px gaps"**
+  - AI uses `set_grid` with `columns: 2`, `rows: 3`, `columnSpacing: 16`, `rowSpacing: 16`
+
+- **"Make this grid item span 2 columns"**
+  - AI uses `set_child` with `columnSpan: 2` for grid child positioning
+
+- **"Position this item in the top-right corner of the grid"**
+  - AI uses `set_child` with `columnAnchor: 1`, `rowAnchor: 0` for precise grid placement
 
 ---
 

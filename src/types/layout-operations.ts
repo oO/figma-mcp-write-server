@@ -7,17 +7,13 @@ import { caseInsensitiveEnum } from './enum-utils.js';
 
 
 export const ManageAutoLayoutSchema = z.object({
-  operation: caseInsensitiveEnum(['enable', 'disable', 'update', 'get_properties']),
-  nodeId: z.union([z.string(), z.array(z.string())]),
+  operation: caseInsensitiveEnum(['get', 'set_horizontal', 'set_vertical', 'set_grid', 'set_freeform', 'set_child', 'reorder_children']),
+  nodeId: z.union([z.string(), z.array(z.string())]).optional(),
+  containerId: z.string().optional(),
   
-  // Layout Direction
-  direction: z.union([
-    caseInsensitiveEnum(['horizontal', 'vertical']),
-    z.array(caseInsensitiveEnum(['horizontal', 'vertical']))
-  ]).optional(),
-  
-  // Spacing
-  spacing: z.union([z.number(), z.array(z.number())]).optional(),
+  // Core spacing properties
+  horizontalSpacing: z.union([z.number(), z.literal('AUTO'), z.array(z.union([z.number(), z.literal('AUTO')]))]).optional(),
+  verticalSpacing: z.union([z.number(), z.literal('AUTO'), z.array(z.union([z.number(), z.literal('AUTO')]))]).optional(),
   
   // Flattened Padding Properties
   paddingTop: z.union([z.number(), z.array(z.number())]).optional(),
@@ -25,20 +21,82 @@ export const ManageAutoLayoutSchema = z.object({
   paddingBottom: z.union([z.number(), z.array(z.number())]).optional(),
   paddingLeft: z.union([z.number(), z.array(z.number())]).optional(),
   
-  // Alignment
-  primaryAlignment: caseInsensitiveEnum(['min', 'center', 'max', 'space_between']).optional(),
-  counterAlignment: caseInsensitiveEnum(['min', 'center', 'max']).optional(),
+  // Alignment properties
+  horizontalAlignment: caseInsensitiveEnum(['LEFT', 'CENTER', 'RIGHT', 'AUTO']).optional(),
+  verticalAlignment: caseInsensitiveEnum(['TOP', 'MIDDLE', 'BOTTOM', 'BASELINE', 'LEFT', 'CENTER', 'RIGHT']).optional(),
   
-  // Flattened Resizing Properties
-  resizingWidth: caseInsensitiveEnum(['hug', 'fill', 'fixed']).optional(),
-  resizingHeight: caseInsensitiveEnum(['hug', 'fill', 'fixed']).optional(),
+  // Sizing mode properties
+  fixedWidth: z.boolean().optional(),
+  fixedHeight: z.boolean().optional(),
+  
+  // Wrapping properties
+  wrapLayout: z.boolean().optional(),
+  
+  // Grid properties
+  rows: z.number().min(1).optional(),
+  columns: z.number().min(1).optional(),
+  rowSpacing: z.union([z.number(), z.literal('AUTO')]).optional(),
+  columnSpacing: z.union([z.number(), z.literal('AUTO')]).optional(),
   
   // Advanced Properties
   strokesIncludedInLayout: z.boolean().optional(),
-  layoutWrap: caseInsensitiveEnum(['no_wrap', 'wrap']).optional(),
+  lastOnTop: z.boolean().optional(),
+  
+  // Child operation properties (support arrays for bulk operations)
+  childIndex: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  fromIndex: z.number().min(0).optional(),
+  toIndex: z.number().min(0).optional(),
+  layoutGrow: z.union([
+    z.union([z.literal(0), z.literal(1)]),
+    z.array(z.union([z.literal(0), z.literal(1)]))
+  ]).optional(),
+  layoutAlign: z.union([
+    caseInsensitiveEnum(['min', 'center', 'max', 'stretch', 'inherit']),
+    z.array(caseInsensitiveEnum(['min', 'center', 'max', 'stretch', 'inherit']))
+  ]).optional(),
+  horizontalSizing: z.union([
+    caseInsensitiveEnum(['fixed', 'hug', 'fill']),
+    z.array(caseInsensitiveEnum(['fixed', 'hug', 'fill']))
+  ]).optional(),
+  verticalSizing: z.union([
+    caseInsensitiveEnum(['fixed', 'hug', 'fill']),
+    z.array(caseInsensitiveEnum(['fixed', 'hug', 'fill']))
+  ]).optional(),
+  
+  // Grid child properties (support arrays for bulk operations)
+  rowSpan: z.union([z.number().min(1), z.array(z.number().min(1))]).optional(),
+  columnSpan: z.union([z.number().min(1), z.array(z.number().min(1))]).optional(),
+  rowAnchor: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  columnAnchor: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  horizontalAlign: z.union([
+    caseInsensitiveEnum(['left', 'center', 'right', 'stretch']),
+    z.array(caseInsensitiveEnum(['left', 'center', 'right', 'stretch']))
+  ]).optional(),
+  verticalAlign: z.union([
+    caseInsensitiveEnum(['top', 'middle', 'bottom', 'stretch']),
+    z.array(caseInsensitiveEnum(['top', 'middle', 'bottom', 'stretch']))
+  ]).optional(),
   
   // Bulk operation control
   failFast: z.boolean().optional(),
+}).refine((data) => {
+  // set_child operation requires either:
+  // 1. containerId + (childIndex OR nodeId) - for single container operations
+  // 2. nodeId only - for cross-parent bulk operations
+  if (data.operation === 'set_child') {
+    return (data.containerId !== undefined && (data.childIndex !== undefined || data.nodeId !== undefined)) ||
+           (data.containerId === undefined && data.nodeId !== undefined);
+  }
+  // reorder_children operation requires containerId
+  else if (data.operation === 'reorder_children') {
+    return data.containerId !== undefined;
+  }
+  // Container operations require nodeId
+  else {
+    return data.nodeId !== undefined;
+  }
+}, {
+  message: "set_child operation requires either 'containerId' + ('childIndex' OR 'nodeId') for single container, or just 'nodeId' for cross-parent bulk operations. reorder_children requires 'containerId'. Container operations require 'nodeId'.",
 });
 
 export const ManageConstraintsSchema = z.object({

@@ -39,7 +39,7 @@ Rather than a thin wrapper around the Figma API, tools are thouthtfully organize
 - **`figma_effects`** - Apply shadows, blurs, and other visual effects to design elements
 
 ### Layout & Positioning
-- **`figma_auto_layout`** - Configure responsive auto layout properties for frames and containers
+- **`figma_auto_layout`** - Complete auto layout system with 7 operations: get/set layouts (horizontal/vertical/grid/freeform), child properties, and reordering. Supports cross-parent bulk operations and auto-index lookup
 - **`figma_constraints`** - Set layout constraints to control how elements resize and reposition
 - **`figma_alignment`** - Align, position, and distribute multiple elements with various reference points
 - **`figma_hierarchy`** - Parent, Group, ungroup, and reorder nodes in the layer structure

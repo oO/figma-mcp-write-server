@@ -160,6 +160,159 @@ The server provides 22 consolidated tools organized by domain:
 
 See README.md for complete tool documentation and parameter details.
 
+## 🏗️ Auto Layout System Deep Dive
+
+### 7-Operation Architecture
+
+The `figma_auto_layout` tool implements a comprehensive 7-operation system that maps to Figma's complete auto layout API:
+
+#### Container Operations (1-5)
+```typescript
+// Layout mode operations
+'get'           // Retrieve layout properties and children info
+'set_horizontal' // Enable horizontal auto layout with full property control
+'set_vertical'   // Enable vertical auto layout with wrapping support
+'set_grid'      // Enable grid layout mode with row/column configuration
+'set_freeform'  // Disable auto layout (return to manual positioning)
+```
+
+#### Child Operations (6-7)
+```typescript
+// Child management operations  
+'set_child'        // Configure child layout properties (2 modes: single-container + cross-parent)
+'reorder_children' // Move children within container by index
+```
+
+### Semantic Parameter Design
+
+**Container vs Child Clarity:**
+- **Container operations**: Use `nodeId` (targets the container frame)
+- **Child operations**: Use `containerId` (references parent) + `childIndex`/`nodeId` (targets child)
+
+**Intuitive Property Names:**
+```typescript
+// User-friendly vs internal API mapping
+horizontalAlignment: 'CENTER'    → primaryAxisAlignItems: 'CENTER'
+verticalSpacing: 16             → itemSpacing: 16 
+fixedWidth: true                → primaryAxisSizingMode: 'FIXED'
+```
+
+### Cross-Parent Bulk Operations
+
+**Revolutionary Feature**: Set child properties across different parents in a single operation:
+
+```typescript
+// Traditional approach (multiple calls)
+figma_auto_layout({ operation: 'set_child', containerId: 'parent1', childIndex: 0, horizontalSizing: 'fill' })
+figma_auto_layout({ operation: 'set_child', containerId: 'parent2', childIndex: 1, horizontalSizing: 'hug' })
+
+// New cross-parent approach (single call)
+figma_auto_layout({ 
+  operation: 'set_child', 
+  nodeId: ['child1', 'child2'],           // No containerId needed!
+  horizontalSizing: ['fill', 'hug'],      // Arrays matched by index
+  layoutGrow: [1, 0]
+})
+```
+
+**Implementation Strategy:**
+1. **Handler Detection**: `!containerId && nodeId` triggers cross-parent mode
+2. **Automatic Parent Discovery**: Plugin finds parent container for each child
+3. **Validation**: Ensures all parents have auto layout enabled
+4. **Individual Processing**: Each child processed with its respective parent
+
+### Bulk Operation Patterns
+
+**Unified Handler Integration:**
+- Container operations use standard unified handler bulk processing
+- Child operations bypass unified handler to prevent array conversion conflicts
+- Direct plugin communication for cross-parent scenarios
+
+**Array Parameter Support:**
+```typescript
+// Single values
+horizontalSpacing: 16
+paddingTop: 20
+
+// Bulk arrays (matched by index with nodeId array)
+horizontalSpacing: [16, 12, 8] 
+paddingTop: [20, 15, 10]
+```
+
+### Auto-Index Lookup
+
+**User Experience Enhancement**: Child operations support both index and ID targeting:
+
+```typescript
+// By index (traditional)
+{ operation: 'set_child', containerId: '123:456', childIndex: 2, layoutGrow: 1 }
+
+// By nodeId (AI-friendly - no math required)
+{ operation: 'set_child', containerId: '123:456', nodeId: '789:123', layoutGrow: 1 }
+```
+
+**Implementation**: Plugin automatically converts `nodeId → childIndex` using `container.children.findIndex()`
+
+### Grid Layout Support
+
+**Complete Grid API Coverage:**
+```typescript
+// Container setup
+{ operation: 'set_grid', nodeId: 'container', rows: 3, columns: 2, rowSpacing: 16, columnSpacing: 20 }
+
+// Child positioning and spanning
+{ operation: 'set_child', containerId: 'container', childIndex: 0, 
+  rowSpan: 2, columnSpan: 1, rowAnchor: 0, columnAnchor: 1 }
+```
+
+### Wrapping and Responsive Features
+
+**Advanced Layout Controls:**
+```typescript
+// Horizontal layout with wrapping
+{ operation: 'set_horizontal', nodeId: 'container', 
+  wrapLayout: true, horizontalSpacing: 12, verticalSpacing: 8 }
+
+// Responsive sizing
+{ operation: 'set_horizontal', nodeId: 'container',
+  fixedWidth: false,      // Hug contents
+  fixedHeight: true }     // Fixed height
+```
+
+### Schema Validation Architecture
+
+**Flexible Validation Logic:**
+```typescript
+// operation-specific validation
+.refine((data) => {
+  if (data.operation === 'set_child') {
+    // Single-container: containerId + (childIndex OR nodeId)
+    // Cross-parent: just nodeId (no containerId)
+    return (data.containerId && (data.childIndex !== undefined || data.nodeId)) ||
+           (!data.containerId && data.nodeId);
+  }
+  // ... other operations
+})
+```
+
+### Testing Strategy
+
+**Comprehensive Test Coverage:**
+- **Container operations**: Bulk array processing, property validation
+- **Child operations**: Both single-container and cross-parent modes
+- **Auto-lookup**: nodeId → childIndex conversion
+- **Edge cases**: Invalid IDs, missing parents, constraint violations
+
+**Mock Strategy:**
+```typescript
+// Handler tests: Mock plugin responses
+mockSendToPlugin.mockResolvedValue({ success: true, data: {...} })
+
+// Plugin tests: Test actual Figma API calls
+expect(frame.layoutMode).toBe('HORIZONTAL')
+expect(child.layoutGrow).toBe(1)
+```
+
 ## 🔄 Communication Protocol
 
 ### MCP Tool Execution Flow

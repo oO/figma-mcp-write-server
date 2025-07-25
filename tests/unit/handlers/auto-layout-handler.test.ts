@@ -24,10 +24,13 @@ describe('AutoLayoutHandler', () => {
       const schema = tools[0].inputSchema;
       const operations = schema.properties.operation.enum;
       
-      expect(operations).toContain('enable');
-      expect(operations).toContain('disable');
-      expect(operations).toContain('update');
-      expect(operations).toContain('get_properties');
+      expect(operations).toContain('get');
+      expect(operations).toContain('set_horizontal');
+      expect(operations).toContain('set_vertical');
+      expect(operations).toContain('set_grid');
+      expect(operations).toContain('set_freeform');
+      expect(operations).toContain('set_child');
+      expect(operations).toContain('reorder_children');
     });
 
     it('should support bulk operations', () => {
@@ -35,8 +38,8 @@ describe('AutoLayoutHandler', () => {
       const schema = tools[0].inputSchema;
       
       expect(schema.properties.nodeId.oneOf).toBeDefined();
-      expect(schema.properties.direction.oneOf).toBeDefined();
-      expect(schema.properties.spacing.oneOf).toBeDefined();
+      expect(schema.properties.horizontalSpacing.oneOf).toBeDefined();
+      expect(schema.properties.verticalSpacing.oneOf).toBeDefined();
       expect(schema.properties.paddingTop.oneOf).toBeDefined();
     });
 
@@ -48,23 +51,22 @@ describe('AutoLayoutHandler', () => {
   });
 
   describe('handle', () => {
-    it('should handle enable operation', async () => {
+    it('should handle set_horizontal operation', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { 
-          operation: 'enable',
+          operation: 'set_horizontal',
           nodeId: 'frame-123',
           name: 'Auto Layout Frame',
-          direction: 'horizontal',
-          spacing: 10
+          layoutMode: 'horizontal',
+          properties: { spacing: 10 }
         }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'enable',
+        operation: 'set_horizontal',
         nodeId: 'frame-123',
-        direction: 'horizontal',
-        spacing: 10,
+        horizontalSpacing: 10,
         paddingTop: 15,
         paddingLeft: 15
       });
@@ -72,10 +74,9 @@ describe('AutoLayoutHandler', () => {
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_AUTO_LAYOUT',
         payload: expect.objectContaining({
-          operation: 'enable',
+          operation: 'set_horizontal',
           nodeId: 'frame-123',
-          direction: 'horizontal',
-          spacing: 10,
+          horizontalSpacing: 10,
           paddingTop: 15,
           paddingLeft: 15
         })
@@ -84,25 +85,26 @@ describe('AutoLayoutHandler', () => {
       expect(result.content[0].type).toBe('text');
     });
 
-    it('should handle disable operation', async () => {
+    it('should handle set_freeform operation', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { 
-          operation: 'disable',
+          operation: 'set_freeform',
           nodeId: 'frame-123',
-          name: 'Frame'
+          name: 'Frame',
+          layoutMode: 'none'
         }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'disable',
+        operation: 'set_freeform',
         nodeId: 'frame-123'
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_AUTO_LAYOUT',
         payload: expect.objectContaining({
-          operation: 'disable',
+          operation: 'set_freeform',
           nodeId: 'frame-123'
         })
       });
@@ -110,67 +112,66 @@ describe('AutoLayoutHandler', () => {
       expect(result.content[0].type).toBe('text');
     });
 
-    it('should handle update operation', async () => {
+    it('should handle set_vertical operation', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { 
-          operation: 'update',
+          operation: 'set_vertical',
           nodeId: 'frame-123',
           name: 'Updated Frame',
-          direction: 'vertical',
-          spacing: 20
+          layoutMode: 'vertical',
+          properties: { spacing: 20 }
         }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'update',
+        operation: 'set_vertical',
         nodeId: 'frame-123',
-        direction: 'vertical',
-        spacing: 20,
-        primaryAlignment: 'center'
+        verticalSpacing: 20,
+        horizontalAlignment: 'CENTER'
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_AUTO_LAYOUT',
         payload: expect.objectContaining({
-          operation: 'update',
+          operation: 'set_vertical',
           nodeId: 'frame-123',
-          direction: 'vertical',
-          spacing: 20,
-          primaryAlignment: 'center'
+          verticalSpacing: 20,
+          horizontalAlignment: 'CENTER'
         })
       });
       expect(result.content).toBeDefined();
       expect(result.content[0].type).toBe('text');
     });
 
-    it('should handle get_properties operation', async () => {
+    it('should handle get operation', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { 
-          operation: 'get_properties',
+          operation: 'get',
           nodeId: 'frame-123',
           name: 'Frame',
-          autoLayout: {
-            direction: 'horizontal',
+          layoutMode: 'horizontal',
+          properties: {
             spacing: 10,
             paddingTop: 15,
             paddingRight: 15,
             paddingBottom: 15,
             paddingLeft: 15
-          }
+          },
+          children: []
         }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'get_properties',
+        operation: 'get',
         nodeId: 'frame-123'
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_AUTO_LAYOUT',
         payload: expect.objectContaining({
-          operation: 'get_properties',
+          operation: 'get',
           nodeId: 'frame-123'
         })
       });
@@ -181,14 +182,13 @@ describe('AutoLayoutHandler', () => {
     it('should handle bulk operations', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
-        data: { operation: 'enable', nodeId: 'frame-123' }
+        data: { operation: 'set_horizontal', nodeId: 'frame-123' }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'enable',
+        operation: 'set_horizontal',
         nodeId: ['frame-123', 'frame-456'],
-        direction: ['horizontal', 'vertical'],
-        spacing: [10, 15]
+        horizontalSpacing: [10, 15]
       });
 
       expect(result.content).toBeDefined();
@@ -199,20 +199,20 @@ describe('AutoLayoutHandler', () => {
     it('should support case-insensitive operations', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
-        data: { operation: 'enable', nodeId: 'frame-123' }
+        data: { operation: 'set_horizontal', nodeId: 'frame-123' }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'ENABLE', // Uppercase
+        operation: 'SET_HORIZONTAL', // Uppercase
         nodeId: 'frame-123',
-        direction: 'HORIZONTAL' // Uppercase
+        horizontalAlignment: 'CENTER' // Uppercase
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_AUTO_LAYOUT',
         payload: expect.objectContaining({
-          operation: 'enable', // Normalized to lowercase
-          direction: 'horizontal' // Normalized to lowercase
+          operation: 'set_horizontal', // Normalized to lowercase
+          horizontalAlignment: 'CENTER' // Kept as uppercase for API
         })
       });
       expect(result.content).toBeDefined();
@@ -222,13 +222,13 @@ describe('AutoLayoutHandler', () => {
     it('should handle failFast parameter', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
-        data: { operation: 'enable', nodeId: 'frame-123' }
+        data: { operation: 'set_horizontal', nodeId: 'frame-123' }
       });
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'enable',
+        operation: 'set_horizontal',
         nodeId: ['frame-123', 'frame-456'],
-        direction: 'horizontal',
+        horizontalSpacing: 10,
         failFast: true
       });
 
@@ -236,9 +236,163 @@ describe('AutoLayoutHandler', () => {
       expect(result.content[0].type).toBe('text');
     });
 
+    it('should handle set_child operation with childIndex', async () => {
+      mockSendToPlugin.mockResolvedValue({
+        success: true,
+        data: { 
+          operation: 'set_child',
+          containerId: 'frame-123',
+          containerName: 'Container Frame',
+          childIndex: 0,
+          childId: 'child-456',
+          childName: 'Child Node',
+          targetedBy: 'childIndex'
+        }
+      });
+
+      const result = await handler.handle('figma_auto_layout', {
+        operation: 'set_child',
+        containerId: 'frame-123',
+        childIndex: 0,
+        layoutGrow: 1,
+        horizontalSizing: 'fill'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_AUTO_LAYOUT',
+        payload: expect.objectContaining({
+          operation: 'set_child',
+          containerId: 'frame-123',
+          childIndex: [0],
+          layoutGrow: [1],
+          horizontalSizing: ['fill']
+        })
+      });
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
+    });
+
+    it('should handle set_child operation with nodeId (auto-lookup)', async () => {
+      mockSendToPlugin.mockResolvedValue({
+        success: true,
+        data: { 
+          operation: 'set_child',
+          containerId: 'frame-123',
+          containerName: 'Container Frame',
+          childIndex: 1,
+          childId: 'child-789',
+          childName: 'Target Child',
+          targetedBy: 'nodeId'
+        }
+      });
+
+      const result = await handler.handle('figma_auto_layout', {
+        operation: 'set_child',
+        containerId: 'frame-123',
+        nodeId: 'child-789',
+        layoutGrow: 1,
+        horizontalSizing: 'fill'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_AUTO_LAYOUT',
+        payload: expect.objectContaining({
+          operation: 'set_child',
+          containerId: 'frame-123',
+          nodeId: 'child-789',
+          layoutGrow: [1],
+          horizontalSizing: ['fill']
+        })
+      });
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
+    });
+
+    it('should handle set_child operation across different parents', async () => {
+      // Mock response for cross-parent operation (handled in plugin)
+      mockSendToPlugin.mockResolvedValue({
+        success: true,
+        data: [
+          { 
+            operation: 'set_child',
+            containerId: 'parent-123',
+            containerName: 'First Parent',
+            childIndex: 0,
+            childId: 'child-456',
+            childName: 'First Child',
+            targetedBy: 'nodeId'
+          },
+          { 
+            operation: 'set_child',
+            containerId: 'parent-789',
+            containerName: 'Second Parent',
+            childIndex: 1,
+            childId: 'child-101',
+            childName: 'Second Child',
+            targetedBy: 'nodeId'
+          }
+        ]
+      });
+
+      const result = await handler.handle('figma_auto_layout', {
+        operation: 'set_child',
+        nodeId: ['child-456', 'child-101'],
+        layoutGrow: [1, 0],
+        horizontalSizing: ['fill', 'hug']
+      });
+
+      // Should be called once with the full cross-parent payload
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(1);
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_AUTO_LAYOUT',
+        payload: expect.objectContaining({
+          operation: 'set_child',
+          nodeId: ['child-456', 'child-101'],
+          layoutGrow: [1, 0],
+          horizontalSizing: ['fill', 'hug']
+        })
+      });
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
+    });
+
+    it('should handle reorder_children operation', async () => {
+      mockSendToPlugin.mockResolvedValue({
+        success: true,
+        data: { 
+          operation: 'reorder_children',
+          containerId: 'frame-123',
+          containerName: 'Container Frame',
+          fromIndex: 2,
+          toIndex: 0,
+          childId: 'child-456',
+          childName: 'Child Node'
+        }
+      });
+
+      const result = await handler.handle('figma_auto_layout', {
+        operation: 'reorder_children',
+        containerId: 'frame-123',
+        fromIndex: 2,
+        toIndex: 0
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_AUTO_LAYOUT',
+        payload: expect.objectContaining({
+          operation: 'reorder_children',
+          containerId: 'frame-123',
+          fromIndex: 2,
+          toIndex: 0
+        })
+      });
+      expect(result.content).toBeDefined();
+      expect(result.content[0].type).toBe('text');
+    });
+
     it('should reject unknown tool names', async () => {
       await expect(
-        handler.handle('unknown_tool', { operation: 'enable', nodeId: 'frame-123' })
+        handler.handle('unknown_tool', { operation: 'get', nodeId: 'frame-123' })
       ).rejects.toThrow('Unknown tool: unknown_tool');
     });
 
@@ -254,18 +408,18 @@ describe('AutoLayoutHandler', () => {
       const mockResponse = {
         success: true,
         data: { 
-          operation: 'enable',
+          operation: 'set_horizontal',
           nodeId: 'frame-123',
           name: 'Auto Layout Frame',
-          direction: 'horizontal'
+          layoutMode: 'horizontal'
         }
       };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       const result = await handler.handle('figma_auto_layout', {
-        operation: 'enable',
+        operation: 'set_horizontal',
         nodeId: 'frame-123',
-        direction: 'horizontal'
+        horizontalSpacing: 10
       });
 
       expect(result.content).toBeDefined();
