@@ -1,4 +1,5 @@
-import { BaseOperation, OperationResult } from './base-operation.js';
+import { BaseOperation } from './base-operation.js';
+import { OperationResult } from '../types.js';
 import { 
   createSolidPaint, 
   createGradientPaint, 
@@ -17,7 +18,7 @@ import {
   flattenedToImageMatrix
 } from '../utils/color-utils.js';
 import { modifyFills } from '../utils/figma-property-utils.js';
-import { cleanEmptyProperties, cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
+import { cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
 import { logger } from '../utils/plugin-logger.js';
 import { ERROR_MESSAGES } from '../utils/fill-constants.js';
 import { 

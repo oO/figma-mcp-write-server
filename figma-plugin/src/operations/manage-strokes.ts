@@ -1,10 +1,11 @@
-import { BaseOperation, OperationResult } from './base-operation.js';
+import { BaseOperation } from './base-operation.js';
+import { OperationResult } from '../types.js';
 import { 
   SharedPaintOperations,
   PaintOperationsConfig
 } from '../utils/shared-paint-operations.js';
 import { modifyStrokes } from '../utils/figma-property-utils.js';
-import { cleanEmptyProperties, cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
+import { cleanEmptyPropertiesAsync } from '../utils/node-utils.js';
 import { ERROR_MESSAGES } from '../utils/stroke-constants.js';
 import { 
   validateNodeForStrokes, 

@@ -1,4 +1,4 @@
-import { OperationResult } from '../operations/base-operation.js';
+import { OperationResult } from '../types.js';
 import { 
   createSolidPaint, 
   createGradientPaint, 
