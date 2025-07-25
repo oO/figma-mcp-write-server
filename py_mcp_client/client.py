@@ -4,6 +4,8 @@ import shutil
 import sys
 import json
 import yaml
+import signal
+import subprocess
 
 from fastmcp import Client
 from fastmcp.client.transports import StdioTransport
@@ -33,11 +35,31 @@ async def main():
 
     # Explicitly create an StdioTransport with the correct parameters
     transport = StdioTransport(command=node_path, args=[server_script], cwd=project_root)
+    server_pid = None
 
     # The Client will use the specified transport
     try:
         async with Client(transport=transport) as client:
             print("MCP Client connected to server via STDIO.")
+            
+            # Find and store the PID of our server process (child of this process)
+            try:
+                import psutil
+                current_pid = os.getpid()
+                for proc in psutil.process_iter(['pid', 'ppid', 'name', 'cmdline']):
+                    try:
+                        if (proc.info['ppid'] == current_pid and 
+                            proc.info['cmdline'] and len(proc.info['cmdline']) >= 2 and
+                            'node' in proc.info['cmdline'][0] and 'dist/index.js' in proc.info['cmdline'][1]):
+                            server_pid = proc.info['pid']
+                            print(f"Tracking server process PID: {server_pid} (child of {current_pid})")
+                            break
+                    except (psutil.NoSuchProcess, psutil.AccessDenied):
+                        continue
+                if not server_pid:
+                    print("Could not find server process as child of this client")
+            except ImportError:
+                print("psutil not available - cannot track server PID")
 
             # Wait for the server to initialize its handlers
             print("Waiting for server to initialize...")
@@ -152,8 +174,28 @@ async def main():
                     break
                 except KeyboardInterrupt:
                     break
+
+    except Exception as e:
+        print(f"Error: {e}")
     finally:
-        await transport.terminate()
+        # Send SIGTERM to the specific server process we tracked
+        print("Cleaning up server process...")
+        if server_pid:
+            try:
+                import psutil
+                proc = psutil.Process(server_pid)
+                print(f"Sending SIGTERM to tracked server process PID: {server_pid}")
+                proc.send_signal(signal.SIGTERM)
+                print("SIGTERM sent successfully")
+                await asyncio.sleep(0.5)
+            except psutil.NoSuchProcess:
+                print("Tracked server process no longer exists")
+            except ImportError:
+                print("psutil not available - cannot send SIGTERM")
+            except Exception as e:
+                print(f"Warning: Could not send SIGTERM to server: {e}")
+        else:
+            print("No server process was tracked")
 
 if __name__ == "__main__":
     asyncio.run(main())
