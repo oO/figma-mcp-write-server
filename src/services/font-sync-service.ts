@@ -46,7 +46,7 @@ export class FontSyncService {
       const lastSync = metadata?.last_sync_time ? new Date(metadata.last_sync_time) : null;
       const timeSinceSync = lastSync ? Math.round((Date.now() - lastSync.getTime()) / (1000 * 60 * 60)) : 0;
       
-      logger.log(`📦 Font database is fresh (${stats.totalFonts} families, last sync ${timeSinceSync}h ago), skipping sync`);
+      logger.log(`🔤 Font database is fresh (${stats.totalFonts} families, last sync ${timeSinceSync}h ago), skipping sync`);
       
       // KISS: Return data directly
       return {
@@ -75,24 +75,24 @@ export class FontSyncService {
 
       // Phase 1: Fetch fonts from Figma API
       this.updateProgress('fetching', 0, 0, 'Fetching fonts from Figma API');
-      logger.log('FontSync: Fetching fonts from Figma API...');
+      logger.log('🔤 Fetching fonts from Figma API...');
       
       const figmaFonts = await this.fetchFontsFromFigma();
-      logger.log(`FontSync: Retrieved ${figmaFonts.length} fonts from Figma API`);
+      logger.log(`🔤 Retrieved ${figmaFonts.length} fonts from Figma API`);
       
       // Phase 2: Process and categorize fonts
       this.updateProgress('processing', 0, figmaFonts.length, 'Processing font data');
-      logger.log(`FontSync: Processing ${figmaFonts.length} fonts...`);
+      logger.log(`🔤 Processing ${figmaFonts.length} fonts...`);
       
       const processedFonts = this.processFigmaFonts(figmaFonts);
-      logger.log(`FontSync: Processed ${processedFonts.length} font families`);
+      logger.log(`🔤 Processed ${processedFonts.length} font families`);
       
       // Phase 3: Store in database
       this.updateProgress('storing', 0, processedFonts.length, 'Storing fonts in database');
-      logger.log(`FontSync: Storing ${processedFonts.length} font families in database...`);
+      logger.log(`🔤 Storing ${processedFonts.length} font families in database...`);
       
       await this.storeFontsInDatabase(processedFonts);
-      logger.log('FontSync: Database storage completed');
+      logger.log('🔤 Database storage completed');
       
       // Complete sync
       const endTime = new Date();
@@ -114,7 +114,7 @@ export class FontSyncService {
       });
 
       const stats = this.db.getStats();
-      logger.log(`FontSync: Sync completed successfully! ${stats.totalFonts} families, ${stats.totalStyles} styles (${duration}ms)`);
+      logger.log(`🔤 Sync completed successfully! ${stats.totalFonts} families, ${stats.totalStyles} styles (${duration}ms)`);
       
       // KISS: Return data directly
       return {
@@ -128,7 +128,7 @@ export class FontSyncService {
       const duration = endTime.getTime() - startTime.getTime();
       const errorMessage = error instanceof Error ? error.toString() : 'Unknown error';
       
-      logger.error(`FontSync: Sync failed after ${duration}ms:`, errorMessage);
+      logger.error(`🔤 Sync failed after ${duration}ms:`, errorMessage);
       
       this.currentSync = {
         ...this.currentSync!,
@@ -175,7 +175,7 @@ export class FontSyncService {
         payload: {}
       });
     } catch (error) {
-      logger.error('FontSync: Error calling plugin:', error);
+      logger.error('🔤 Error calling plugin:', error);
       throw error;
     }
 
@@ -186,12 +186,12 @@ export class FontSyncService {
     } else if (Array.isArray(result)) {
       fonts = result;
     } else {
-      logger.error('FontSync: Invalid result structure:', result);
+      logger.error('🔤 Invalid result structure:', result);
       throw new Error('Invalid font data received from Figma API');
     }
     
     if (!Array.isArray(fonts)) {
-      logger.error('FontSync: Fonts is not an array:', fonts);
+      logger.error('🔤 Fonts is not an array:', fonts);
       throw new Error('Invalid font data received from Figma API');
     }
 
@@ -274,7 +274,7 @@ export class FontSyncService {
     }
     
     if (errors > 0) {
-      logger.warn(`FontSync: Storage completed with ${errors} errors out of ${fonts.length} fonts`);
+      logger.warn(`🔤 Storage completed with ${errors} errors out of ${fonts.length} fonts`);
     }
   }
 

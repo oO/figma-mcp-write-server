@@ -50,7 +50,7 @@ Rather than a thin wrapper around the Figma API, tools are thouthtfully organize
 - **`figma_components`** - Create and manage reusable components and component sets with variant properties
 - **`figma_instances`** - Create component instances, swap components, and manage property overrides
 - **`figma_variables`** - Create, bind, and manage design variables across your design system
-- **`figma_fonts`** - Search, validate, and manage fonts with font database integration
+- **`figma_fonts`** - Search, validate, and manage fonts with database-optimized operations and wildcard search support
 
 ### Advanced Operations
 - **`figma_boolean_operations`** - Perform union, subtract, intersect, and exclude operations on shapes

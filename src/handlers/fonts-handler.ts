@@ -1,12 +1,15 @@
 import { ToolHandler, Tool } from '../types/index.js';
 import { UnifiedHandler, UnifiedHandlerConfig, UnifiedParamConfigs } from '../utils/unified-handler.js';
 import { FontOperationsSchema } from '../types/font-operations.js';
+import { FontService } from '../services/font-service.js';
 
 export class FontsHandler implements ToolHandler {
   private unifiedHandler: UnifiedHandler;
+  private fontServiceAccessor: (() => FontService | null) | undefined;
 
-  constructor(sendToPluginFn: (request: any) => Promise<any>) {
+  constructor(sendToPluginFn: (request: any) => Promise<any>, fontServiceAccessor?: () => FontService | null) {
     this.unifiedHandler = new UnifiedHandler(sendToPluginFn);
+    this.fontServiceAccessor = fontServiceAccessor;
   }
 
   getTools(): Tool[] {
@@ -24,7 +27,7 @@ export class FontsHandler implements ToolHandler {
             },
             query: {
               type: 'string',
-              description: 'Search query for font families (for search_fonts operation)'
+              description: 'Search query for font families. Supports wildcards (*) for partial matching (for search_fonts operation)'
             },
             source: {
               type: 'string',
@@ -94,6 +97,7 @@ export class FontsHandler implements ToolHandler {
         },
         examples: [
           '{"operation": "search_fonts", "query": "Inter", "limit": 10}',
+          '{"operation": "search_fonts", "query": "Hel*", "limit": 10}',
           '{"operation": "search_fonts", "source": "google", "minStyleCount": 5, "sortBy": "style_count"}',
           '{"operation": "check_availability", "fontFamily": "Inter", "fontStyle": "Regular"}',
           '{"operation": "check_availability", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"]}',
@@ -143,6 +147,10 @@ export class FontsHandler implements ToolHandler {
       },
       pluginMessageType: 'MANAGE_FONTS',
       schema: FontOperationsSchema,
+      // Use custom handler for database-eligible operations
+      customHandler: this.isDatabaseEligible(args.operation) 
+        ? (validatedArgs: any) => this.handleWithFontService(validatedArgs)
+        : undefined,
       operationParameters: {
         search_fonts: ['query', 'source', 'includeGoogle', 'includeSystem', 'includeCustom', 'hasStyle', 'minStyleCount', 'limit', 'sortBy', 'failFast'],
         check_availability: ['fontFamily', 'fontStyle', 'failFast'],
@@ -158,4 +166,76 @@ export class FontsHandler implements ToolHandler {
 
     return this.unifiedHandler.handle(args, config);
   }
+
+  private isDatabaseEligible(operation: string): boolean {
+    // Operations that benefit from database optimization
+    return ['search_fonts', 'get_font_count', 'check_availability', 'get_font_styles', 'validate_font', 'get_font_info'].includes(operation);
+  }
+
+  private async handleWithFontService(args: any): Promise<any> {
+    const fontService = this.fontServiceAccessor?.();
+    if (!fontService) {
+      throw new Error('FontService not available');
+    }
+
+    switch (args.operation) {
+      case 'search_fonts':
+        return await fontService.searchFonts({
+          query: args.query,
+          source: args.source,
+          includeGoogle: args.includeGoogle,
+          includeSystem: args.includeSystem,
+          includeCustom: args.includeCustom,
+          hasStyle: args.hasStyle,
+          minStyleCount: args.minStyleCount,
+          limit: args.limit,
+          sortBy: args.sortBy
+        });
+      
+      case 'get_font_count':
+        return await fontService.getFontCount({
+          countSource: args.source,
+          countHasStyle: args.hasStyle
+        });
+
+      case 'check_availability':
+        const fontNames = this.prepareFontNamesForCheck(args);
+        return await fontService.checkFontAvailability(fontNames, {
+          fallbackSuggestions: args.fallbackSuggestions
+        });
+
+      case 'get_font_styles':
+        return await fontService.getFontStyles(args.fontFamily);
+
+      case 'validate_font':
+        return await fontService.validateFont(args.fontFamily, args.fontStyle, {
+          strict: args.strict,
+          fallbackSuggestions: args.fallbackSuggestions
+        });
+
+      case 'get_font_info':
+        return await fontService.getFontInfo(args.fontFamily, args.fontStyle);
+        
+      default:
+        throw new Error(`FontService operation ${args.operation} not implemented`);
+    }
+  }
+
+  private prepareFontNamesForCheck(args: any): Array<{ family: string; style: string }> {
+    // Handle array parameters - prepare font name pairs
+    const families = Array.isArray(args.fontFamily) ? args.fontFamily : [args.fontFamily];
+    const styles = Array.isArray(args.fontStyle) ? args.fontStyle : [args.fontStyle];
+    
+    const maxLength = Math.max(families.length, styles.length);
+    const fontNames = [];
+    
+    for (let i = 0; i < maxLength; i++) {
+      const family = families[i] || families[families.length - 1];
+      const style = styles[i] || styles[styles.length - 1];
+      fontNames.push({ family, style });
+    }
+    
+    return fontNames;
+  }
+
 }

@@ -15,12 +15,14 @@ export class HandlerRegistry {
   private allTools: Tool[] = [];
   private wsServer: any; // Reference to WebSocket server for health monitoring
   private sendToPlugin: (request: any) => Promise<any>;
+  private fontServiceAccessor: (() => any) | undefined;
   private handlerRegistrationPromise: Promise<void>;
   
 
-  constructor(sendToPluginFn: (request: any) => Promise<any>, wsServer?: any) {
+  constructor(sendToPluginFn: (request: any) => Promise<any>, wsServer?: any, fontServiceAccessor?: () => any) {
     this.wsServer = wsServer;
     this.sendToPlugin = sendToPluginFn;
+    this.fontServiceAccessor = fontServiceAccessor;
 
     // Start handler registration immediately and capture the promise
     this.handlerRegistrationPromise = this.registerHandlers(sendToPluginFn);
@@ -39,6 +41,8 @@ export class HandlerRegistry {
               let handler;
               if (name === 'PluginStatusHandler') {
                 handler = new HandlerClass(sendToPluginFn, this.wsServer);
+              } else if (name === 'FontsHandler' && this.fontServiceAccessor) {
+                handler = new HandlerClass(sendToPluginFn, this.fontServiceAccessor);
               } else {
                 handler = new HandlerClass(sendToPluginFn);
               }

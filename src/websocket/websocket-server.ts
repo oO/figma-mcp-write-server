@@ -110,9 +110,13 @@ export class FigmaWebSocketServer extends EventEmitter {
       ws.on('message', (data) => {
         try {
           const message = JSON.parse(data.toString());
+          // Only log non-heartbeat messages
+          if (message.type !== 'HEARTBEAT_ACK') {
+            logger.debug('📥 WebSocket message received:', { type: message.type, hasId: !!message.id });
+          }
           this.handleMessage(ws, message);
         } catch (error) {
-          // Message parsing error - ignore
+          logger.error('📥 WebSocket message parsing error:', error);
         }
       });
       
@@ -187,6 +191,7 @@ export class FigmaWebSocketServer extends EventEmitter {
 
   private handleMessage(ws: WebSocket, message: any): void {
     if (message.type === 'PLUGIN_HELLO') {
+      logger.log('🔌 Plugin connected via WebSocket');
       this.pluginConnection = ws;
       this.connectionStatus.pluginConnected = true;
       this.connectionStatus.connectionHealth = 'healthy';
@@ -280,7 +285,7 @@ export class FigmaWebSocketServer extends EventEmitter {
     } else {
       this.healthMetrics.successCount++;
       this.healthMetrics.lastSuccess = new Date();
-      logger.debug(`📥 Operation completed: ${operation}`, logData);
+      // Removed verbose operation logging
       request.resolve(message.result);
     }
   }
@@ -477,7 +482,7 @@ export class FigmaWebSocketServer extends EventEmitter {
       requestId: request.id,
       ...(nodeId && { nodeId: Array.isArray(nodeId) ? `${nodeId.length} nodes` : nodeId })
     };
-    logger.debug(`📤 Sending operation to plugin: ${operation}`, logData);
+    // Removed verbose operation logging
     
     try {
       this.pluginConnection.send(JSON.stringify(request.request));

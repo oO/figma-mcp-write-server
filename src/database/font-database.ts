@@ -219,6 +219,117 @@ export class FontDatabase {
   }
 
   /**
+   * Check if specific font family/style combinations are available
+   */
+  checkFontAvailability(fontChecks: Array<{ family: string; style: string }>): Array<{
+    family: string;
+    style: string;
+    available: boolean;
+    source?: FontSource;
+  }> {
+    const results = [];
+    
+    for (const { family, style } of fontChecks) {
+      const sql = `
+        SELECT f.source
+        FROM fonts f
+        JOIN font_styles fs ON fs.font_id = f.id
+        WHERE f.family = ? AND fs.style = ?
+        LIMIT 1
+      `;
+      
+      const result = this.db.prepare(sql).get(family, style) as { source: FontSource } | undefined;
+      
+      results.push({
+        family,
+        style,
+        available: !!result,
+        source: result?.source
+      });
+    }
+    
+    return results;
+  }
+
+  /**
+   * Validate if a font family/style combination exists
+   */
+  validateFont(family: string, style: string): {
+    isValid: boolean;
+    family: string;
+    style: string;
+    source?: FontSource;
+    styleCount?: number;
+  } {
+    const sql = `
+      SELECT f.source, f.style_count
+      FROM fonts f
+      JOIN font_styles fs ON fs.font_id = f.id
+      WHERE f.family = ? AND fs.style = ?
+      LIMIT 1
+    `;
+    
+    const result = this.db.prepare(sql).get(family, style) as { 
+      source: FontSource; 
+      style_count: number; 
+    } | undefined;
+    
+    return {
+      isValid: !!result,
+      family,
+      style,
+      source: result?.source,
+      styleCount: result?.style_count
+    };
+  }
+
+  /**
+   * Get detailed information about a specific font
+   */
+  getFontInfo(family: string, style: string): {
+    family: string;
+    style: string;
+    available: boolean;
+    source?: FontSource;
+    styleCount?: number;
+    allStyles?: string[];
+  } {
+    // First check if the specific font exists
+    const checkSql = `
+      SELECT f.source, f.style_count
+      FROM fonts f
+      JOIN font_styles fs ON fs.font_id = f.id
+      WHERE f.family = ? AND fs.style = ?
+      LIMIT 1
+    `;
+    
+    const fontResult = this.db.prepare(checkSql).get(family, style) as { 
+      source: FontSource; 
+      style_count: number; 
+    } | undefined;
+    
+    if (!fontResult) {
+      return {
+        family,
+        style,
+        available: false
+      };
+    }
+    
+    // Get all styles for the font family
+    const allStyles = this.getFontStyles(family);
+    
+    return {
+      family,
+      style,
+      available: true,
+      source: fontResult.source,
+      styleCount: fontResult.style_count,
+      allStyles
+    };
+  }
+
+  /**
    * Insert or update a font family with its styles
    */
   upsertFont(family: string, source: FontSource, styles: string[], isLoaded: boolean = true): void {

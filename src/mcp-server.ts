@@ -55,13 +55,13 @@ export class FigmaMCPServer {
     // Initialize handler registry with WebSocket communication
     this.handlerRegistry = new HandlerRegistry(
       (request: any) => this.wsServer.sendToPlugin(request),
-      this.wsServer
+      this.wsServer,
+      () => this.fontService // Provide FontService accessor
     );
 
-    // Listen for plugin connection to initialize font database
+    // Listen for plugin connection to trigger sync if needed
     this.wsServer.on('pluginConnected', () => {
-      logger.log('🔌 Plugin connected, initializing font database...');
-      this.initializeFontDatabase();
+      this.onPluginConnected();
     });
 
     // Wait for handler registration before setting up request handlers
@@ -82,6 +82,8 @@ export class FigmaMCPServer {
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const { name, arguments: args } = request.params;
+      
+      logger.log(`🔧 MCP tool call received: ${name}`, args);
       
       try {
         return await this.handlerRegistry.handleToolCall(name, args || {});
@@ -120,7 +122,9 @@ export class FigmaMCPServer {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     
-    // Font database will be initialized when plugin connects
+    // Initialize font database immediately (check state first)
+    await this.initializeFontDatabase();
+    
     logger.log('🚀 MCP server started, waiting for plugin connection...', {
       pid: process.pid,
       parentPid: process.ppid
@@ -133,15 +137,12 @@ export class FigmaMCPServer {
   private async initializeFontDatabase(): Promise<void> {
     // Prevent multiple initializations
     if (this.fontService) {
-      logger.log('🔤 Font database already initialized');
       return;
     }
 
     try {
       if (this.config.fontDatabase?.enabled !== false) {
-        logger.log('🔤 Checking font database status...');
-        
-        // Create FontService which will handle database initialization and sync
+        // Create FontService which will handle database initialization
         this.fontService = new FontService(
           (request: any) => this.wsServer.sendToPlugin(request),
           {
@@ -149,13 +150,19 @@ export class FigmaMCPServer {
             enableDatabase: true
           }
         );
-        
-        logger.log('🔤 Font database service ready');
-      } else {
-      logger.log('🔤 Font database disabled in configuration');
       }
     } catch (error) {
-      logger.error('Failed to initialize font database:', error);
+      logger.warn('Failed to initialize font database:', error);
+    }
+  }
+
+  private async onPluginConnected(): Promise<void> {
+    logger.log('🔌 Plugin connection event received, checking font database sync...');
+    if (this.fontService) {
+      // Check if sync is needed now that plugin is connected
+      await this.fontService.checkAndSyncIfNeeded();
+    } else {
+      logger.warn('FontService not available, skipping sync');
     }
   }
 

@@ -48,17 +48,29 @@ export const FontOperationsSchema = z.object({
   switch (data.operation) {
     case 'check_availability':
     case 'preload_fonts':
-      return !!data.fontFamily && !!data.fontStyle;
+      if (!data.fontFamily || !data.fontStyle) {
+        throw new Error(`${data.operation} requires both 'fontFamily' and 'fontStyle' parameters`);
+      }
+      return true;
     case 'get_font_styles':
-      return !!data.fontFamily;
+      if (!data.fontFamily) {
+        throw new Error(`${data.operation} requires 'fontFamily' parameter`);
+      }
+      return true;
     case 'validate_font':
     case 'get_font_info':
-      return !!data.fontFamily && !!data.fontStyle;
+      if (!data.fontFamily || !data.fontStyle) {
+        throw new Error(`${data.operation} requires both 'fontFamily' and 'fontStyle' parameters`);
+      }
+      return true;
     case 'search_fonts':
       // At least one search parameter is required
-      return !!(data.query || data.source || data.includeGoogle || 
-               data.includeSystem || data.includeCustom || data.hasStyle || 
-               data.minStyleCount);
+      if (!(data.query || data.source || data.includeGoogle || 
+            data.includeSystem || data.includeCustom || data.hasStyle || 
+            data.minStyleCount)) {
+        throw new Error(`search_fonts requires at least one search parameter: query, source, includeGoogle, includeSystem, includeCustom, hasStyle, or minStyleCount`);
+      }
+      return true;
     default:
       return true;
   }

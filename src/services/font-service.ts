@@ -48,6 +48,7 @@ export class FontService {
     }
 
     // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for search_fonts (database not ready)');
     return await this.searchFontsFromAPI(options);
   }
 
@@ -83,6 +84,7 @@ export class FontService {
     }
 
     // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for get_font_count (database not ready)');
     return await this.getFontCountFromAPI(options);
   }
 
@@ -106,56 +108,88 @@ export class FontService {
 
   /**
    * Check availability of specific fonts
+   * Uses database if available, falls back to Figma API
    */
   async checkFontAvailability(fontNames: Array<{ family: string; style: string }>, options: {
     fallbackSuggestions?: boolean;
   } = {}): Promise<FontInfo[]> {
-    const result = await this.sendToPlugin({
-      type: 'MANAGE_FONTS',
-      payload: {
-        operation: 'check_availability',
-        fontNames,
-        ...options
+    // Try database first if available and ready
+    if (await this.isDatabaseReady()) {
+      try {
+        return await this.checkFontAvailabilityFromDatabase(fontNames, options);
+      } catch (error) {
+        logger.error('Database availability check failed, falling back to API:', error);
       }
-    });
-    // KISS: Direct data response (no success wrapper)
-    return result;
+    }
+
+    // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for check_availability (database not ready)');
+    return await this.checkFontAvailabilityFromAPI(fontNames, options);
   }
 
   /**
    * Validate a specific font
+   * Uses database if available, falls back to Figma API
    */
   async validateFont(fontFamily: string, fontStyle: string, options: {
     strict?: boolean;
     fallbackSuggestions?: boolean;
   } = {}): Promise<any> {
-    const result = await this.sendToPlugin({
-      type: 'MANAGE_FONTS',
-      payload: {
-        operation: 'validate_font',
-        fontFamily,
-        fontStyle,
-        ...options
+    // Try database first if available and ready
+    if (await this.isDatabaseReady()) {
+      try {
+        return await this.validateFontFromDatabase(fontFamily, fontStyle, options);
+      } catch (error) {
+        logger.error('Database font validation failed, falling back to API:', error);
       }
-    });
-    // KISS: Direct data response (no success wrapper)
-    return result;
+    }
+
+    // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for validate_font (database not ready)');
+    return await this.validateFontFromAPI(fontFamily, fontStyle, options);
   }
 
   /**
    * Get detailed information about a specific font
+   * Uses database if available, falls back to Figma API
    */
   async getFontInfo(fontFamily: string, fontStyle: string): Promise<FontInfo> {
-    const result = await this.sendToPlugin({
-      type: 'MANAGE_FONTS',
-      payload: {
-        operation: 'get_font_info',
-        fontFamily,
-        fontStyle
+    // Try database first if available and ready
+    if (await this.isDatabaseReady()) {
+      try {
+        return await this.getFontInfoFromDatabase(fontFamily, fontStyle);
+      } catch (error) {
+        logger.error('Database font info failed, falling back to API:', error);
       }
-    });
-    // KISS: Direct data response (no success wrapper)
-    return result;
+    }
+
+    // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for get_font_info (database not ready)');
+    return await this.getFontInfoFromAPI(fontFamily, fontStyle);
+  }
+
+  /**
+   * Get all styles for a specific font family
+   * Uses database if available, falls back to Figma API
+   */
+  async getFontStyles(fontFamily: string): Promise<{
+    family: string;
+    styles: string[];
+    styleCount: number;
+    category: string;
+  }> {
+    // Try database first if available and ready
+    if (await this.isDatabaseReady()) {
+      try {
+        return await this.getFontStylesFromDatabase(fontFamily);
+      } catch (error) {
+        logger.error('Database font styles failed, falling back to API:', error);
+      }
+    }
+
+    // Fallback to Figma API
+    logger.warn('🔤⚠️ Using Figma API fallback for get_font_styles (database not ready)');
+    return await this.getFontStylesFromAPI(fontFamily);
   }
 
   /**
@@ -192,7 +226,7 @@ export class FontService {
   // Database initialization and management
 
   /**
-   * Initialize database and sync service
+   * Initialize database and sync service (without triggering sync)
    */
   private async initializeDatabase(): Promise<void> {
     try {
@@ -204,20 +238,43 @@ export class FontService {
       this.db = new FontDatabase(this.config.databasePath);
       this.syncService = new FontSyncService(this.db, this.sendToPlugin);
       
-      // Trigger initial sync if database is empty or stale
-      if (this.syncService.isSyncNeeded()) {
-        logger.log('🔄 Database is empty or stale, triggering background sync...');
-        // Don't await - let it run in background
-        this.syncService.syncFonts().catch(error => {
-          logger.error('Background font sync failed:', error);
-        });
-      } else {
-        logger.log('🔤 Font database is up to date, no sync needed');
-      }
+      // Database initialized, sync will be triggered only when plugin connects if needed
     } catch (error) {
       logger.warn('Failed to initialize font database:', error);
       this.db = null;
       this.syncService = null;
+    }
+  }
+
+  /**
+   * Check database state and sync only if needed (called when plugin connects)
+   */
+  async checkAndSyncIfNeeded(): Promise<void> {
+    if (this.initializationPromise) {
+      await this.initializationPromise;
+    }
+    
+    if (!this.syncService) {
+      logger.warn('🔤 SyncService not available, database disabled');
+      return; // Database not available
+    }
+
+    if (!this.db) {
+      logger.warn('🔤 Database not available after initialization');
+      return;
+    }
+
+    try {
+      const syncNeeded = this.syncService.isSyncNeeded();
+      
+      // Only sync if database is empty or stale
+      if (syncNeeded) {
+        logger.log('🔤 Font database requires sync, updating...');
+        await this.syncService.syncFonts();
+        logger.log('🔤 Font database sync completed');
+      }
+    } catch (error) {
+      logger.error('🔤 Font database sync failed:', error);
     }
   }
 
@@ -353,29 +410,6 @@ export class FontService {
     return result;
   }
 
-  /**
-   * Get font styles using database with fallback
-   */
-  async getFontStyles(fontFamily: string): Promise<string[]> {
-    // Try database first
-    if (await this.isDatabaseReady()) {
-      try {
-        return this.db!.getFontStyles(fontFamily);
-      } catch (error) {
-        logger.error('Database font styles failed, falling back to API:', error);
-      }
-    }
-
-    // Fallback to API
-    const result = await this.sendToPlugin({
-      type: 'MANAGE_FONTS',
-      payload: {
-        operation: 'get_font_styles',
-        fontFamily
-      }
-    });
-    return result;
-  }
 
   /**
    * Get sync service for manual operations
@@ -409,5 +443,128 @@ export class FontService {
       return await this.syncService.syncFonts(true);
     }
     throw new Error('Sync service not available');
+  }
+
+  // Private database-specific methods
+
+  private async checkFontAvailabilityFromDatabase(fontNames: Array<{ family: string; style: string }>, options: any): Promise<FontInfo[]> {
+    if (!this.db) throw new Error('Database not available');
+    
+    const checks = fontNames.map(f => ({ family: f.family, style: f.style }));
+    const results = this.db.checkFontAvailability(checks);
+    
+    return results.map(result => ({
+      family: result.family,
+      style: result.style,
+      status: result.available ? 'available' as const : 'missing' as const,
+      category: result.source
+    }));
+  }
+
+  private async checkFontAvailabilityFromAPI(fontNames: Array<{ family: string; style: string }>, options: any): Promise<FontInfo[]> {
+    const result = await this.sendToPlugin({
+      type: 'MANAGE_FONTS',
+      payload: {
+        operation: 'check_availability',
+        fontFamily: fontNames.map(f => f.family),
+        fontStyle: fontNames.map(f => f.style),
+        ...options
+      }
+    });
+    return result;
+  }
+
+  private async validateFontFromDatabase(fontFamily: string, fontStyle: string, options: any): Promise<any> {
+    if (!this.db) throw new Error('Database not available');
+    
+    const result = this.db.validateFont(fontFamily, fontStyle);
+    
+    return {
+      isValid: result.isValid,
+      fontName: { family: result.family, style: result.style },
+      category: result.source,
+      message: result.isValid 
+        ? `Font '${result.family}' ${result.style} is valid and available`
+        : `Font '${result.family}' ${result.style} is not available`
+    };
+  }
+
+  private async validateFontFromAPI(fontFamily: string, fontStyle: string, options: any): Promise<any> {
+    const result = await this.sendToPlugin({
+      type: 'MANAGE_FONTS',
+      payload: {
+        operation: 'validate_font',
+        fontFamily,
+        fontStyle,
+        ...options
+      }
+    });
+    return result;
+  }
+
+  private async getFontInfoFromDatabase(fontFamily: string, fontStyle: string): Promise<FontInfo> {
+    if (!this.db) throw new Error('Database not available');
+    
+    const result = this.db.getFontInfo(fontFamily, fontStyle);
+    
+    return {
+      family: result.family,
+      style: result.style,
+      status: result.available ? 'available' : 'missing',
+      category: result.source
+    };
+  }
+
+  private async getFontInfoFromAPI(fontFamily: string, fontStyle: string): Promise<FontInfo> {
+    const result = await this.sendToPlugin({
+      type: 'MANAGE_FONTS',
+      payload: {
+        operation: 'get_font_info',
+        fontFamily,
+        fontStyle
+      }
+    });
+    return result;
+  }
+
+  private async getFontStylesFromDatabase(fontFamily: string): Promise<{
+    family: string;
+    styles: string[];
+    styleCount: number;
+    category: string;
+  }> {
+    if (!this.db) throw new Error('Database not available');
+    
+    const styles = this.db.getFontStyles(fontFamily);
+    
+    if (styles.length === 0) {
+      throw new Error(`Font family '${fontFamily}' not found`);
+    }
+    
+    // Get font info to determine category (use first style)
+    const fontInfo = this.db.getFontInfo(fontFamily, styles[0] || 'Regular');
+    
+    return {
+      family: fontFamily,
+      styles,
+      styleCount: styles.length,
+      category: (fontInfo.source as string) || 'custom'
+    };
+  }
+
+  private async getFontStylesFromAPI(fontFamily: string): Promise<{
+    family: string;
+    styles: string[];
+    styleCount: number;
+    category: string;
+  }> {
+    const result = await this.sendToPlugin({
+      type: 'MANAGE_FONTS',
+      payload: {
+        operation: 'get_font_styles',
+        fontFamily
+      }
+    });
+    return result;
   }
 }

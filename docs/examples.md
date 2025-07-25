@@ -81,7 +81,10 @@ Practical examples showing how to use the Figma MCP Write Server through natural
 ### Typography Controls
 
 - **"Create a subtitle with Inter font, 16px size, medium weight"**
-  - AI uses `figma_fonts` to validate font availability, then applies with `figma_text`
+  - AI uses `figma_fonts` to validate font availability (database-optimized), then applies with `figma_text`
+
+- **"Find all Helvetica font variants"**
+  - AI uses `figma_fonts` with wildcard search (`"query": "Hel*"`) for fast database-powered results
 
 - **"Make the paragraph text have tighter letter spacing"**
   - AI applies negative letterSpacing value for condensed typography
@@ -198,7 +201,7 @@ Practical examples showing how to use the Figma MCP Write Server through natural
   3. Sets appropriate line heights and spacing for each level
 
 - **"Create branded text styles using custom fonts"**
-  - AI uses `figma_fonts` to validate brand fonts, then creates text styles
+  - AI uses `figma_fonts` to validate brand fonts (database-optimized), then creates text styles
   - Applies brand-specific typography hierarchy and spacing
 
 ---

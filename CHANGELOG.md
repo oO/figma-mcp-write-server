@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.34.0] - 2025-07-25
 
 ### Added
+- **Font Database Integration**: Database-first architecture with API fallback for 6 font operations
+  - **Database-optimized operations**: `search_fonts`, `get_font_count`, `check_availability`, `get_font_styles`, `validate_font`, `get_font_info`
+  - **Performance improvement**: Database operations bypass plugin API calls for faster response
+  - **Intelligent fallback system**: Graceful API fallback when database unavailable or sync needed
+  - **FTS5 wildcard search**: Full-text search with wildcard support (`Hel*` matches Helvetica)
+  - **Font sync service integration**: Plugin connection triggers database sync only when needed
 - **Auto Layout System Refactor**: 7-operation structure with cross-parent bulk operations
   - **7-operation structure**: `get`, `set_horizontal`, `set_vertical`, `set_grid`, `set_freeform`, `set_child`, `reorder_children`
   - **Cross-parent bulk child operations**: Set child properties across different containers in single operation
