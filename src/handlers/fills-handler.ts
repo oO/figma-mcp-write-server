@@ -473,12 +473,6 @@ export class FillsHandler implements ToolHandler {
     // Preprocess args to handle local image loading
     const processedArgs = await this.preprocessImagePaths(args);
     
-    logger.log('FillsHandler.handle passing to unifiedHandler', {
-      originalKeys: args ? Object.keys(args) : [],
-      processedKeys: processedArgs ? Object.keys(processedArgs) : [],
-      hasImageBytes: !!processedArgs?.imageBytes,
-      hasImagePath: !!processedArgs?.imagePath
-    });
     
     return this.unifiedHandler.handle(processedArgs, config);
   }
@@ -494,12 +488,6 @@ export class FillsHandler implements ToolHandler {
    * DO NOT change this to return byte arrays - it will cause hanging.
    */
   private async preprocessImagePaths(args: any): Promise<any> {
-    logger.log('FillsHandler.preprocessImagePaths called', { 
-      operation: args?.operation, 
-      hasImagePath: !!args?.imagePath,
-      imagePath: args?.imagePath,
-      allArgs: args ? Object.keys(args) : []
-    });
 
     // Handle null/undefined args
     if (!args || typeof args !== 'object') {
@@ -508,13 +496,9 @@ export class FillsHandler implements ToolHandler {
 
     // Only process add_image operations that have imagePath
     if (args.operation !== 'add_image' || !args.imagePath) {
-      logger.log('FillsHandler.preprocessImagePaths skipping', { 
-        reason: args.operation !== 'add_image' ? 'wrong operation' : 'no imagePath'
-      });
       return args;
     }
 
-    logger.log('FillsHandler.preprocessImagePaths processing imagePath', { imagePath: args.imagePath });
     const processedArgs = { ...args };
     
     // Handle imagePath parameter (single or array)
@@ -556,11 +540,6 @@ export class FillsHandler implements ToolHandler {
       // Remove imagePath since we're now using imageBytes
       delete processedArgs.imagePath;
       
-      logger.log('FillsHandler.preprocessImagePaths completed', { 
-        base64Length: imageDataArray.length === 1 ? imageDataArray[0]?.length : imageDataArray.map(b => b?.length),
-        imageBytesType: imageDataArray.length === 1 ? typeof imageDataArray[0] : 'array',
-        processedKeys: Object.keys(processedArgs)
-      });
     }
     
     return processedArgs;
