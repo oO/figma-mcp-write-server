@@ -6,7 +6,6 @@ import {
   HexColorSchema,
   OpacitySchema,
   CoordinateSchema,
-  BulkFailFastSchema,
   PaintTypeFilterSchema,
   GradientTypeSchema,
   ImageScaleModeSchema,
@@ -58,8 +57,7 @@ const SingleOrArray = <T extends z.ZodType>(schema: T) => z.union([schema, z.arr
 const BaseStrokeParams = {
   nodeId: SingleOrArray(z.string().describe('Node ID')),
   paintIndex: SingleOrArray(PaintIndexSchema).optional(),
-  filterType: PaintTypeFilterSchema.optional(),
-  failFast: BulkFailFastSchema.optional()
+  filterType: PaintTypeFilterSchema.optional()
 };
 
 // Stroke property parameters (for update operation)
@@ -238,8 +236,7 @@ const DuplicateStrokeParams = z.object({
   fromNodeId: SingleOrArray(z.string()),
   toNodeId: SingleOrArray(z.string()),
   paintIndex: SingleOrArray(PaintIndexSchema).optional(),
-  overwrite: OverwriteModeSchema.optional(),
-  failFast: BulkFailFastSchema.optional()
+  overwrite: OverwriteModeSchema.optional()
 });
 
 // Union of all stroke operations

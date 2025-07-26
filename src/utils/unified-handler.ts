@@ -156,7 +156,6 @@ export class UnifiedHandler {
       },
       {
         operation: args.operation,
-        failFast: args.failFast || false
       }
     );
 
@@ -313,8 +312,7 @@ export class UnifiedHandler {
 export class UnifiedParamConfigs {
   static basic() {
     return {
-      operation: CommonParamConfigs.operation,
-      failFast: CommonParamConfigs.failFast
+      operation: CommonParamConfigs.operation
     };
   }
 

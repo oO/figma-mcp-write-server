@@ -1,9 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { 
   ManageCollectionsSchema, 
-  ManageVariablesSchema,
-  VariableCollectionDataSchema,
-  VariableDataSchema,
+  ManageVariablesSchema
 } from '@/types/variable-operations';
 
 describe('Variable Operations Schemas', () => {
@@ -11,7 +9,7 @@ describe('Variable Operations Schemas', () => {
     test('should validate create operation', () => {
       const validData = {
         operation: 'create',
-        collectionName: 'Colors',
+        name: 'Colors',
         modes: ['Light', 'Dark'],
         description: 'Color tokens'
       };
@@ -24,7 +22,7 @@ describe('Variable Operations Schemas', () => {
       const validData = {
         operation: 'update',
         collectionId: 'collection-1',
-        collectionName: 'Updated Colors'
+        name: 'Updated Colors'
       };
 
       const result = ManageCollectionsSchema.safeParse(validData);
@@ -72,7 +70,7 @@ describe('Variable Operations Schemas', () => {
   describe('ManageVariablesSchema', () => {
     test('should validate variable creation', () => {
       const validData = {
-        operation: 'create',
+        operation: 'create_variable',
         collectionId: 'collection-1',
         variableName: 'Primary Blue',
         variableType: 'COLOR',
@@ -88,7 +86,7 @@ describe('Variable Operations Schemas', () => {
       
       types.forEach(type => {
         const data = {
-          operation: 'create',
+          operation: 'create_variable',
           collectionId: 'collection-1',
           variableName: `Test ${type}`,
           variableType: type
@@ -101,14 +99,14 @@ describe('Variable Operations Schemas', () => {
 
     test('should validate binding operations', () => {
       const bindToNode = {
-        operation: 'bind',
+        operation: 'bind_variable',
         variableId: 'var-1',
-        nodeId: 'node-1',
+        id: 'node-1',
         property: 'fills'
       };
 
       const bindToStyle = {
-        operation: 'bind',
+        operation: 'bind_variable',
         variableId: 'var-1',
         styleId: 'style-1',
         property: 'color'
@@ -120,13 +118,13 @@ describe('Variable Operations Schemas', () => {
 
     test('should validate unbind operations', () => {
       const unbindFromNode = {
-        operation: 'unbind',
-        nodeId: 'node-1',
+        operation: 'unbind_variable',
+        id: 'node-1',
         property: 'width'
       };
 
       const unbindFromStyle = {
-        operation: 'unbind',
+        operation: 'unbind_variable',
         styleId: 'style-1',
         property: 'paints'
       };
@@ -135,14 +133,14 @@ describe('Variable Operations Schemas', () => {
       expect(ManageVariablesSchema.safeParse(unbindFromStyle).success).toBe(true);
     });
 
-    test('should validate get_bindings operations', () => {
+    test('should validate get_variable operations', () => {
       const getByNode = {
-        operation: 'get_bindings',
-        nodeId: 'node-1'
+        operation: 'get_variable',
+        id: 'node-1'
       };
 
       const getByVariable = {
-        operation: 'get_bindings',
+        operation: 'get_variable',
         variableId: 'var-1'
       };
 
@@ -152,7 +150,7 @@ describe('Variable Operations Schemas', () => {
 
     test('should handle complex modeValues', () => {
       const complexData = {
-        operation: 'create',
+        operation: 'create_variable',
         collectionId: 'collection-1',
         variableName: 'Spacing Scale',
         variableType: 'FLOAT',
@@ -169,7 +167,7 @@ describe('Variable Operations Schemas', () => {
 
     test('should validate variable metadata', () => {
       const withMetadata = {
-        operation: 'create',
+        operation: 'create_variable',
         collectionId: 'collection-1',
         variableName: 'Primary Color',
         variableType: 'COLOR',
@@ -184,90 +182,4 @@ describe('Variable Operations Schemas', () => {
     });
   });
 
-  describe('VariableCollectionDataSchema', () => {
-    test('should validate complete collection data', () => {
-      const collectionData = {
-        id: 'VariableCollectionId:collection-1',
-        name: 'Color Tokens',
-        description: 'Design system color tokens',
-        modes: [
-          { id: 'mode-1', name: 'Light' },
-          { id: 'mode-2', name: 'Dark' }
-        ],
-        defaultModeId: 'mode-1',
-        hiddenFromPublishing: false,
-        variableIds: ['var-1', 'var-2', 'var-3']
-      };
-
-      const result = VariableCollectionDataSchema.safeParse(collectionData);
-      expect(result.success).toBe(true);
-    });
-
-    test('should handle optional fields with defaults', () => {
-      const minimalData = {
-        id: 'collection-1',
-        name: 'Test Collection',
-        modes: [{ id: 'mode-1', name: 'Default' }],
-        defaultModeId: 'mode-1'
-      };
-
-      const result = VariableCollectionDataSchema.safeParse(minimalData);
-      expect(result.success).toBe(true);
-      expect(result.data?.hiddenFromPublishing).toBe(false);
-    });
-  });
-
-  describe('VariableDataSchema', () => {
-    test('should validate complete variable data', () => {
-      const variableData = {
-        id: 'VariableID:var-1',
-        name: 'Primary Blue',
-        description: 'Main brand color',
-        collectionId: 'collection-1',
-        type: 'COLOR',
-        scopes: ['FILL_COLOR', 'STROKE_COLOR'],
-        codeSyntax: { iOS: 'primaryBlue', web: '--color-primary' },
-        hiddenFromPublishing: false,
-        valuesByMode: {
-          'mode-1': { r: 0, g: 0.4, b: 0.8 },
-          'mode-2': { r: 0.29, g: 0.62, b: 1 }
-        }
-      };
-
-      const result = VariableDataSchema.safeParse(variableData);
-      expect(result.success).toBe(true);
-    });
-
-    test('should handle all variable types', () => {
-      const types = ['COLOR', 'FLOAT', 'STRING', 'BOOLEAN'];
-      
-      types.forEach(type => {
-        const data = {
-          id: `var-${type.toLowerCase()}`,
-          name: `Test ${type}`,
-          collectionId: 'collection-1',
-          type
-        };
-
-        const result = VariableDataSchema.safeParse(data);
-        expect(result.success).toBe(true);
-      });
-    });
-
-    test('should apply default values', () => {
-      const minimalData = {
-        id: 'var-1',
-        name: 'Test Variable',
-        collectionId: 'collection-1',
-        type: 'COLOR'
-      };
-
-      const result = VariableDataSchema.safeParse(minimalData);
-      expect(result.success).toBe(true);
-      expect(result.data?.scopes).toEqual([]);
-      expect(result.data?.codeSyntax).toEqual({});
-      expect(result.data?.hiddenFromPublishing).toBe(false);
-      expect(result.data?.valuesByMode).toEqual({});
-    });
-  });
 });

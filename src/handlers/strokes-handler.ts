@@ -235,8 +235,7 @@ export class StrokesHandler implements ToolHandler {
               type: 'string', 
               enum: ['NONE', 'SINGLE', 'ALL'],
               description: 'Overwrite mode: NONE=add to existing (default), SINGLE=replace at same index, ALL=replace all paints'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations' }
+            }
           },
           required: ['operation', 'nodeId']
         },
@@ -357,7 +356,6 @@ export class StrokesHandler implements ToolHandler {
         overwrite: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         
         // Standard parameters
-        failFast: { expectedType: 'boolean' as const, allowSingle: true }
       },
       pluginMessageType: 'MANAGE_STROKES',
       schema: ManageStrokesSchema

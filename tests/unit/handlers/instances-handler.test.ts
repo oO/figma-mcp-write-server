@@ -355,7 +355,7 @@ describe('InstancesHandler', () => {
       expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle failFast parameter in bulk operations', async () => {
+    it('should handle bulk operations with error continuation in bulk operations', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { id: 'instance-123', name: 'Updated Instance' }
@@ -365,7 +365,6 @@ describe('InstancesHandler', () => {
         operation: 'update',
         instanceId: ['instance-123', 'instance-456'],
         name: ['Updated Instance 1', 'Updated Instance 2'],
-        failFast: true
       });
 
       expect(result.content).toHaveLength(1);

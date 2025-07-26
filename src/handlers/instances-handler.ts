@@ -67,8 +67,7 @@ export class InstancesHandler implements ToolHandler {
               type: 'object',
               description: 'Property overrides for the instance',
               additionalProperties: true
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         },
@@ -102,8 +101,7 @@ export class InstancesHandler implements ToolHandler {
         instanceId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         mainComponentId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         name: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
-        overrides: { expectedType: 'object' as const },
-        failFast: { expectedType: 'boolean' as const }
+        overrides: { expectedType: 'object' as const }
       },
       pluginMessageType: 'MANAGE_INSTANCES',
       schema: ManageInstancesSchema,

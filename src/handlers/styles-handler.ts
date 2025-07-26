@@ -187,10 +187,6 @@ export class StyleHandler implements ToolHandler {
                 }
               ],
               description: 'Layout grids for grid styles - single array or array of arrays for bulk operations'
-            },
-            failFast: { 
-              type: 'boolean', 
-              description: 'Stop on first error in bulk operations (default: false)' 
             }
           },
           required: ['operation']
@@ -251,13 +247,13 @@ export class StyleHandler implements ToolHandler {
       pluginMessageType: 'MANAGE_STYLES',
       schema: ManageStylesSchema,
       operationParameters: {
-        create: ['type', 'name', 'description', 'color', 'paintType', 'opacity', 'fontFamily', 'fontStyle', 'fontSize', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'textCase', 'textDecoration', 'gradientStops', 'layoutGrids', 'failFast'],
-        update: ['styleId', 'name', 'description', 'color', 'paintType', 'opacity', 'fontFamily', 'fontStyle', 'fontSize', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'textCase', 'textDecoration', 'gradientStops', 'layoutGrids', 'failFast'],
-        list: ['type', 'failFast'],
-        apply: ['nodeId', 'styleId', 'type', 'failFast'],
-        delete: ['styleId', 'failFast'],
-        get: ['styleId', 'failFast'],
-        duplicate: ['styleId', 'name', 'description', 'failFast']
+        create: ['type', 'name', 'description', 'color', 'paintType', 'opacity', 'fontFamily', 'fontStyle', 'fontSize', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'textCase', 'textDecoration', 'gradientStops', 'layoutGrids'],
+        update: ['styleId', 'name', 'description', 'color', 'paintType', 'opacity', 'fontFamily', 'fontStyle', 'fontSize', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'textCase', 'textDecoration', 'gradientStops', 'layoutGrids'],
+        list: ['type'],
+        apply: ['nodeId', 'styleId', 'type'],
+        delete: ['styleId'],
+        get: ['styleId'],
+        duplicate: ['styleId', 'name', 'description']
       }
     };
 

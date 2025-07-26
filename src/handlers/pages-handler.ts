@@ -118,10 +118,6 @@ export class PagesHandler implements ToolHandler {
             flowStartingPoints: { 
               type: 'array', 
               description: 'Advanced: Flow starting points array for prototyping' 
-            },
-            failFast: { 
-              type: 'boolean', 
-              description: 'Stop on first error in bulk operations (default: false)' 
             }
           },
           required: ['operation']

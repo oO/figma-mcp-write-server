@@ -28,7 +28,6 @@ describe('EffectsHandler', () => {
       expect(schema.properties?.effectType).toHaveProperty('oneOf');
       expect(schema.properties?.color).toHaveProperty('oneOf');
       expect(schema.properties?.radius).toHaveProperty('oneOf');
-      expect(schema.properties?.failFast).toBeDefined();
     });
 
     test('should have proper examples including bulk operations', () => {
@@ -446,7 +445,7 @@ describe('EffectsHandler', () => {
       }
     });
 
-    test('should handle failFast in bulk operations', async () => {
+    test('should handle bulk operations with error continuation', async () => {
       mockSendToPlugin
         .mockResolvedValueOnce({ success: true, data: { effectId: 'effect-1' } })
         .mockRejectedValueOnce(new Error('Creation failed'))
@@ -457,14 +456,13 @@ describe('EffectsHandler', () => {
         owner: ['node:123:456', 'node:123:789', 'node:123:abc'],
         effectType: ['DROP_SHADOW', 'INNER_SHADOW', 'LAYER_BLUR'],
         radius: [4, 3, 8],
-        failFast: true
       });
 
-      // Should stop after first failure
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
+      // Should continue processing all operations even after failures
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
       
       const parsedResult = yaml.load(result.content[0].text);
-      expect(parsedResult.successCount).toBe(1);
+      expect(parsedResult.successCount).toBe(2);
       expect(parsedResult.errorCount).toBe(1);
     });
   });

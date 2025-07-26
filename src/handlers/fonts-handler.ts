@@ -87,10 +87,6 @@ export class FontsHandler implements ToolHandler {
             includeUnused: {
               type: 'boolean',
               description: 'Include unused fonts in project font listing (default: false)'
-            },
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
             }
           },
           required: ['operation']
@@ -103,7 +99,7 @@ export class FontsHandler implements ToolHandler {
           '{"operation": "check_availability", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"]}',
           '{"operation": "check_availability", "fontFamily": "Inter", "fontStyle": ["Regular", "Bold", "Italic"]}',
           '{"operation": "check_availability", "fontFamily": ["Inter", "Roboto", "Open Sans"], "fontStyle": ["Regular", "Bold", "Regular"]}',
-          '{"operation": "check_availability", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"], "failFast": true}',
+          '{"operation": "check_availability", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"]}',
           '{"operation": "get_missing", "fallbackSuggestions": true}',
           '{"operation": "get_font_styles", "fontFamily": "Inter"}',
           '{"operation": "validate_font", "fontFamily": "Inter", "fontStyle": "Regular"}',
@@ -112,7 +108,7 @@ export class FontsHandler implements ToolHandler {
           '{"operation": "preload_fonts", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"]}',
           '{"operation": "preload_fonts", "fontFamily": "Inter", "fontStyle": ["Regular", "Bold", "Italic"]}',
           '{"operation": "preload_fonts", "fontFamily": ["Inter", "Roboto", "Open Sans"], "fontStyle": ["Regular", "Bold", "Regular"]}',
-          '{"operation": "preload_fonts", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"], "failFast": true}',
+          '{"operation": "preload_fonts", "fontFamily": ["Inter", "Roboto"], "fontStyle": ["Regular", "Bold"]}',
           '{"operation": "get_project_fonts", "includeUnused": true}',
           '{"operation": "get_font_count"}'
         ]
@@ -152,15 +148,15 @@ export class FontsHandler implements ToolHandler {
         ? (validatedArgs: any) => this.handleWithFontService(validatedArgs)
         : undefined,
       operationParameters: {
-        search_fonts: ['query', 'source', 'includeGoogle', 'includeSystem', 'includeCustom', 'hasStyle', 'minStyleCount', 'limit', 'sortBy', 'failFast'],
-        check_availability: ['fontFamily', 'fontStyle', 'failFast'],
-        get_missing: ['fallbackSuggestions', 'failFast'],
-        get_font_styles: ['fontFamily', 'failFast'],
-        validate_font: ['fontFamily', 'fontStyle', 'failFast'],
-        get_font_info: ['fontFamily', 'fontStyle', 'failFast'],
-        preload_fonts: ['fontFamily', 'fontStyle', 'failFast'],
-        get_project_fonts: ['includeUnused', 'failFast'],
-        get_font_count: ['failFast']
+        search_fonts: ['query', 'source', 'includeGoogle', 'includeSystem', 'includeCustom', 'hasStyle', 'minStyleCount', 'limit', 'sortBy'],
+        check_availability: ['fontFamily', 'fontStyle'],
+        get_missing: ['fallbackSuggestions'],
+        get_font_styles: ['fontFamily'],
+        validate_font: ['fontFamily', 'fontStyle'],
+        get_font_info: ['fontFamily', 'fontStyle'],
+        preload_fonts: ['fontFamily', 'fontStyle'],
+        get_project_fonts: ['includeUnused'],
+        get_font_count: []
       }
     };
 

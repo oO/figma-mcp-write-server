@@ -27,12 +27,10 @@ describe('VariableHandlers', () => {
       // Check collections schema has oneOf patterns for bulk support
       expect(collectionsSchema?.properties?.collectionId).toHaveProperty('oneOf');
       expect(collectionsSchema?.properties?.collectionName).toHaveProperty('oneOf');
-      expect(collectionsSchema?.properties?.failFast).toBeDefined();
 
       // Check variables schema has oneOf patterns for bulk support  
       expect(variablesSchema?.properties?.variableId).toHaveProperty('oneOf');
       expect(variablesSchema?.properties?.variableName).toHaveProperty('oneOf');
-      expect(variablesSchema?.properties?.failFast).toBeDefined();
     });
   });
 
@@ -164,7 +162,7 @@ describe('VariableHandlers', () => {
       }));
     });
 
-    test('should handle failFast option in bulk operations', async () => {
+    test('should handle bulk operations with mixed success/failure', async () => {
       mockSendToPlugin
         .mockResolvedValueOnce({ success: true, data: { success: true } })
         .mockRejectedValueOnce(new Error('Collection creation failed'))
@@ -172,16 +170,15 @@ describe('VariableHandlers', () => {
 
       const result = await variablesHandler.handle('figma_collections', {
         operation: 'create',
-        collectionName: ['Success', 'Failure', 'NotCalled'],
+        collectionName: ['Success', 'Failure', 'Success2'],
         modes: [['Light'], ['Light'], ['Light']],
-        failFast: true
       });
 
-      // Should stop after first failure with failFast
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
+      // Should process all operations regardless of failures
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
       
       const parsedResult = yaml.load(result.content[0].text);
-      expect(parsedResult.successCount).toBe(1);
+      expect(parsedResult.successCount).toBe(2);
       expect(parsedResult.errorCount).toBe(1);
       expect(parsedResult.totalItems).toBe(3);
     });

@@ -379,7 +379,6 @@ export const BulkMetadataFields = {
  * Bulk operation control fields
  */
 export const BulkControlFields = {
-  failFast: z.boolean().optional(), // Stop on first error in bulk operations
   count: z.number().min(1).optional(), // Number of items to create (alternative to arrays)
 } as const;
 

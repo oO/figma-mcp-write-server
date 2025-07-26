@@ -235,7 +235,7 @@ describe('ManageFillsOperation', () => {
       expect(result.processedNodes).toBe(2);
     });
 
-    it('should handle bulk operation with failFast=false', async () => {
+    it('should handle bulk operation with error continuation', async () => {
       const node1 = createMockNode([createSolidPaint()]);
       
       mockFigma.getNodeById
@@ -245,7 +245,6 @@ describe('ManageFillsOperation', () => {
       const result = await handleManageFills({
         operation: 'get',
         nodeId: ['node1', 'nonexistent'],
-        failFast: false
       });
 
       // Direct result expected without success wrapper

@@ -189,7 +189,7 @@ async function searchFonts(params: any): Promise<any> {
 
 async function checkAvailability(params: any): Promise<FontInfo[]> {
   BaseOperation.validateParams(params, ['fontFamily', 'fontStyle']);
-  const { fontFamily, fontStyle, fallbackSuggestions = false, failFast = false } = params;
+  const { fontFamily, fontStyle, fallbackSuggestions = false } = params;
   
   // Normalize to arrays for bulk processing
   const families = Array.isArray(fontFamily) ? fontFamily : [fontFamily];
@@ -235,10 +235,6 @@ async function checkAvailability(params: any): Promise<FontInfo[]> {
         }
       }
       
-      if (failFast) {
-        results.push(fontInfo);
-        break;
-      }
     }
     
     results.push(fontInfo);
@@ -387,7 +383,7 @@ async function getFontInfo(params: any): Promise<any> {
 
 async function preloadFonts(params: any): Promise<any> {
   BaseOperation.validateParams(params, ['fontFamily', 'fontStyle']);
-  const { fontFamily, fontStyle, failFast = false } = params;
+  const { fontFamily, fontStyle } = params;
   
   // Normalize to arrays for bulk processing
   const families = Array.isArray(fontFamily) ? fontFamily : [fontFamily];
@@ -427,9 +423,6 @@ async function preloadFonts(params: any): Promise<any> {
       });
       failed++;
       
-      if (failFast) {
-        break;
-      }
     }
   }
   

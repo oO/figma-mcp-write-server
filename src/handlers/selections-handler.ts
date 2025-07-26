@@ -81,10 +81,6 @@ export class SelectionHandler implements ToolHandler {
             focus: {
               type: 'boolean',
               description: 'Whether to focus on selected nodes (default: true)'
-            },
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
             }
           },
           required: ['operation']
@@ -142,8 +138,8 @@ export class SelectionHandler implements ToolHandler {
       schema: ManageSelectionSchema,
       operationParameters: {
         get_selection: ['detail', 'focus'],
-        set_selection: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'focus', 'failFast'],
-        list_nodes: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'detail', 'failFast']
+        set_selection: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'focus'],
+        list_nodes: ['pageId', 'nodeId', 'traversal', 'filterByType', 'filterByName', 'filterByVisibility', 'filterByLockedState', 'maxDepth', 'maxResults', 'includeAllPages', 'detail']
       }
     };
 

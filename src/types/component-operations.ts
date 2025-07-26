@@ -27,7 +27,6 @@ export const ManageComponentsSchema = z.object({
   y: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) for created components - supports bulk
   includeInstances: z.boolean().nullable().optional(), // Include instances in listing
   filterType: caseInsensitiveEnum(['all', 'components', 'component_sets']).optional(), // Filter type for listing
-  failFast: z.boolean().nullable().optional(), // Stop on first error in bulk operations
 });
 
 // Manage instances schema
@@ -40,7 +39,6 @@ export const ManageInstancesSchema = z.object({
   overrides: z.record(z.unknown()).optional(), // Property overrides
   x: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) - supports bulk
   y: z.union([z.number(), z.array(z.number())]).optional(), // Position(s) - supports bulk
-  failFast: z.boolean().optional(), // Stop on first error in bulk operations
 });
 
 

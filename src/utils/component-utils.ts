@@ -82,7 +82,6 @@ export class ComponentUtils {
       },
       {
         operation: args.operation,
-        failFast: args.failFast
       }
     );
     
@@ -141,8 +140,7 @@ export class ComponentUtils {
       componentSetId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
       
       // Control parameters
-      operation: CommonParamConfigs.operation,
-      failFast: CommonParamConfigs.failFast
+      operation: CommonParamConfigs.operation
     };
   }
 

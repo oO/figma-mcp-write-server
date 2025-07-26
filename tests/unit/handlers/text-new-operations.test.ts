@@ -421,13 +421,12 @@ describe('TextHandler - New Operations', () => {
       await expect(handler.handle('figma_text', params)).rejects.toThrow('Invalid character range: 10-5');
     });
 
-    it('should handle bulk operations with failFast=false', async () => {
+    it('should handle bulk operations with error continuation', async () => {
       const params = {
         operation: 'insert_text',
         nodeId: ['123:456', 'invalid', '123:789'],
         insertPosition: [0, 0, 0],
         insertText: ['Hello', 'World', 'Test'],
-        failFast: false
       };
 
       mockSendToPlugin.mockResolvedValue({

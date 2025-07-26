@@ -220,7 +220,6 @@ describe('Figma Fills Edge Cases and Error Handling', () => {
       const result = await handleManageFills({
         operation: 'list',
         nodeId: 'mixed-node',
-        failFast: false
       });
 
       expect(result.results[0].fills).toBe('mixed');
@@ -323,7 +322,6 @@ describe('Figma Fills Edge Cases and Error Handling', () => {
         operation: 'add_solid',
         nodeId: manyNodeIds,
         color: '#FF0000',
-        failFast: false
       });
 
       expect(result.successfulNodes).toBe(1);
@@ -657,7 +655,6 @@ describe('Figma Fills Edge Cases and Error Handling', () => {
         operation: 'add_solid',
         nodeId: ['valid-1', 'missing', 'valid-2', 'unsupported'],
         color: '#FF0000',
-        failFast: false
       });
 
       expect(result.totalNodes).toBe(4);

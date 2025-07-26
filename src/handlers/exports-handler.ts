@@ -157,13 +157,6 @@ export class ExportsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string' } }
               ],
               description: 'Legacy parameter - use toId instead. Target node ID(s) for duplicate_setting operation'
-            },
-            
-            // Bulk operation control
-            failFast: {
-              type: 'boolean',
-              default: false,
-              description: 'Stop on first error in bulk operations'
             }
           },
           required: ['operation']
@@ -185,7 +178,7 @@ export class ExportsHandler implements ToolHandler {
           '{"operation": "export", "id": "123:456", "format": "SVG", "svgOutlineText": true, "outputDirectory": "/Users/me/exports"}',
           
           // Bulk operations
-          '{"operation": "export", "id": ["123:456", "789:012"], "format": "PNG", "failFast": true}',
+          '{"operation": "export", "id": ["123:456", "789:012"], "format": "PNG"}',  
           
           // Page export examples
           '{"operation": "export", "id": "0:1", "format": "PNG"}',
@@ -237,7 +230,6 @@ export class ExportsHandler implements ToolHandler {
         toNodeId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         
         // Bulk operation control
-        failFast: { expectedType: 'boolean' as const, allowSingle: true }
       },
       pluginMessageType: 'MANAGE_EXPORTS',
       schema: ManageExportsSchema,

@@ -6,7 +6,6 @@ import { PaintSchema } from './figma-base.js';
 export const HexColorSchema = z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{8}|[A-Fa-f0-9]{3}|[A-Fa-f0-9]{4})$/).describe('Hex color (e.g. #FF0000, #FF0000AA)');
 export const OpacitySchema = z.number().min(0).max(1).describe('Opacity value (0-1)');
 export const CoordinateSchema = z.number().describe('Coordinate value');
-export const BulkFailFastSchema = z.boolean().default(false).describe('Stop on first error in bulk operations');
 
 // Enum schemas for fill operations
 export const FillOperationSchema = caseInsensitiveEnum([
@@ -239,8 +238,6 @@ export const ManageFillsSchema = z.object({
   toNodeId: z.union([z.string(), z.array(z.string())]).optional().describe('Target node ID(s) for duplicate'),
   overwrite: OverwriteModeSchema.optional().describe('Overwrite mode: NONE=add to existing, SINGLE=replace at same index, ALL=replace all fills'),
   
-  // Bulk operation controls
-  failFast: BulkFailFastSchema.optional().describe('Stop on first error in bulk operations')
 }).describe('Figma fills management parameters');
 
 // Operation-specific validation schemas

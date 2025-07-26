@@ -32,8 +32,7 @@ export const ManageSelectionSchema = createActionSchema(
     maxResults: z.number().min(1).max(1000).optional(),
     
     // Behavior options
-    focus: z.boolean().optional(),
-    failFast: z.boolean().optional()
+    focus: z.boolean().optional()
   },
   {
     // Operation-specific validation rules with better error messages

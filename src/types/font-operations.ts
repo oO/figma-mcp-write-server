@@ -26,8 +26,6 @@ export const FontOperationsSchema = z.object({
   strict: z.union([z.boolean(), z.array(z.boolean())]).optional(),
   fallbackSuggestions: z.union([z.boolean(), z.array(z.boolean())]).optional(),
   
-  // Bulk operation control
-  failFast: z.boolean().optional(), // Stop on first error in bulk operations
   
   // Search parameters for search_fonts
   query: z.string().optional(),

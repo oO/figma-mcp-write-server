@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.2] - 2025-07-26
+
+### Removed
+- **failFast parameter**: Removed misleading failFast parameter from all bulk operations
+  - **API cleanup**: Removed from all tool schemas, handlers, and parameter validation
+  - **Simplified behavior**: Bulk operations now always process all items regardless of individual failures
+  - **Consistent error handling**: Operations collect both successes and errors instead of early termination
+  - **Non-breaking rational**: Operations were never atomic, so failFast implied false guarantees about transactional behavior
+
+### Fixed
+- **Plugin operation signatures**: Updated handleBulkError calls to match simplified signature
+- **Test expectations**: Updated tests to expect full processing of bulk operations
+- **Documentation consistency**: Removed failFast references from design specifications
+
 ## [0.34.1] - 2025-07-26
 
 ### Changed
@@ -247,7 +261,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Bulk Operations Support**: Comprehensive bulk operation capabilities for major Figma MCP tools.
   - **Supported Tools**: `figma_nodes`, `figma_text`, `figma_styles`, `figma_variables`, `figma_collections`, `figma_auto_layout`, `figma_constraints`, `figma_images`, `figma_components`, `figma_instances`, `figma_fonts`, `figma_alignment`, `figma_exports`, `figma_annotations`, `figma_measurements`, `figma_dev_resources`.
   - **Intelligent Cycling**: Arrays of different lengths automatically cycle to match the longest array.
-  - **Partial Success**: Operations continue even if individual items fail (controlled by `failFast` parameter).
+  - **Partial Success**: Operations continue even if individual items fail, collecting both successes and errors.
 
 ### Fixed
 - **Color Alpha Channel Support**: The `ColorFields` schema and `color-utils` now correctly handle 8-digit hex colors with alpha channels (#RRGGBBAA).

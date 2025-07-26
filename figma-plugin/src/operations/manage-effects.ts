@@ -36,8 +36,6 @@ export interface EffectParams {
   secondaryColor?: string;
   clipToShape?: boolean;
   
-  // Bulk operation controls
-  failFast?: boolean;
 }
 
 /**

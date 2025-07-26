@@ -19,8 +19,7 @@ export const ManageHierarchySchema = z.object({
     caseInsensitiveEnum(['forward', 'backward', 'front', 'back']),
     z.array(caseInsensitiveEnum(['forward', 'backward', 'front', 'back']))
   ]).optional(),
-  targetId: z.union([z.string(), z.array(z.string())]).optional(),
-  failFast: z.boolean().optional()
+  targetId: z.union([z.string(), z.array(z.string())]).optional()
 });
 
 // Export types

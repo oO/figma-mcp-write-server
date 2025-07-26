@@ -209,8 +209,6 @@ export const ManageEffectsSchema = z.object({
     z.array(z.boolean())
   ]).optional(),
 
-  // Bulk operation controls
-  failFast: z.boolean().default(false)
 });
 
 // ================================================================================

@@ -42,14 +42,14 @@ describe('Handler Discovery Debug', () => {
       
       // Check specific refactored handlers
       const expectedHandlers = [
-        'node-handler.ts',
+        'nodes-handler.ts',
         'plugin-status-handler.ts',
-        'style-handler.ts',
-        'text-handler.ts',
+        'styles-handler.ts',
+        'texts-handler.ts',
         'fonts-handler.ts',
         'components-handler.ts',
         'effects-handler.ts',
-        'selection-handler.ts'
+        'selections-handler.ts'
       ];
       
       expectedHandlers.forEach(handler => {
@@ -77,8 +77,8 @@ describe('Handler Discovery Debug', () => {
   describe('Direct Handler Import', () => {
     it('should be able to import a handler directly', async () => {
       try {
-        // Try to import node-handler directly
-        const nodeHandlerModule = await import('../../src/handlers/node-handler');
+        // Try to import nodes-handler directly
+        const nodeHandlerModule = await import('../../src/handlers/nodes-handler');
         console.log('Direct import successful, exports:', Object.keys(nodeHandlerModule));
         
         expect(nodeHandlerModule.NodeHandler).toBeDefined();
@@ -122,8 +122,8 @@ describe('Handler Discovery Debug', () => {
   describe('Dynamic Import Test', () => {
     it('should test the dynamic import pattern used by HandlerRegistry', async () => {
       const handlerPromises = [
-        import('./../../src/handlers/node-handler.js').catch(err => {
-          console.log('node-handler.js import failed:', err.message);
+        import('./../../src/handlers/nodes-handler.js').catch(err => {
+          console.log('nodes-handler.js import failed:', err.message);
           return null;
         }),
         import('./../../src/handlers/plugin-status-handler.js').catch(err => {
@@ -136,7 +136,7 @@ describe('Handler Discovery Debug', () => {
       
       results.forEach((result, index) => {
         if (result.status === 'fulfilled' && result.value) {
-          const handlerNames = ['node-handler', 'plugin-status-handler'];
+          const handlerNames = ['nodes-handler', 'plugin-status-handler'];
           console.log(`${handlerNames[index]} import succeeded:`, Object.keys(result.value));
         } else {
           console.log(`Import ${index} failed:`, result.status === 'rejected' ? result.reason : 'null value');

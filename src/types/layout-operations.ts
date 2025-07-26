@@ -77,8 +77,6 @@ export const ManageAutoLayoutSchema = z.object({
     z.array(caseInsensitiveEnum(['top', 'middle', 'bottom', 'stretch']))
   ]).optional(),
   
-  // Bulk operation control
-  failFast: z.boolean().optional(),
 }).refine((data) => {
   // set_child operation requires either:
   // 1. containerId + (childIndex OR nodeId) - for single container operations

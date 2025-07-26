@@ -56,8 +56,7 @@ export class AnnotationsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string' } }
               ],
               description: 'Category ID(s) for grouping annotations - must be valid Figma category IDs. Use operation "list_categories" to get available category IDs and labels. Single string or array for bulk operations'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         }

@@ -1,19 +1,14 @@
 /**
- * Handles errors in bulk operations with consistent failFast behavior
+ * Handles errors in bulk operations by adding error to results
  * @param error - The error that occurred
  * @param nodeId - The node ID where the error occurred
- * @param params - Parameters containing failFast setting
- * @param results - Results array to append error to (if not failing fast)
+ * @param results - Results array to append error to
  */
 export function handleBulkError<T extends { nodeId: string }>(
   error: any, 
   nodeId: string, 
-  params: { failFast?: boolean }, 
   results: T[]
 ): void {
-  if (params.failFast !== false) {
-    throw error;
-  }
   results.push({
     nodeId,
     error: error.toString()

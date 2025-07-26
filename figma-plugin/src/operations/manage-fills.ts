@@ -227,7 +227,7 @@ async function listFills(params: any): Promise<OperationResult> {
         
         results.push(nodeResult);
       } catch (error) {
-        handleBulkError(error, nodeId, params, results);
+        handleBulkError(error, nodeId, results);
       }
     }
     
@@ -272,7 +272,7 @@ async function addSolidFill(params: any): Promise<OperationResult> {
         results.push(result);
         
       } catch (error) {
-        handleBulkError(error, nodeId, params, results);
+        handleBulkError(error, nodeId, results);
       }
     }
     
@@ -337,7 +337,7 @@ async function addGradientFill(params: any): Promise<OperationResult> {
         results.push(response);
         
       } catch (error) {
-        handleBulkError(error, nodeId, params, results);
+        handleBulkError(error, nodeId, results);
       }
     }
     
@@ -395,7 +395,7 @@ async function addPatternFill(params: any): Promise<OperationResult> {
         results.push(result);
         
       } catch (error) {
-        handleBulkError(error, nodeId, params, results);
+        handleBulkError(error, nodeId, results);
       }
     }
     
@@ -594,7 +594,7 @@ async function addImageFill(params: any): Promise<OperationResult> {
         results.push(response);
         
       } catch (error) {
-        handleBulkError(error, nodeId, params, results);
+        handleBulkError(error, nodeId, results);
       }
     }
     
@@ -963,9 +963,6 @@ async function deleteFill(params: any): Promise<OperationResult> {
         });
         
       } catch (error) {
-        if (params.failFast !== false) {
-          throw error;
-        }
         results.push({
           nodeId,
           error: error.toString()
@@ -1047,9 +1044,6 @@ async function clearFills(params: any): Promise<OperationResult> {
         });
         
       } catch (error) {
-        if (params.failFast !== false) {
-          throw error;
-        }
         results.push({
           nodeId,
           error: error.toString()
@@ -1113,9 +1107,6 @@ async function duplicateFills(params: any): Promise<OperationResult> {
         });
         
       } catch (error) {
-        if (params.failFast !== false) {
-          throw error;
-        }
         sourceResults.push({
           sourceNodeId,
           error: error.toString()
@@ -1191,9 +1182,6 @@ async function duplicateFills(params: any): Promise<OperationResult> {
         });
         
       } catch (error) {
-        if (params.failFast !== false) {
-          throw error;
-        }
         results.push({
           targetNodeId,
           error: error.toString()

@@ -208,7 +208,7 @@ describe('ConstraintsHandler', () => {
       }
     });
 
-    it('should handle failFast parameter', async () => {
+    it('should handle bulk operations with mixed success/failure results', async () => {
       mockSendToPlugin
         .mockResolvedValueOnce({ nodeId: 'node1', horizontalConstraint: 'MIN', verticalConstraint: 'MAX' })
         .mockRejectedValueOnce(new Error('Node not found: node2'));
@@ -217,8 +217,7 @@ describe('ConstraintsHandler', () => {
         operation: 'set',
         nodeId: ['node1', 'node2'],
         horizontalConstraint: 'MIN',
-        verticalConstraint: 'MAX',
-        failFast: false
+        verticalConstraint: 'MAX'
       });
 
       // Bulk operation should return YAML wrapped array result

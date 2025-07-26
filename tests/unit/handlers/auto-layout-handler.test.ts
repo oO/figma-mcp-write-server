@@ -219,7 +219,7 @@ describe('AutoLayoutHandler', () => {
       expect(result.content[0].type).toBe('text');
     });
 
-    it('should handle failFast parameter', async () => {
+    it('should handle bulk operations with multiple nodes', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { operation: 'set_horizontal', nodeId: 'frame-123' }
@@ -228,8 +228,7 @@ describe('AutoLayoutHandler', () => {
       const result = await handler.handle('figma_auto_layout', {
         operation: 'set_horizontal',
         nodeId: ['frame-123', 'frame-456'],
-        horizontalSpacing: 10,
-        failFast: true
+        horizontalSpacing: 10
       });
 
       expect(result.content).toBeDefined();

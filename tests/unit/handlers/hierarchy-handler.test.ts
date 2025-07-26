@@ -337,7 +337,7 @@ describe('HierarchyHandler', () => {
       expect(result.isError).toBe(false);
     });
 
-    it('should handle failFast parameter', async () => {
+    it('should handle bulk operations with error continuation', async () => {
       mockSendToPlugin.mockResolvedValue({
         success: true,
         data: { operation: 'parent', nodeId: 'node-123' }
@@ -347,7 +347,6 @@ describe('HierarchyHandler', () => {
         operation: 'parent',
         nodeId: ['node-123', 'node-456'],
         parentId: 'parent-1',
-        failFast: true
       });
 
       expect(result.isError).toBe(false);

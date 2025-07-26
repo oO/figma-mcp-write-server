@@ -478,10 +478,6 @@ export class TextHandler implements ToolHandler {
               description: 'Maximum number of search results to return per text node (default: 100) - single number or array for bulk operations'
             },
             // Note: OpenType features (ligatures, kerning) are read-only in Figma Plugin API
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
-            }
           },
           required: ['operation']
         },
@@ -642,16 +638,16 @@ export class TextHandler implements ToolHandler {
       pluginMessageType: 'MANAGE_TEXT',
       schema: ManageTextSchema,
       operationParameters: {
-        create: ['characters', 'parentId', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename', 'failFast'],
-        update: ['nodeId', 'characters', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename', 'failFast'],
-        get: ['nodeId', 'failFast'],
-        delete: ['nodeId', 'failFast'],
-        set_range: ['nodeId', 'rangeStart', 'rangeEnd', 'rangeFontSize', 'rangeFontFamily', 'rangeFontStyle', 'rangeTextCase', 'rangeTextDecoration', 'rangeTextDecorationStyle', 'rangeTextDecorationOffset', 'rangeTextDecorationOffsetUnit', 'rangeTextDecorationThickness', 'rangeTextDecorationThicknessUnit', 'rangeTextDecorationColor', 'rangeTextDecorationColorAuto', 'rangeTextDecorationSkipInk', 'rangeLetterSpacing', 'rangeFillColor', 'rangeHyperlinkType', 'rangeHyperlinkValue', 'failFast'],
-        get_range: ['nodeId', 'rangeStart', 'rangeEnd', 'failFast'],
-        delete_range: ['nodeId', 'rangeStart', 'rangeEnd', 'failFast'],
-        insert_text: ['nodeId', 'insertPosition', 'insertText', 'insertUseStyle', 'failFast'],
-        delete_text: ['nodeId', 'deleteStart', 'deleteEnd', 'failFast'],
-        search_text: ['searchQuery', 'nodeId', 'searchCaseSensitive', 'searchWholeWord', 'searchMaxResults', 'failFast'],
+        create: ['characters', 'parentId', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename'],
+        update: ['nodeId', 'characters', 'x', 'y', 'name', 'width', 'height', 'fontSize', 'fontFamily', 'fontStyle', 'fillColor', 'textCase', 'textDecoration', 'textDecorationStyle', 'textDecorationOffset', 'textDecorationOffsetUnit', 'textDecorationThickness', 'textDecorationThicknessUnit', 'textDecorationColor', 'textDecorationColorAuto', 'textDecorationSkipInk', 'textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'textTruncation', 'maxLines', 'letterSpacing', 'lineHeight', 'paragraphSpacing', 'paragraphIndent', 'listType', 'listSpacing', 'hangingPunctuation', 'hangingList', 'leadingTrim', 'autoRename'],
+        get: ['nodeId'],
+        delete: ['nodeId'],
+        set_range: ['nodeId', 'rangeStart', 'rangeEnd', 'rangeFontSize', 'rangeFontFamily', 'rangeFontStyle', 'rangeTextCase', 'rangeTextDecoration', 'rangeTextDecorationStyle', 'rangeTextDecorationOffset', 'rangeTextDecorationOffsetUnit', 'rangeTextDecorationThickness', 'rangeTextDecorationThicknessUnit', 'rangeTextDecorationColor', 'rangeTextDecorationColorAuto', 'rangeTextDecorationSkipInk', 'rangeLetterSpacing', 'rangeFillColor', 'rangeHyperlinkType', 'rangeHyperlinkValue'],
+        get_range: ['nodeId', 'rangeStart', 'rangeEnd'],
+        delete_range: ['nodeId', 'rangeStart', 'rangeEnd'],
+        insert_text: ['nodeId', 'insertPosition', 'insertText', 'insertUseStyle'],
+        delete_text: ['nodeId', 'deleteStart', 'deleteEnd'],
+        search_text: ['searchQuery', 'nodeId', 'searchCaseSensitive', 'searchWholeWord', 'searchMaxResults']
       },
       customHandler: async (normalizedArgs) => {
         // Send to plugin with the standard MANAGE_TEXT message type

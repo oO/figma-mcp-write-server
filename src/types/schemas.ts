@@ -137,8 +137,7 @@ export const ManageAnnotationsSchema = z.object({
   label: z.union([z.string(), z.array(z.string())]).optional(),
   labelMarkdown: z.union([z.string(), z.array(z.string())]).optional(),
   pinProperty: z.array(z.enum(['width', 'height', 'maxWidth', 'minWidth', 'maxHeight', 'minHeight', 'fills', 'strokes', 'effects', 'strokeWeight', 'cornerRadius', 'opacity', 'textStyleId', 'textAlignHorizontal', 'fontFamily', 'fontStyle', 'fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'itemSpacing', 'padding', 'layoutMode', 'alignItems', 'mainComponent'])).optional(),
-  categoryId: z.union([z.string(), z.array(z.string())]).optional(),
-  failFast: z.boolean().optional()
+  categoryId: z.union([z.string(), z.array(z.string())]).optional()
 });
 
 export const ManageMeasurementsSchema = z.object({
@@ -149,8 +148,7 @@ export const ManageMeasurementsSchema = z.object({
   direction: z.union([z.enum(['horizontal', 'vertical', 'distance']), z.array(z.enum(['horizontal', 'vertical', 'distance']))]).optional(),
   label: z.union([z.string(), z.array(z.string())]).optional(),
   customValue: z.union([z.string(), z.array(z.string())]).optional(),
-  pageId: z.union([z.string(), z.array(z.string())]).optional(),
-  failFast: z.boolean().optional()
+  pageId: z.union([z.string(), z.array(z.string())]).optional()
 });
 
 export const ManageDevResourcesSchema = z.object({
@@ -164,8 +162,7 @@ export const ManageDevResourcesSchema = z.object({
     includeChildren: z.boolean().default(false),
     includeComments: z.boolean().default(true),
     useFlexbox: z.boolean().default(true)
-  }).optional(),
-  failFast: z.boolean().optional()
+  }).optional()
 });
 
 // Export types for dev mode operations

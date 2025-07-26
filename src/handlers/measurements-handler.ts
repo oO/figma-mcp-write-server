@@ -70,8 +70,7 @@ export class MeasurementsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string' } }
               ],
               description: 'Page ID(s) for listing measurements - single string or array for bulk operations'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         }

@@ -269,10 +269,6 @@ export class NodeHandler implements ToolHandler {
               minimum: 1,
               maximum: 100,
               description: 'Number of nodes to create for bulk operations (1-100)'
-            },
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
             }
           },
           required: ['operation']
@@ -360,11 +356,11 @@ export class NodeHandler implements ToolHandler {
       pluginMessageType: 'MANAGE_NODES',
       schema: UnifiedNodeOperationsSchema,
       operationParameters: {
-        create: ['nodeType', 'parentId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'startX', 'startY', 'endX', 'endY', 'startCap', 'endCap', 'length', 'rotation', 'failFast'],
-        get: ['nodeId', 'failFast'],
-        update: ['nodeId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'rotation', 'failFast'],
-        delete: ['nodeId', 'failFast'],
-        duplicate: ['nodeId', 'offsetX', 'offsetY', 'count', 'failFast']
+        create: ['nodeType', 'parentId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'startX', 'startY', 'endX', 'endY', 'startCap', 'endCap', 'length', 'rotation'],
+        get: ['nodeId'],
+        update: ['nodeId', 'name', 'x', 'y', 'width', 'height', 'fillColor', 'strokeColor', 'fillOpacity', 'strokeOpacity', 'strokeWeight', 'strokeAlign', 'visible', 'locked', 'opacity', 'cornerRadius', 'topLeftRadius', 'topRightRadius', 'bottomLeftRadius', 'bottomRightRadius', 'cornerSmoothing', 'clipsContent', 'pointCount', 'innerRadius', 'blendMode', 'rotation'],
+        delete: ['nodeId'],
+        duplicate: ['nodeId', 'offsetX', 'offsetY', 'count']
       }
     };
 

@@ -84,7 +84,6 @@ export class LayoutUtils {
       },
       {
         operation: args.operation,
-        failFast: args.failFast
       }
     );
     
@@ -131,7 +130,6 @@ export class LayoutUtils {
       newIndex: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
       name: CommonParamConfigs.name,
       operation: CommonParamConfigs.operation,
-      failFast: CommonParamConfigs.failFast,
       // Auto layout specific
       direction: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
       spacing: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },

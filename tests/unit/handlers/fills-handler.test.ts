@@ -340,12 +340,11 @@ describe('FillsHandler', () => {
   });
 
   describe('Bulk Operations', () => {
-    it('should handle bulk add_solid with failFast=false', async () => {
+    it('should handle bulk add_solid with error continuation', async () => {
       const params = {
         operation: 'add_solid',
         nodeId: ['node1', 'node2', 'invalid'],
         color: '#00FF00',
-        failFast: false
       };
 
       // Bulk operations: each call returns individual result

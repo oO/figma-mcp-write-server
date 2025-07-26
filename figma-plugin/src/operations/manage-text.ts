@@ -969,9 +969,6 @@ async function handleInsertText(params: TextParams): Promise<any> {
           };
           
         } catch (error) {
-          if (params.failFast) {
-            throw error;
-          }
           results[op.originalIndex] = {
             nodeId: op.nodeId,
             insertPosition: op.insertPosition,
@@ -985,9 +982,6 @@ async function handleInsertText(params: TextParams): Promise<any> {
     } catch (error) {
       // If we can't even find the node, mark all operations for this node as failed
       nodeOps.forEach(op => {
-        if (params.failFast) {
-          throw error;
-        }
         results[op.originalIndex] = {
           nodeId: op.nodeId,
           insertPosition: op.insertPosition,
@@ -1089,9 +1083,6 @@ async function handleDeleteText(params: TextParams): Promise<any> {
           };
           
         } catch (error) {
-          if (params.failFast) {
-            throw error;
-          }
           results[op.originalIndex] = {
             nodeId: op.nodeId,
             deleteStart: op.deleteStart,
@@ -1105,9 +1096,6 @@ async function handleDeleteText(params: TextParams): Promise<any> {
     } catch (error) {
       // If we can't even find the node, mark all operations for this node as failed
       nodeOps.forEach(op => {
-        if (params.failFast) {
-          throw error;
-        }
         results[op.originalIndex] = {
           nodeId: op.nodeId,
           deleteStart: op.deleteStart,
@@ -1191,9 +1179,6 @@ async function handleSearchText(params: TextParams): Promise<any> {
       };
       
     } catch (error) {
-      if (params.failFast) {
-        throw error;
-      }
       results[op.originalIndex] = {
         nodeId: op.nodeId,
         searchQuery: op.searchQuery,
@@ -1250,7 +1235,7 @@ async function performGlobalSearch(params: TextParams): Promise<any> {
         maxResults: searchMaxResults || 100
       });
       
-      if (matches.length > 0 || !params.failFast) {
+      if (matches.length > 0) {
         results.push({
           nodeId: textNode.id,
           nodeName: textNode.name,
@@ -1267,9 +1252,6 @@ async function performGlobalSearch(params: TextParams): Promise<any> {
       }
       
     } catch (error) {
-      if (params.failFast) {
-        throw error;
-      }
       results.push({
         nodeId: textNode.id,
         nodeName: textNode.name,

@@ -140,8 +140,7 @@ export class AutoLayoutHandler implements ToolHandler {
             rowAnchor: { type: 'number', minimum: 0, description: 'Grid child row anchor position' },
             columnAnchor: { type: 'number', minimum: 0, description: 'Grid child column anchor position' },
             horizontalAlign: { type: 'string', enum: ['left', 'center', 'right', 'stretch'], description: 'Grid child horizontal alignment within cell' },
-            verticalAlign: { type: 'string', enum: ['top', 'middle', 'bottom', 'stretch'], description: 'Grid child vertical alignment within cell' },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            verticalAlign: { type: 'string', enum: ['top', 'middle', 'bottom', 'stretch'], description: 'Grid child vertical alignment within cell' }
           },
           required: ['operation']
         },

@@ -73,8 +73,7 @@ export class DevResourcesHandler implements ToolHandler {
                 }
               },
               description: 'Options for CSS generation'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         }

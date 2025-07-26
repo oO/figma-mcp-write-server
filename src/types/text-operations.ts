@@ -107,8 +107,6 @@ export const ManageTextSchema = z.object({
   searchWholeWord: z.union([z.boolean(), z.array(z.boolean())]).optional(),
   searchMaxResults: z.union([z.number().min(1).max(1000), z.array(z.number().min(1).max(1000))]).optional(),
   
-  // Bulk operation control
-  failFast: z.boolean().optional()
 }).refine((data) => {
   // Validate required fields based on operation
   switch (data.operation) {

@@ -338,8 +338,7 @@ export class FillsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'number' } }
               ],
               description: 'Y coordinate(s) for node creation - single number or array for bulk operations'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations' }
+            }
           },
           required: ['operation', 'nodeId']
         },
@@ -466,7 +465,6 @@ export class FillsHandler implements ToolHandler {
         y: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         
         // Standard parameters
-        failFast: { expectedType: 'boolean' as const, allowSingle: true }
       },
       pluginMessageType: 'MANAGE_FILLS',
       schema: ManageFillsSchema

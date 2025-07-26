@@ -92,8 +92,7 @@ export class ComponentsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string' } }
               ],
               description: 'Universal node ID for target operations (get, update, delete, publish) - works with any node type - single string or array for bulk operations'
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         },
@@ -131,8 +130,7 @@ export class ComponentsHandler implements ToolHandler {
         properties: { expectedType: 'object' as const },
         variantName: { expectedType: 'string' as const },
         variantValue: { expectedType: 'string' as const },
-        variants: { expectedType: 'object' as const },
-        failFast: { expectedType: 'boolean' as const }
+        variants: { expectedType: 'object' as const }
       },
       pluginMessageType: 'MANAGE_COMPONENTS',
       schema: ManageComponentsSchema,

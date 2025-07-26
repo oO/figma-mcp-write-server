@@ -16,10 +16,7 @@ export const ManageCollectionsSchema = z.object({
   modeName: z.union([z.string(), z.array(z.string())]).optional(), // For add mode operations
   newModeName: z.union([z.string(), z.array(z.string())]).optional(), // For rename operations
   description: z.union([z.string(), z.array(z.string())]).optional(), // Collection description
-  hiddenFromPublishing: z.union([z.boolean(), z.array(z.boolean())]).optional(), // Publishing visibility
-  
-  // Bulk operation control
-  failFast: z.boolean().optional(), // Stop on first error in bulk operations
+  hiddenFromPublishing: z.union([z.boolean(), z.array(z.boolean())]).optional() // Publishing visibility
 });
 
 // Variable management schema with bulk operations support
@@ -52,10 +49,7 @@ export const ManageVariablesSchema = z.object({
   modes: z.union([z.string(), z.array(z.string()), z.array(z.array(z.string()))]).optional(), // Mode names for creation
   modeId: z.union([z.string(), z.array(z.string())]).optional(), // Specific mode ID for operations
   modeName: z.union([z.string(), z.array(z.string())]).optional(), // For add mode operations
-  newModeName: z.union([z.string(), z.array(z.string())]).optional(), // For rename operations
-  
-  // Bulk operation control
-  failFast: z.boolean().optional(), // Stop on first error in bulk operations
+  newModeName: z.union([z.string(), z.array(z.string())]).optional() // For rename operations
 });
 
 

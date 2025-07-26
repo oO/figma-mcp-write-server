@@ -100,11 +100,9 @@ export class BulkOperationsParser {
     operations: Array<T>,
     executor: (operation: T, index: number) => Promise<any>,
     options: {
-      failFast?: boolean;
       operation?: string;
     } = {}
   ): Promise<BulkOperationResult> {
-    const { failFast = false } = options;
     const results: any[] = [];
 
     for (let i = 0; i < operations.length; i++) {
@@ -141,10 +139,6 @@ export class BulkOperationsParser {
         }
         
         results.push(errorResult);
-        
-        if (failFast) {
-          break;
-        }
       }
     }
 
@@ -428,6 +422,5 @@ export const CommonParamConfigs = {
 
   // Operation control
   operation: { expectedType: 'string' as const, required: true },
-  count: { expectedType: 'number' as const },
-  failFast: { expectedType: 'boolean' as const }
+  count: { expectedType: 'number' as const }
 };

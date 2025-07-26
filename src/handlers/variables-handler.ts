@@ -106,10 +106,6 @@ export class VariablesHandler implements ToolHandler {
               type: 'boolean',
               description: 'Whether variable is hidden from publishing'
             },
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
-            },
             // Collection-specific parameters
             name: {
               oneOf: [
@@ -185,7 +181,6 @@ export class VariablesHandler implements ToolHandler {
       paramConfigs: {
         // Core operational parameters
         operation: { expectedType: 'string' as const, allowSingle: true },
-        failFast: { expectedType: 'boolean' as const, allowSingle: true },
         // Variable-specific parameters
         variableId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },
         collectionId: { expectedType: 'array' as const, arrayItemType: 'string' as const, allowSingle: true },

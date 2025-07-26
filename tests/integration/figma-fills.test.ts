@@ -257,7 +257,6 @@ describe('Figma Fills Integration Tests', () => {
         operation: 'add_solid',
         nodeId: nodeIds,
         color: '#00FF00',
-        failFast: false
       });
 
       expect(bulkAddResult.results).toHaveLength(3);
@@ -363,7 +362,6 @@ describe('Figma Fills Integration Tests', () => {
         operation: 'add_solid',
         nodeId: nodeIds,
         color: '#FF0000',
-        failFast: false
       });
 
       expect(result.totalNodes).toBe(3);
@@ -559,7 +557,6 @@ describe('Figma Fills Integration Tests', () => {
         operation: 'add_solid',
         nodeId: manyNodeIds,
         color: '#00FF00',
-        failFast: false
       });
 
       const endTime = Date.now();

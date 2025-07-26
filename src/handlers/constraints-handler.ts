@@ -37,8 +37,7 @@ export class ConstraintsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string', enum: ['MIN', 'MAX', 'STRETCH', 'CENTER', 'SCALE'] } }
               ],
               description: 'Vertical constraint(s): MIN (top), MAX (bottom), STRETCH (top+bottom), CENTER, SCALE - single value or array for bulk operations' 
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation', 'nodeId']
         }

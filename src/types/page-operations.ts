@@ -45,8 +45,6 @@ export const ManagePagesSchema = z.object({
   // Reorder parameters
   newIndex: z.union([z.number(), z.array(z.number())]).optional(),
   
-  // Bulk operation control
-  failFast: z.boolean().optional()
 });
 
 // Export types

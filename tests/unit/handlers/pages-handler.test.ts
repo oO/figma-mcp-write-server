@@ -525,7 +525,7 @@ describe('PagesHandler', () => {
       expect(parsedResult).toHaveProperty('pages');
     });
 
-    it('should handle failFast parameter', async () => {
+    it('should handle bulk operations with error continuation', async () => {
       mockSendToPlugin.mockResolvedValue({
         operation: 'delete',
         pageId: 'page-123'
@@ -535,7 +535,6 @@ describe('PagesHandler', () => {
         operation: 'delete',
         pageId: ['page-123', 'page-456'],
         switchToPageId: 'page-789',
-        failFast: true
       });
 
       // UnifiedHandler returns YAML wrapped results

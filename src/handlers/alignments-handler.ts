@@ -82,7 +82,6 @@ export class AlignmentHandler implements ToolHandler {
         spacing: { expectedType: 'number' as const, allowSingle: true },
         
         // Standard parameters
-        failFast: { expectedType: 'boolean' as const, allowSingle: true }
       },
       pluginMessageType: 'MANAGE_ALIGNMENT',
       schema: ManageAlignmentSchema

@@ -12,8 +12,7 @@ export const ManageMeasurementsSchema = z.object({
   direction: z.union([z.enum(['horizontal', 'vertical', 'distance']), z.array(z.enum(['horizontal', 'vertical', 'distance']))]).optional(),
   label: z.union([z.string(), z.array(z.string())]).optional(),
   customValue: z.union([z.string(), z.array(z.string())]).optional(),
-  pageId: z.union([z.string(), z.array(z.string())]).optional(),
-  failFast: z.boolean().optional()
+  pageId: z.union([z.string(), z.array(z.string())]).optional()
 });
 
 export type ManageMeasurementsParams = z.infer<typeof ManageMeasurementsSchema>;

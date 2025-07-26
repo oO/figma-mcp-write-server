@@ -107,7 +107,6 @@ export class DevModeUtils {
       },
       {
         operation: args.operation,
-        failFast: args.failFast || false
       }
     );
 
@@ -126,7 +125,6 @@ export class DevModeUtils {
     return {
       // Common to all dev mode operations
       operation: CommonParamConfigs.operation,
-      failFast: CommonParamConfigs.failFast,
       
       // Annotations specific
       nodeId: CommonParamConfigs.nodeId,

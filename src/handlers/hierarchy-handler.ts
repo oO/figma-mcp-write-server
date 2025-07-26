@@ -59,8 +59,7 @@ export class HierarchyHandler implements ToolHandler {
                 { type: 'array', items: { type: 'string' } }
               ],
               description: 'Target page ID(s) (for move_to_page) - single string or array for bulk operations' 
-            },
-            failFast: { type: 'boolean', description: 'Stop on first error in bulk operations (default: false)' }
+            }
           },
           required: ['operation']
         },

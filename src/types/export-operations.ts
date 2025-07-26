@@ -37,8 +37,6 @@ export const ManageExportsSchema = z.object({
   fromNodeId: z.union([z.string(), z.array(z.string())]).optional(), // Legacy compatibility
   toNodeId: z.union([z.string(), z.array(z.string())]).optional(), // Legacy compatibility
   
-  // Bulk operation control
-  failFast: z.boolean().optional(),
 });
 
 export type ManageExportsParams = z.infer<typeof ManageExportsSchema>;

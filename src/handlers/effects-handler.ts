@@ -152,11 +152,6 @@ export class EffectsHandler implements ToolHandler {
                 { type: 'array', items: { type: 'boolean' } }
               ],
               description: 'Clip to shape for texture effects - single value or array for bulk operations'
-            },
-            // Bulk operation controls
-            failFast: {
-              type: 'boolean',
-              description: 'Stop on first error in bulk operations (default: false)'
             }
           },
           required: ['operation', 'owner']
@@ -218,12 +213,12 @@ export class EffectsHandler implements ToolHandler {
       pluginMessageType: 'MANAGE_EFFECTS', // Will be overridden by customHandler
       schema: ManageEffectsSchema,
       operationParameters: {
-        create: ['owner', 'effectType', 'color', 'secondaryColor', 'offsetX', 'offsetY', 'radius', 'spread', 'size', 'density', 'opacity', 'visible', 'showShadowBehindNode', 'blendMode', 'noiseType', 'clipToShape', 'failFast'],
-        update: ['owner', 'effectIndex', 'color', 'secondaryColor', 'offsetX', 'offsetY', 'radius', 'spread', 'size', 'density', 'opacity', 'visible', 'showShadowBehindNode', 'blendMode', 'noiseType', 'clipToShape', 'failFast'],
-        delete: ['owner', 'effectIndex', 'failFast'],
-        get: ['owner', 'failFast'],
-        reorder: ['owner', 'effectIndex', 'newIndex', 'failFast'],
-        duplicate: ['owner', 'effectIndex', 'failFast']
+        create: ['owner', 'effectType', 'color', 'secondaryColor', 'offsetX', 'offsetY', 'radius', 'spread', 'size', 'density', 'opacity', 'visible', 'showShadowBehindNode', 'blendMode', 'noiseType', 'clipToShape'],
+        update: ['owner', 'effectIndex', 'color', 'secondaryColor', 'offsetX', 'offsetY', 'radius', 'spread', 'size', 'density', 'opacity', 'visible', 'showShadowBehindNode', 'blendMode', 'noiseType', 'clipToShape'],
+        delete: ['owner', 'effectIndex'],
+        get: ['owner'],
+        reorder: ['owner', 'effectIndex', 'newIndex'],
+        duplicate: ['owner', 'effectIndex']
       },
       customHandler: async (normalizedArgs) => {
         // Transform flat parameters to structured effect parameters
