@@ -1,618 +1,210 @@
-# Development Guide
+# Development
 
-## Table of Contents
+Technical reference for contributors.
 
-1. [🚀 Quick Start for Contributors](#-quick-start-for-contributors)
-2. [🏗️ Architecture Overview](#-architecture-overview)
-3. [📋 Handler System](#-handler-system)
-4. [🔄 Communication Protocol](#-communication-protocol)
-5. [🛠️ Adding a New Tool](#-adding-a-new-tool-step-by-step-example)
-6. [⚙️ Configuration](#-configuration)
-7. [🧪 Testing Strategy](#-testing-strategy)
-8. [🆘 Getting Help](#-getting-help)
+## Architecture
 
----
+### Server Components
+- **MCP Server** (`src/`): Handles tool registration and Claude communication
+- **WebSocket Bridge** (`src/services/websocket.ts`): Connects to Figma plugin
+- **Handlers** (`src/handlers/`): Tool implementations organized by domain
+- **Font Database** (`src/services/font-database.ts`): SQLite-based font search
 
-## 🚀 Quick Start for Contributors
+### Plugin Components
+- **Main Thread** (`figma-plugin/src/`): Figma API access, no browser APIs
+- **UI Thread** (`figma-plugin/ui/`): Browser APIs, no Figma access
+- **Operations** (`figma-plugin/src/operations/`): Auto-discovered handlers
 
-### First Time Setup (5 minutes)
-```bash
-# 1. Clone and setup
-git clone git@github.com:oO/figma-mcp-write-server.git
-cd figma-mcp-write-server
-npm install
-npm run build
-
-# 2. Start development server
-npm run dev
+### Communication Flow
+```
+Claude → MCP Server → WebSocket → UI Thread → Main Plugin Thread → Figma API
 ```
 
-**3. Install the Figma plugin:**
-- Open Figma Desktop
-- Go to **Plugins** → **Development** → **Import plugin from manifest**
-- Select `figma-plugin/manifest.json` from the project directory
-- Run the plugin from **Plugins** → **Development** → **Figma MCP Write Server**
+## Adding Features
 
-### Verify Everything Works
-```bash
-# Run tests to ensure everything is working
-npm test
-
-# Check WebSocket connection
-npm run test:connectivity
-
-# View manual testing guide
-npm run test:manual
-```
-
-### Your First Contribution
-
-#### Pick a Task
-1. **Browse Issues**: Look for "good first issue" labels
-2. **Check Documentation**: Areas that need improvement
-3. **Test Coverage**: Functions that need more tests
-4. **Bug Reports**: Issues that need fixing
-
-#### Make the Change
-1. **Create Branch**: `git checkout -b feature/your-change`
-2. **Make Changes**: Follow the patterns in existing code
-3. **Add Tests**: Ensure your changes are tested
-4. **Run Tests**: `npm test` to verify everything works
-5. **Submit PR**: Include description of changes
-
-#### Adding Your First Tool
-1. **Define Schema** using shared type components from `src/types/`
-   - Use `figma-enums.ts` for case-insensitive Figma-specific enums
-   - Use `common-fields.ts` for reusable field patterns
-   - Use `operation-factory.ts` for standardized operation schemas
-2. **Add MCP Handler Method** to appropriate handler class in `src/handlers/`
-3. **Add Plugin Implementation** in `figma-plugin/src/operations/`
-4. **Register Tool** in handler's `getTools()` method
-5. **Test** with `npm test`
-
-**Important**: Ensure both MCP server and Figma plugin handlers implement the same operations to avoid schema/implementation mismatches.
-
-### Quick Test
-```bash
-npm test              # Run all tests (unit + integration)
-npm run test:unit     # Run unit tests only  
-npm run test:integration  # Run integration tests only
-npm run test:coverage # Generate coverage report
-```
-
-## 🏗️ Architecture Overview
-
-The Figma MCP Write Server implements a three-layer architecture connecting AI agents to Figma through the Plugin API:
-
-```mermaid
-graph LR
-    subgraph Agent
-        A[AI Agent/Claude] --> B[MCP Client]
-    end
-    subgraph Figma
-        D[Figma Plugin] --> E[Figma Design]
-    end
-    B --> C[MCP Server]
-    C --> D
-```
-
-AI Agent → MCP Protocol → Our Server → WebSocket → Figma Plugin → Figma API
-
-The server translates MCP tool calls into Figma operations and returns structured YAML data.
-
-### Core Design Principles
-
-1. **Logical Tool Consolidation**: Group related operations into single tools with common parameters
-2. **ID-Based Operations**: Use explicit node IDs, never selection state dependencies
-3. **YAML Response Format**: All tools return structured YAML data within MCP's text field
-4. **MCP Protocol Compliance**: Strict adherence to Model Context Protocol standards
-5. **Extensible Design**: Easy to add operations without creating tools
-
-### Cross-Platform Build System
-
-The build system is designed for Windows, macOS, and Linux compatibility:
-
-- **Dynamic Path Resolution**: Uses `getDefaultPaths()` from `src/config/config.ts` for platform-specific configuration directories
-- **ES Module Consistency**: All build scripts use consistent ES module imports with `createRequire()` for CommonJS dependencies
-- **Automatic Cleanup**: Build process removes temporary files (`dist/bundled.js`) to prevent Windows from retaining intermediate bundles
-- **Platform Detection**: Automatically handles config paths for Windows (`%APPDATA%`), macOS (`~/Library/Application Support`), and Linux (`~/.config`)
-
-**Build Commands:**
-```bash
-npm run build              # Full build with cross-platform cleanup
-npm run build:plugin       # Plugin-only build with temporary file cleanup
-npm run build:plugin-ui    # UI template processing with platform-aware config loading
-```
-
-## 📋 Handler System
-
-### Handler Registry (`src/handlers/index.ts`)
-Central registry with auto-discovery pattern:
-
-- **Auto-Discovery**: Handlers automatically register via `getTools()` interface method
-- **Map-Based Routing**: Efficient Map-based request routing for tool execution
-- **Connection Monitoring**: Built-in `get_plugin_status` and `get_connection_health` tools
-- **YAML Response Format**: Consistent YAML output for structured data within MCP text format
-- **Error Handling**: Error reporting with timestamps and operation context
-- **Type Safety**: Full TypeScript integration with runtime validation using Zod schemas
-
-### Available MCP Tools Summary
-
-The server provides 22 consolidated tools organized by domain:
-
-**Core Design Tools**
-- `figma_nodes`, `figma_text`, `figma_fills`, `figma_strokes`, `figma_effects`
-
-**Layout & Positioning**
-- `figma_auto_layout`, `figma_constraints`, `figma_alignment`, `figma_hierarchy`, `figma_selection`
-
-**Design System**
-- `figma_styles`, `figma_components`, `figma_instances`, `figma_variables`, `figma_fonts`
-
-**Advanced Operations**
-- `figma_boolean_operations`, `figma_vector_operations`
-
-**Developer Tools**
-- `figma_dev_resources`, `figma_annotations`, `figma_measurements`, `figma_exports`
-
-**System Tools**
-- `figma_plugin_status`
-
-See README.md for complete tool documentation and parameter details.
-
-## 🏗️ Auto Layout System Deep Dive
-
-### 7-Operation Architecture
-
-The `figma_auto_layout` tool implements a comprehensive 7-operation system that maps to Figma's complete auto layout API:
-
-#### Container Operations (1-5)
+### New Operation
+1. Create handler in `figma-plugin/src/operations/my-operation.ts`:
 ```typescript
-// Layout mode operations
-'get'           // Retrieve layout properties and children info
-'set_horizontal' // Enable horizontal auto layout with full property control
-'set_vertical'   // Enable vertical auto layout with wrapping support
-'set_grid'      // Enable grid layout mode with row/column configuration
-'set_freeform'  // Disable auto layout (return to manual positioning)
-```
-
-#### Child Operations (6-7)
-```typescript
-// Child management operations  
-'set_child'        // Configure child layout properties (2 modes: single-container + cross-parent)
-'reorder_children' // Move children within container by index
-```
-
-### Semantic Parameter Design
-
-**Container vs Child Clarity:**
-- **Container operations**: Use `nodeId` (targets the container frame)
-- **Child operations**: Use `containerId` (references parent) + `childIndex`/`nodeId` (targets child)
-
-**Intuitive Property Names:**
-```typescript
-// User-friendly vs internal API mapping
-horizontalAlignment: 'CENTER'    → primaryAxisAlignItems: 'CENTER'
-verticalSpacing: 16             → itemSpacing: 16 
-fixedWidth: true                → primaryAxisSizingMode: 'FIXED'
-```
-
-### Cross-Parent Bulk Operations
-
-**Revolutionary Feature**: Set child properties across different parents in a single operation:
-
-```typescript
-// Traditional approach (multiple calls)
-figma_auto_layout({ operation: 'set_child', containerId: 'parent1', childIndex: 0, horizontalSizing: 'fill' })
-figma_auto_layout({ operation: 'set_child', containerId: 'parent2', childIndex: 1, horizontalSizing: 'hug' })
-
-// New cross-parent approach (single call)
-figma_auto_layout({ 
-  operation: 'set_child', 
-  nodeId: ['child1', 'child2'],           // No containerId needed!
-  horizontalSizing: ['fill', 'hug'],      // Arrays matched by index
-  layoutGrow: [1, 0]
-})
-```
-
-**Implementation Strategy:**
-1. **Handler Detection**: `!containerId && nodeId` triggers cross-parent mode
-2. **Automatic Parent Discovery**: Plugin finds parent container for each child
-3. **Validation**: Ensures all parents have auto layout enabled
-4. **Individual Processing**: Each child processed with its respective parent
-
-### Bulk Operation Patterns
-
-**Unified Handler Integration:**
-- Container operations use standard unified handler bulk processing
-- Child operations bypass unified handler to prevent array conversion conflicts
-- Direct plugin communication for cross-parent scenarios
-
-**Array Parameter Support:**
-```typescript
-// Single values
-horizontalSpacing: 16
-paddingTop: 20
-
-// Bulk arrays (matched by index with nodeId array)
-horizontalSpacing: [16, 12, 8] 
-paddingTop: [20, 15, 10]
-```
-
-### Auto-Index Lookup
-
-**User Experience Enhancement**: Child operations support both index and ID targeting:
-
-```typescript
-// By index (traditional)
-{ operation: 'set_child', containerId: '123:456', childIndex: 2, layoutGrow: 1 }
-
-// By nodeId (AI-friendly - no math required)
-{ operation: 'set_child', containerId: '123:456', nodeId: '789:123', layoutGrow: 1 }
-```
-
-**Implementation**: Plugin automatically converts `nodeId → childIndex` using `container.children.findIndex()`
-
-### Grid Layout Support
-
-**Complete Grid API Coverage:**
-```typescript
-// Container setup
-{ operation: 'set_grid', nodeId: 'container', rows: 3, columns: 2, rowSpacing: 16, columnSpacing: 20 }
-
-// Child positioning and spanning
-{ operation: 'set_child', containerId: 'container', childIndex: 0, 
-  rowSpan: 2, columnSpan: 1, rowAnchor: 0, columnAnchor: 1 }
-```
-
-### Wrapping and Responsive Features
-
-**Advanced Layout Controls:**
-```typescript
-// Horizontal layout with wrapping
-{ operation: 'set_horizontal', nodeId: 'container', 
-  wrapLayout: true, horizontalSpacing: 12, verticalSpacing: 8 }
-
-// Responsive sizing
-{ operation: 'set_horizontal', nodeId: 'container',
-  fixedWidth: false,      // Hug contents
-  fixedHeight: true }     // Fixed height
-```
-
-### Schema Validation Architecture
-
-**Flexible Validation Logic:**
-```typescript
-// operation-specific validation
-.refine((data) => {
-  if (data.operation === 'set_child') {
-    // Single-container: containerId + (childIndex OR nodeId)
-    // Cross-parent: just nodeId (no containerId)
-    return (data.containerId && (data.childIndex !== undefined || data.nodeId)) ||
-           (!data.containerId && data.nodeId);
-  }
-  // ... other operations
-})
-```
-
-### Testing Strategy
-
-**Comprehensive Test Coverage:**
-- **Container operations**: Bulk array processing, property validation
-- **Child operations**: Both single-container and cross-parent modes
-- **Auto-lookup**: nodeId → childIndex conversion
-- **Edge cases**: Invalid IDs, missing parents, constraint violations
-
-**Mock Strategy:**
-```typescript
-// Handler tests: Mock plugin responses
-mockSendToPlugin.mockResolvedValue({ success: true, data: {...} })
-
-// Plugin tests: Test actual Figma API calls
-expect(frame.layoutMode).toBe('HORIZONTAL')
-expect(child.layoutGrow).toBe(1)
-```
-
-## 🔄 Communication Protocol
-
-### MCP Tool Execution Flow
-
-```mermaid
-sequenceDiagram
-    participant AI as AI Agent
-    participant MCP as MCP Client
-    participant Server as MCP Server<br/>(with integrated WebSocket)
-    participant Registry as Handler Registry
-    participant Handler as Tool Handler
-    participant Plugin as Figma Plugin
-    participant Figma as Figma API
-
-    AI->>MCP: Natural language request
-    MCP->>Server: MCP tool call (stdio)
-    Server->>Registry: Route tool call
-    Registry->>Registry: Validate plugin connection
-    Registry->>Handler: Execute tool handler
-    Handler->>Handler: Validate parameters (Zod)
-    Handler->>Server: Send via integrated WebSocket
-    Server->>Plugin: JSON over WebSocket
-    Plugin->>Figma: Plugin API call
-    Figma-->>Plugin: Result
-    Plugin-->>Server: Response
-    Server-->>Handler: Response data
-    Handler->>Handler: Format as YAML
-    Handler-->>Registry: Formatted result
-    Registry-->>Server: Tool response
-    Server-->>MCP: MCP response
-    MCP-->>AI: Natural language result
-```
-
-### WebSocket Message Format
-```typescript
-// Request to plugin (standardized payload wrapper)
-{
-  id: "uuid-v4",                    // Unique request ID
-  type: "CREATE_NODE",              // Operation type
-  payload: {                        // Validated parameters
-    nodeType: "rectangle",
-    width: 100,
-    height: 100,
-    fillColor: "#FF0000",
-    x: 0,
-    y: 0
-  }
-}
-
-// Response from plugin
-{
-  id: "uuid-v4",
-  success: true,
-  data: {
-    nodeId: "figma-node-id",
-    nodeType: "rectangle",
-    message: "Rectangle created successfully"
-  }
-}
-
-// Error response
-{
-  id: "uuid-v4",
-  success: false,
-  error: "Node not found: invalid-id"
+export async function MY_OPERATION(payload: {param: string}): Promise<any> {
+  // Access Figma API here
+  const node = figma.createRectangle();
+  node.name = payload.param;
+  return { id: node.id };
 }
 ```
 
-## 🛠️ Adding a New Tool: Step-by-Step Example
-
-Let's add a "rotate_node" operation to `manage_nodes`:
-
-### Step 1: Define Schema (types.ts)
+2. Add MCP method in appropriate handler:
 ```typescript
-export const RotateNodeSchema = z.object({
-  operation: z.literal("rotate"),
-  nodeId: z.string(),
-  rotation: z.number() // degrees
+async myNewTool(args: {param: string}): Promise<string> {
+  const result = await this.executeOperation('MY_OPERATION', args);
+  return formatYamlResponse(result);
+}
+```
+
+3. Register in `getTools()`:
+```typescript
+{
+  name: 'my_new_tool',
+  description: 'Does something new',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      param: { type: 'string', description: 'Parameter description' }
+    },
+    required: ['param']
+  }
+}
+```
+
+### Handler Organization
+- `geometry-handler.ts`: Shapes, fills, strokes, effects
+- `text-handler.ts`: Text creation and styling
+- `layout-handler.ts`: Auto layout, constraints, alignment
+- `design-system-handler.ts`: Styles, components, variables
+- `advanced-handler.ts`: Boolean ops, vectors, exports
+- `system-handler.ts`: Plugin status, diagnostics
+
+## Key Patterns
+
+### Figma Property Updates
+```typescript
+// WRONG - Direct mutation doesn't trigger updates
+node.fills.push(newFill);
+
+// CORRECT - Clone, modify, reassign
+import { modifyFills } from '../utils/figma-property-utils.js';
+modifyFills(node, manager => {
+  manager.push(newFill);
+});
+```
+
+### Binary Data
+```typescript
+// Main thread - no atob/btoa available
+figma.ui.postMessage({ 
+  type: 'DECODE_BASE64',
+  data: base64String 
 });
 
-// Add to existing ManageNodesSchema union
-export const ManageNodesSchema = z.discriminatedUnion("operation", [
-  MoveNodeSchema,
-  DuplicateNodeSchema,
-  DeleteNodeSchema,
-  RotateNodeSchema // Add this
-]);
+// UI thread - has browser APIs
+if (msg.type === 'DECODE_BASE64') {
+  const bytes = atob(msg.data);
+  // Process bytes...
+}
 ```
 
-### Step 2: Add Handler Method (handlers/node-handler.ts)
+### Error Handling
 ```typescript
-private async rotateNode(params: RotateNodeParams): Promise<ToolResult> {
-  const response = await this.sendToPlugin({
-    type: 'ROTATE_NODE',
-    payload: {
-      nodeId: params.nodeId,
-      rotation: params.rotation
-    }
-  });
+// In operations
+throw new Error('Specific error message');
 
-  if (!response.success) {
-    throw new Error(response.error || 'Rotation failed');
-  }
-
-  return {
-    content: [{
-      type: 'text',
-      text: yaml.dump({
-        operation: 'rotate',
-        nodeId: params.nodeId,
-        rotation: params.rotation,
-        message: `Node rotated ${params.rotation} degrees`
-      }, { indent: 2, lineWidth: 100 })
-    }],
-    isError: false
-  };
-}
-
-// Update manageNodes method to handle operation
-async manageNodes(params: any): Promise<ToolResult> {
-  const validation = validateAndParse(ManageNodesSchema, params, 'manageNodes');
-  
-  if (!validation.success) {
-    throw new Error(`Validation failed: ${validation.error}`);
-  }
-  
-  const validated = validation.data;
-
-  switch (validated.operation) {
-    case 'move': return this.moveNode(validated);
-    case 'duplicate': return this.duplicateNode(validated);
-    case 'delete': return this.deleteNode(validated);
-    case 'rotate': return this.rotateNode(validated); // Add this
-    default:
-      throw new Error(`Unknown operation: ${validated.operation}`);
-  }
+// In handlers
+try {
+  const result = await this.executeOperation(...);
+  return formatYamlResponse(result);
+} catch (error) {
+  throw error; // Let MCP handle it
 }
 ```
 
-### Step 3: Add Plugin Handler (figma-plugin/src/operations/manage-nodes.ts)
-```typescript
-export async function rotateNode(payload: any): Promise<any> {
-  try {
-    const node = figma.getNodeById(payload.nodeId);
-    if (!node) {
-      return {
-        success: false,
-        error: `Node ${payload.nodeId} not found`
-      };
-    }
+## Testing
 
-    // Convert degrees to radians for Figma API
-    node.rotation = payload.rotation * (Math.PI / 180);
-
-    return {
-      success: true,
-      data: {
-        nodeId: payload.nodeId,
-        rotation: payload.rotation,
-        message: `Node rotated ${payload.rotation} degrees`
-      }
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: `Rotation failed: ${error.message}`
-    };
-  }
-}
-```
-
-### Build and Test
+### Unit Tests
 ```bash
-npm run build                # Build everything
-npm test                     # Run all tests
-npm run test:unit           # Run unit tests only
-# Test manually: manage_nodes(operation: "rotate", nodeId: "123:456", rotation: 45)
+npm run test:unit
 ```
+- Test individual functions
+- Mock Figma API
+- Located in `tests/unit/`
 
-## 🔍 Logging System
-
-Both server and plugin use unified console-style logging interfaces:
-
-### Server Logger
-```typescript
-import { logger } from '../utils/logger.js';
-
-logger.log('Plugin connected', { connectionId: 'abc123' });    // ✅ 
-logger.info('Same as log');                                   // ✅
-logger.warn('Font loading failed', { fontName: 'Inter' });    // ⚠️
-logger.error('Database connection failed', error);            // ❌
-logger.debug('Internal state', { nodeCount: 150 });          // 🐛
-```
-
-### Plugin Logger  
-```typescript
-import { logger } from '../logger.js';
-
-logger.log('Node created successfully');     // ✅ (also to console)
-logger.warn('Invalid node type');            // ⚠️ (also to console) 
-logger.error('Operation failed', error);     // ❌ (also to console)
-logger.debug('Processing step complete');    // 🐛 (also to console)
-```
-
-### Log Location
-Server logs write to platform-specific cache directories:
-- **macOS**: `~/Library/Caches/figma-mcp-write-server/server.log`
-- **Windows**: `%LOCALAPPDATA%/figma-mcp-write-server/server.log`  
-- **Linux**: `~/.cache/figma-mcp-write-server/server.log`
-
-Plugin logs appear in browser console (F12 → Console tab).
-
-## ⚙️ Configuration
-
-The server creates a configuration file on first run with these key settings:
-
-```yaml
-# WebSocket server settings
-port: 8765
-host: localhost
-
-# Font database configuration
-fontDatabase:
-  enabled: true
-  maxAgeHours: 24
-  syncOnStartup: true
-  backgroundSync: true
-
-# Logging configuration
-logging:
-  level: info
-  enableFileLogging: false
-```
-
-Edit the config file to customize server behavior. Restart the server after changes.
-
-### Configuration Development
-The server uses a cross-platform configuration system:
-- Config files auto-generate on first run
-- Database paths are platform-specific by default
-- Font synchronization configurable via YAML
-
-## 🧪 Testing Strategy
-
-### Test Suite (119 Tests)
-
-**Unit Tests (103 tests)**:
-- Handler functionality for all tool types
-- Parameter validation with Zod schemas
-- Error handling and exception patterns
-- WebSocket communication logic
-- Tool registration and routing
-
-**Integration Tests (16 tests)**:
-- MCP server and handler registry integration
-- Multi-tool workflows and sequential operations
-- Plugin status and health monitoring
-- End-to-end tool execution flows
-
-### Test Commands
+### Integration Tests
 ```bash
-npm test                    # Run all tests (119 total)
-npm run test:unit          # Unit tests only (103 tests)
-npm run test:integration   # Integration tests only (16 tests)
-npm run test:coverage      # Generate coverage report
-npm run test:watch         # Watch mode for development
-npm run test:connectivity  # WebSocket connection test
-npm run test:manual        # Display manual test guide
+npm run test:integration
+```
+- Test full tool flow
+- Mock WebSocket connection
+- Located in `tests/integration/`
+
+### Manual Testing
+```bash
+npm run test:manual
+```
+Provides step-by-step testing guide.
+
+## Build System
+
+### Development
+```bash
+npm run dev        # Watch mode
+npm run dev:plugin # Plugin only
+npm run dev:server # Server only
 ```
 
-### Manual Testing Workflow
-1. **Setup**: Start server and load plugin
-2. **Basic Operations**: Test core functionality
-3. **Features**: Test auto layout, styles, hierarchy
-4. **Error Handling**: Test invalid inputs and edge cases
-5. **Performance**: Test with large files and many operations
+### Production
+```bash
+npm run build      # Build all
+npm run build:plugin
+npm run build:server
+```
 
-## 🆘 Getting Help
+### Plugin Build Process
+1. TypeScript compilation
+2. Inline CSS into HTML
+3. Bundle with esbuild
+4. Copy manifest.json
 
-### Common Issues
-- **Build Errors**: Check Node.js version (18+) and run `npm install`
-- **Plugin Not Loading**: Verify manifest.json path and Figma Desktop version
-- **WebSocket Connection**: Ensure server is running on correct port
-- **Test Failures**: Check that Figma plugin is not running during tests
+## Common Issues
 
-### Support Channels
-- **GitHub Issues**: For bugs and feature requests
-- **Pull Request Reviews**: For code feedback and questions
-- **Documentation**: Check README.md and examples.md for usage help
+### WebSocket Connection Failed
+- Ensure plugin is running in Figma
+- Check port isn't blocked (default: 8765)
+- Verify no other instances running
 
-### Next Steps
-- **Read Examples**: Check [examples.md](examples.md) for usage patterns
-- **Explore Codebase**: Browse `src/handlers/` to understand tool implementations
-- **Run Tests**: Use `npm test` to understand expected behavior
-- **Contribute**: Pick an issue and submit your first PR!
+### Operation Not Found
+- Operation name must match export name
+- File must be in `operations/` directory
+- Check for typos in UPPER_SNAKE_CASE
 
-## 📚 Additional Documentation
+### Figma API Errors
+- Some properties are read-only
+- Parent constraints affect operations
+- Check node type compatibility
 
-For detailed implementation guides, architecture specifics, and advanced topics, see:
-- **[architecture.md](architecture.md)** - Deep technical implementation details
-- **[patterns.md](patterns.md)** - Handler patterns and best practices
-- **[contributing.md](contributing.md)** - Step-by-step development guides  
-- **[testing.md](testing.md)** - Testing strategies and procedures
+### Type Errors
+- Use `figma.d.ts` for API types
+- Import from `@figma/plugin-typings`
+- Check for null/undefined nodes
+
+## Performance
+
+### Batch Operations
+- Combine multiple updates in single operation
+- Use `figma.commitUndo()` for atomic changes
+- Minimize plugin<->UI communication
+
+### Large Selections
+- Process in chunks for 100+ nodes
+- Show progress for long operations
+- Use `figma.currentPage.selection` efficiently
+
+### Font Database
+- SQLite indexes on family, style, weight
+- Cached for 24 hours by default
+- Background sync to avoid blocking
+
+## Release Process
+
+1. Update version in `package.json`
+2. Run tests: `npm test`
+3. Build: `npm run build`
+4. Update CHANGELOG.md
+5. Commit with format:
+```
+type: description (vX.X.X)
+
+- Change 1
+- Change 2
+
+Designed with ❤️ by oO. Coded with ✨ by Claude Sonnet 4
+Co-authored-by: Claude.AI <noreply@anthropic.com>
+```

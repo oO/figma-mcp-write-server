@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.34.1] - 2025-07-26
+
+### Changed
+- **Documentation Refactor**: Major documentation overhaul reducing 5000+ lines to 700 lines
+  - **Consolidated structure**: Merged redundant docs into single guide.md file
+  - **Streamlined README**: Reduced from 180 to 145 lines, removed marketing language
+  - **Direct examples**: Replaced verbose format with concise command examples
+  - **Technical focus**: Removed emojis and fluff from development.md
+  - **Preserved specs**: Kept tmp/ files as development specifications
+
+### Fixed
+- **README improvements**: Fixed incomplete line, removed redundant capabilities section
+- **Tool listing**: Compressed 33 lines of tool descriptions to 11 lines with categories
+- **WebSocket diagram**: Corrected communication flow showing UI thread handles WebSocket
+
 ## [0.34.0] - 2025-07-25
 
 ### Added

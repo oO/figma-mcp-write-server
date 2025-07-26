@@ -20,50 +20,21 @@ Since Figma's REST API is read-only, this server uses the Plugin API to enable w
 | **Setup Complexity** | Simple | Moderate (requires plugin) |
 | **Offline Usage** | ✅ Works offline | ❌ Requires active Figma session |
 
-**Key Capabilities:**
-- **Full Design Creation** - Generate complete designs from scratch, not just modifications
-- **Design System Integration** - Create and manage components, styles, and design tokens
-- **Developer Handoff** - Generate CSS and manage development resources and status
-- **Asset Management** - Handle images, fonts, and exports to the filesystem or directly back to the AI agent
-- **Complete Figma API Support** -
-
 ## 📋 Available Tools
 
-Rather than a thin wrapper around the Figma API, tools are thouthtfully organized for intuitive use and discovery. Humans rely on the UI and good UX, but MCP tools have to be designed from the Agent's perspective. _AX is the new UX_
+Rather than a thin wrapper around the Figma API, tools are organized for intuitive use and discovery. Humans rely on the UI and good UX, but MCP tools have to be designed from the Agent's perspective.
 
-### Core Design Tools
-- **`figma_nodes`** - Create, update, move, delete, and duplicate design elements (rectangles, ellipses, text, frames, stars, polygons)
-- **`figma_text`** - Create and style text with typography controls, character-level formatting, and text properties
-- **`figma_fills`** - Manage fill properties including solid colors, gradients, image fills, and pattern fills for design elements
-- **`figma_strokes`** - Manage stroke properties including solid colors, gradients, image strokes, patterns, and stroke styling (weight, alignment, caps, joins)
-- **`figma_effects`** - Apply shadows, blurs, and other visual effects to design elements
+### Tool Categories
+- **Core Design:** `figma_nodes`, `figma_text`, `figma_fills`, `figma_strokes`, `figma_effects`
+- **Layout & Positioning:** `figma_auto_layout`, `figma_constraints`, `figma_alignment`, `figma_hierarchy`
+- **Design System:** `figma_styles`, `figma_components`, `figma_instances`, `figma_variables`, `figma_fonts`
+- **Advanced Operations:** `figma_boolean_operations`, `figma_vector_operations`
+- **Developer Tools:** `figma_dev_resources`, `figma_annotations`, `figma_measurements`, `figma_exports`
+- **System:** `figma_plugin_status`, `figma_pages`, `figma_selection`
 
-### Layout & Positioning
-- **`figma_auto_layout`** - Complete auto layout system with 7 operations: get/set layouts (horizontal/vertical/grid/freeform), child properties, and reordering. Supports cross-parent bulk operations and auto-index lookup
-- **`figma_constraints`** - Set layout constraints to control how elements resize and reposition
-- **`figma_alignment`** - Align, position, and distribute multiple elements with various reference points
-- **`figma_hierarchy`** - Parent, Group, ungroup, and reorder nodes in the layer structure
-- **`figma_selection`** - Get or set the current selection and navigate page nodes
+These 23 tools provide complete access to Figma's capabilities - from creating basic shapes and text to building complex design systems with components and variables. Advanced features include boolean operations for combining shapes, vector manipulation for custom paths, and comprehensive export options for developer handoff.
 
-### Design System
-- **`figma_styles`** - Create and manage design system styles for colors, text, effects, and layout grids
-- **`figma_components`** - Create and manage reusable components and component sets with variant properties
-- **`figma_instances`** - Create component instances, swap components, and manage property overrides
-- **`figma_variables`** - Create, bind, and manage design variables across your design system
-- **`figma_fonts`** - Search, validate, and manage fonts with database-optimized operations and wildcard search support
-
-### Advanced Operations
-- **`figma_boolean_operations`** - Perform union, subtract, intersect, and exclude operations on shapes
-- **`figma_vector_operations`** - Create and manipulate vector paths, flatten shapes, and outline strokes
-
-### Developer Tools
-- **`figma_dev_resources`** - Generate CSS code and manage development resources and status
-- **`figma_annotations`** - Add design annotations and documentation for developer handoff
-- **`figma_measurements`** - Create spacing and sizing measurements for design specifications
-- **`figma_exports`** - Export design elements as images, SVGs, or other formats with customizable settings
-
-### System Tools
-- **`figma_plugin_status`** - Check plugin connection status, run diagnostics, and monitor system health
+See the [Complete Guide](docs/guide.md#tool-reference) for detailed documentation of each tool.
 
 
 
@@ -169,9 +140,10 @@ Open Claude Desktop and use any of the 22 available tools to design programmatic
 
 ## 📚 Documentation
 
-- **[Usage Examples](docs/examples.md)** - Practical usage examples and AI instructions
-- **[Configuration Guide](docs/configuration.md)** - Server configuration and setup options
-- **[Development Guide](docs/development.md)** - Contributing and architecture guidelines
+- **[Complete Guide](docs/guide.md)** - Setup, tools, examples, and development
+- **[Examples](docs/examples.md)** - Quick command reference
+- **[Configuration](docs/configuration.md)** - Advanced server settings
+- **[Development](docs/development.md)** - Technical reference for contributors
 - **[Changelog](CHANGELOG.md)** - Version history and updates
 
 ## 📄 License
