@@ -78,6 +78,85 @@ export function findNodeOrPageById(id: string): (SceneNode | PageNode) | null {
   }
 }
 
+/**
+ * Apply corner radius properties to a node (DRY utility)
+ * Handles the try/catch for mixed corner values
+ */
+export function applyCornerRadius(node: any, params: any, index: number = 0): void {
+  // Apply uniform corner radius if specified
+  const cornerRadius = Array.isArray(params.cornerRadius) ? params.cornerRadius[index] : params.cornerRadius;
+  if (cornerRadius !== undefined) {
+    try {
+      node.cornerRadius = cornerRadius;
+    } catch (error) {
+      // Some nodes may not support cornerRadius or value may be invalid
+      // This is expected behavior for certain node types
+    }
+  }
+  
+  // Apply individual corner radii if specified
+  const topLeftRadius = Array.isArray(params.topLeftRadius) ? params.topLeftRadius[index] : params.topLeftRadius;
+  if (topLeftRadius !== undefined && 'topLeftRadius' in node) {
+    node.topLeftRadius = topLeftRadius;
+  }
+  
+  const topRightRadius = Array.isArray(params.topRightRadius) ? params.topRightRadius[index] : params.topRightRadius;
+  if (topRightRadius !== undefined && 'topRightRadius' in node) {
+    node.topRightRadius = topRightRadius;
+  }
+  
+  const bottomLeftRadius = Array.isArray(params.bottomLeftRadius) ? params.bottomLeftRadius[index] : params.bottomLeftRadius;
+  if (bottomLeftRadius !== undefined && 'bottomLeftRadius' in node) {
+    node.bottomLeftRadius = bottomLeftRadius;
+  }
+  
+  const bottomRightRadius = Array.isArray(params.bottomRightRadius) ? params.bottomRightRadius[index] : params.bottomRightRadius;
+  if (bottomRightRadius !== undefined && 'bottomRightRadius' in node) {
+    node.bottomRightRadius = bottomRightRadius;
+  }
+  
+  // Apply corner smoothing if specified
+  const cornerSmoothing = Array.isArray(params.cornerSmoothing) ? params.cornerSmoothing[index] : params.cornerSmoothing;
+  if (cornerSmoothing !== undefined && 'cornerSmoothing' in node) {
+    node.cornerSmoothing = cornerSmoothing;
+  }
+}
+
+/**
+ * Extract corner radius properties safely from a node (DRY utility)
+ * Handles the exception when mixed corner values exist
+ */
+export function extractCornerRadiusProperties(node: any): Partial<NodeInfo> {
+  const cornerProps: any = {};
+  
+  // Try to get global cornerRadius (may throw for mixed values)
+  if ('cornerRadius' in node) {
+    try {
+      cornerProps.cornerRadius = node.cornerRadius;
+    } catch (error) {
+      // Expected: Mixed corner values cause cornerRadius to throw
+      // This is normal behavior - just skip global cornerRadius
+    }
+  }
+  
+  // Individual corner properties (always work)
+  if ('topLeftRadius' in node) cornerProps.topLeftRadius = node.topLeftRadius;
+  if ('topRightRadius' in node) cornerProps.topRightRadius = node.topRightRadius;
+  if ('bottomLeftRadius' in node) cornerProps.bottomLeftRadius = node.bottomLeftRadius;
+  if ('bottomRightRadius' in node) cornerProps.bottomRightRadius = node.bottomRightRadius;
+  
+  return cornerProps;
+}
+
+/**
+ * Format and safely serialize node response (DRY utility)
+ * Combines formatNodeResponse + cleanEmptyPropertiesAsync pattern
+ */
+export async function formatNodeResponseAsync(node: SceneNode): Promise<NodeInfo> {
+  const nodeData = formatNodeResponse(node);
+  return await cleanEmptyPropertiesAsync(nodeData) || nodeData;
+}
+
 export function formatNodeResponse(node: SceneNode): NodeInfo {
   const response: NodeInfo = {
     id: node.id,
@@ -107,8 +186,9 @@ export function formatNodeResponse(node: SceneNode): NodeInfo {
     }
   }
   
-  // Include corner properties for relevant node types
-  if ('cornerRadius' in node) response.cornerRadius = (node as any).cornerRadius;
+  // Include corner properties for relevant node types using DRY utility
+  const cornerProps = extractCornerRadiusProperties(node);
+  Object.assign(response, cornerProps);
   
   // CRITICAL: Include variable binding information for ALL properties
   if ('boundVariables' in node) {
@@ -119,7 +199,7 @@ export function formatNodeResponse(node: SceneNode): NodeInfo {
   }
   
   // Add additional properties that can be variable-bound
-  if ('rotation' in node) response.rotation = (node as any).rotation * 180 / Math.PI; // Convert radians to degrees
+  if ('rotation' in node) response.rotation = (node as any).rotation; // Figma API stores degrees directly
   if ('strokeWeight' in node && !response.strokeWeight) response.strokeWeight = (node as any).strokeWeight;
   
   // Typography properties for text nodes
@@ -133,11 +213,7 @@ export function formatNodeResponse(node: SceneNode): NodeInfo {
     if ('lineHeight' in node) response.lineHeight = (node as any).lineHeight;
   }
   
-  // Additional corner radius properties for rectangles/frames
-  if ('topLeftRadius' in node) response.topLeftRadius = (node as any).topLeftRadius;
-  if ('topRightRadius' in node) response.topRightRadius = (node as any).topRightRadius;
-  if ('bottomLeftRadius' in node) response.bottomLeftRadius = (node as any).bottomLeftRadius;
-  if ('bottomRightRadius' in node) response.bottomRightRadius = (node as any).bottomRightRadius;
+  // Corner radius properties are handled above using DRY utility
   
   // Layout properties for frames
   if ('spacing' in node) response.spacing = (node as any).spacing;
@@ -229,7 +305,7 @@ export function createNodeData(node: BaseNode, detail: string, depth: number, pa
 
   // Add optional properties if they exist
   if ('opacity' in node) detailedData.opacity = (node as any).opacity;
-  if ('rotation' in node) detailedData.rotation = (node as any).rotation * 180 / Math.PI; // Convert radians to degrees
+  if ('rotation' in node) detailedData.rotation = (node as any).rotation; // Figma API stores degrees directly
   if ('cornerRadius' in node) detailedData.cornerRadius = (node as any).cornerRadius;
   if ('fills' in node) detailedData.fills = (node as any).fills;
   if ('strokes' in node) detailedData.strokes = (node as any).strokes;
@@ -574,26 +650,27 @@ function isColorStopArray(obj: any): obj is ColorStop[] {
  * Async version of cleanEmptyProperties that can enhance image fills with metadata
  */
 export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
-  if (obj === null || typeof obj !== 'object') {
-    return obj;
-  }
-  
-  // Special handling for RGBA colors (must come before array check)
-  if (isRGBAColor(obj)) {
-    return formatColorCompact(obj);
-  }
-  
-  if (Array.isArray(obj)) {
-    // Special handling for ColorStop arrays
-    if (isColorStopArray(obj)) {
-      return formatGradientStopsCompact(obj);
+  try {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
     }
     
-    const cleaned = [];
-    for (const item of obj) {
-      const cleanedItem = await cleanEmptyPropertiesAsync(item);
-      if (cleanedItem !== undefined) {
-        cleaned.push(cleanedItem);
+    // Special handling for RGBA colors (must come before array check)
+    if (isRGBAColor(obj)) {
+      return formatColorCompact(obj);
+    }
+    
+    if (Array.isArray(obj)) {
+      // Special handling for ColorStop arrays
+      if (isColorStopArray(obj)) {
+        return formatGradientStopsCompact(obj);
+      }
+      
+      const cleaned = [];
+      for (const item of obj) {
+        const cleanedItem = await cleanEmptyPropertiesAsync(item);
+        if (cleanedItem !== undefined) {
+          cleaned.push(cleanedItem);
       }
     }
     return cleaned.length > 0 ? cleaned : undefined;
@@ -733,6 +810,9 @@ export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
   
   
   return hasProperties ? cleaned : undefined;
+  } catch (error) {
+    throw error;
+  }
 }
 
 export function cleanEmptyProperties(obj: any): any {
@@ -893,15 +973,3 @@ export function formatPaintCompact(paint: Paint): any {
   return compactPaint;
 }
 
-/**
- * Convert Transform matrix to flattened gradient parameters for debugging
- */
-export function debugMatrixToFlattened(matrix: Transform): string {
-  try {
-    const { matrixToFlattened } = require('../utils/color-utils.js');
-    const flattened = matrixToFlattened(matrix);
-    return `startX:${flattened.gradientStartX.toFixed(2)}, startY:${flattened.gradientStartY.toFixed(2)}, endX:${flattened.gradientEndX.toFixed(2)}, endY:${flattened.gradientEndY.toFixed(2)}, scale:${flattened.gradientScale.toFixed(2)}`;
-  } catch (error) {
-    return formatTransformCompact(matrix);
-  }
-}

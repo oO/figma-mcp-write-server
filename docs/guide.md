@@ -116,7 +116,7 @@ npm run dev          # Development mode
 ## Tool Reference
 
 ### Core Design
-- `figma_nodes` - Create/update/delete shapes, frames, text
+- `figma_nodes` - Create/update/delete geometric shapes (rectangles, ellipses, frames, sections, slices, stars, polygons) with specialized operations per type, list/filter nodes
 - `figma_text` - Text styling and properties
 - `figma_fills` - Colors, gradients, images
 - `figma_strokes` - Border styling
@@ -127,7 +127,7 @@ npm run dev          # Development mode
 - `figma_constraints` - Resize behavior
 - `figma_alignment` - Align and distribute
 - `figma_hierarchy` - Layer organization
-- `figma_selection` - Selection control
+- `figma_selection` - Get/set selection with filtering and traversal
 
 ### Design System
 - `figma_styles` - Color/text/effect styles

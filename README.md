@@ -32,7 +32,7 @@ Rather than a thin wrapper around the Figma API, tools are organized for intuiti
 - **Developer Tools:** `figma_dev_resources`, `figma_annotations`, `figma_measurements`, `figma_exports`
 - **System:** `figma_plugin_status`, `figma_pages`, `figma_selection`
 
-These 23 tools provide complete access to Figma's capabilities - from creating basic shapes and text to building complex design systems with components and variables. Advanced features include boolean operations for combining shapes, vector manipulation for custom paths, and comprehensive export options for developer handoff.
+These 24 tools provide complete access to Figma's capabilities - from creating basic shapes and text to building complex design systems with components and variables. Advanced features include boolean operations for combining shapes, vector manipulation for custom paths, and comprehensive export options for developer handoff.
 
 See the [Complete Guide](docs/guide.md#tool-reference) for detailed documentation of each tool.
 
@@ -98,7 +98,7 @@ Add this configuration to your Claude Desktop MCP settings file:
 **Optional**: Customize server settings by copying `config.example.yaml` to your platform-specific config directory and editing as needed. See [Configuration Guide](docs/configuration.md) for details.
 
 ## 🎯 Start Creating
-Open Claude Desktop and use any of the 22 available tools to design programmatically
+Open Claude Desktop and use any of the 24 available tools to design programmatically
 
 ### Layout & Structure
 - "Create a header frame with title and subtitle"

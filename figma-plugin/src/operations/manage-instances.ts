@@ -354,7 +354,7 @@ async function getInstance(params: any): Promise<any> {
       y: instanceNode.y,
       width: instanceNode.width,
       height: instanceNode.height,
-      rotation: (instanceNode.rotation || 0) * 180 / Math.PI, // Convert radians to degrees
+      rotation: instanceNode.rotation || 0, // Figma API stores degrees directly
       opacity: instanceNode.opacity || 1,
       visible: instanceNode.visible !== false,
       locked: instanceNode.locked || false,

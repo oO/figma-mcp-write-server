@@ -178,16 +178,17 @@ export const BulkExportNodesSchema = z.object({
 
 // Simple single schema like ManageTextSchema
 export const UnifiedNodeOperationsSchema = z.object({
-  operation: caseInsensitiveEnum(['create', 'get', 'update', 'delete', 'duplicate']),
+  operation: caseInsensitiveEnum([
+    'get', 'list', 'update', 'delete', 'duplicate', 
+    'create_rectangle', 'create_ellipse', 'create_frame', 'create_section', 'create_slice', 'create_star', 'create_polygon',
+    'update_rectangle', 'update_ellipse', 'update_frame', 'update_section', 'update_slice', 'update_star', 'update_polygon'
+  ]),
   
   // Core identification
   nodeId: z.union([z.string(), z.array(z.string())]).optional(),
   
   // Parent container for create operations
   parentId: z.string().optional(),
-  
-  // Create-specific
-  nodeType: z.union([FigmaCreateNodeTypes, z.array(FigmaCreateNodeTypes)]).optional(),
   
   // Basic properties
   ...BulkPositionFields,
@@ -196,35 +197,76 @@ export const UnifiedNodeOperationsSchema = z.object({
   ...BulkColorFields,
   ...BulkMetadataFields,
   ...BulkControlFields,
+  
+  // Type-specific properties
+  // Rectangle and Frame properties
+  cornerRadius: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  topLeftRadius: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  topRightRadius: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  bottomLeftRadius: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  bottomRightRadius: z.union([z.number().min(0), z.array(z.number().min(0))]).optional(),
+  cornerSmoothing: z.union([z.number().min(0).max(1), z.array(z.number().min(0).max(1))]).optional(),
+  
+  // Frame-specific properties
+  clipsContent: z.union([z.boolean(), z.array(z.boolean())]).optional(),
+  
+  // Section-specific properties
+  sectionContentsHidden: z.union([z.boolean(), z.array(z.boolean())]).optional(),
+  devStatus: z.union([
+    caseInsensitiveEnum(['READY_FOR_DEV', 'IN_DEVELOPMENT', 'COMPLETED']),
+    z.array(caseInsensitiveEnum(['READY_FOR_DEV', 'IN_DEVELOPMENT', 'COMPLETED']))
+  ]).optional(),
+  
+  // Star and Polygon properties
+  pointCount: z.union([z.number().min(3), z.array(z.number().min(3))]).optional(),
+  innerRadius: z.union([z.number().min(0).max(1), z.array(z.number().min(0).max(1))]).optional(),
+  
+  // Offset properties for duplication
+  offsetX: z.union([z.number(), z.array(z.number())]).optional(),
+  offsetY: z.union([z.number(), z.array(z.number())]).optional(),
+  
+  // Count for bulk creation
+  count: z.number().min(1).max(100).optional(),
+  
+  // List operation filter parameters
+  filterByName: z.string().optional(),
+  filterByType: z.union([z.string(), z.array(z.string())]).optional(),
+  filterByVisibility: caseInsensitiveEnum(['visible', 'hidden', 'all']).optional(),
+  filterByLockedState: z.boolean().optional(),
+  traversal: caseInsensitiveEnum(['children', 'ancestors', 'siblings', 'descendants']).optional(),
+  maxDepth: z.number().min(0).optional(),
+  maxResults: z.number().min(1).optional(),
+  includeAllPages: z.boolean().optional(),
+  detail: caseInsensitiveEnum(['minimal', 'standard', 'detailed']).optional(),
+  pageId: z.string().optional(),
 }).refine((data) => {
   // Validate required fields based on operation
-  switch (data.operation) {
-    case 'create':
-      // Must have nodeType for create
-      if (!data.nodeType) return false;
-      if (Array.isArray(data.nodeType)) {
-        return data.nodeType.length > 0;
-      }
-      return true;
-    case 'get':
-    case 'update':
-    case 'delete':
-    case 'duplicate':
-      // Must have nodeId for these operations
-      if (!data.nodeId) return false;
-      if (Array.isArray(data.nodeId)) {
-        return data.nodeId.length > 0 && data.nodeId.every(id => id && id.trim().length > 0);
-      }
-      return typeof data.nodeId === 'string' && data.nodeId.trim().length > 0;
-    default:
-      return true;
+  const createOps = ['create_rectangle', 'create_ellipse', 'create_frame', 'create_section', 'create_slice', 'create_star', 'create_polygon'];
+  const updateOps = ['get', 'update', 'delete', 'duplicate', 'update_rectangle', 'update_ellipse', 'update_frame', 'update_section', 'update_slice', 'update_star', 'update_polygon'];
+  
+  if (updateOps.includes(data.operation)) {
+    // Must have nodeId for these operations
+    if (!data.nodeId) return false;
+    if (Array.isArray(data.nodeId)) {
+      return data.nodeId.length > 0 && data.nodeId.every(id => id && id.trim().length > 0);
+    }
+    return typeof data.nodeId === 'string' && data.nodeId.trim().length > 0;
   }
+  
+  return true;
 }, (val) => ({
   message: `Missing required parameters for operation '${val.operation}': ${
-    val.operation === 'create' ? "'nodeType' is required" :
-    ['get', 'update', 'delete', 'duplicate'].includes(val.operation) ? "'nodeId' is required" :
+    ['get', 'update', 'delete', 'duplicate', 'update_rectangle', 'update_ellipse', 'update_frame', 'update_section', 'update_slice', 'update_star', 'update_polygon'].includes(val.operation) ? "'nodeId' is required" :
     "Missing required parameters"
   }`
+})).refine((data) => {
+  // Validate that count parameter is only used with duplicate operation
+  if (data.count !== undefined && data.operation !== 'duplicate') {
+    return false;
+  }
+  return true;
+}, (val) => ({
+  message: `Parameter 'count' is only valid for duplicate operations, not '${val.operation}'`
 }));
 
 // Export types

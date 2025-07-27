@@ -366,7 +366,7 @@ async function getComponentDetails(component: ComponentNode): Promise<any> {
       y: component.y,
       width: component.width,
       height: component.height,
-      rotation: (component.rotation || 0) * 180 / Math.PI, // Convert radians to degrees
+      rotation: component.rotation || 0, // Figma API stores degrees directly
       opacity: component.opacity || 1,
       visible: component.visible !== false,
       locked: component.locked || false,
@@ -405,7 +405,7 @@ async function getComponentSetDetails(componentSet: ComponentSetNode): Promise<a
       y: componentSet.y,
       width: componentSet.width,
       height: componentSet.height,
-      rotation: (componentSet.rotation || 0) * 180 / Math.PI, // Convert radians to degrees
+      rotation: componentSet.rotation || 0, // Figma API stores degrees directly
       opacity: componentSet.opacity || 1,
       visible: componentSet.visible !== false,
       locked: componentSet.locked || false,

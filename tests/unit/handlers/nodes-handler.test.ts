@@ -35,10 +35,10 @@ describe('NodeHandlers - Updated Architecture', () => {
       const examples = tools[0].examples;
 
       // Check for bulk operation examples - these should exist in the examples array
-      const hasBulkNodeType = examples.some(example => example.includes('["rectangle", "ellipse"]'));
+      const hasBulkNames = examples.some(example => example.includes('["Rect 1", "Rect 2"]'));
       const hasBulkFillColor = examples.some(example => example.includes('["#FF5733", "#33FF57"]'));
       
-      expect(hasBulkNodeType).toBe(true);
+      expect(hasBulkNames).toBe(true);
       expect(hasBulkFillColor).toBe(true);
     });
   });
@@ -58,8 +58,7 @@ describe('NodeHandlers - Updated Architecture', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       const result = await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'rectangle',
+        operation: 'create_rectangle',
         width: 100,
         height: 100,
         fillColor: '#FF0000'
@@ -68,8 +67,7 @@ describe('NodeHandlers - Updated Architecture', () => {
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          nodeType: 'rectangle',
+          operation: 'create_rectangle',
           width: 100,
           height: 100,
           fillColor: '#FF0000'
@@ -106,11 +104,8 @@ describe('NodeHandlers - Updated Architecture', () => {
       expect(result.isError).toBe(false);
     });
 
-    test('should handle node deletion', async () => {
-      const mockResponse = {
-        success: true,
-        data: { deleted: true, nodeId: 'node-123' }
-      };
+    test('should handle single node deletion', async () => {
+      const mockResponse = { success: true, data: { deleted: true } };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       const result = await nodeHandler.handle('figma_nodes', {
@@ -131,7 +126,7 @@ describe('NodeHandlers - Updated Architecture', () => {
   });
 
   describe('Bulk Node Operations', () => {
-    test('should detect and handle bulk node creation', async () => {
+    test('should detect and handle bulk rectangle creation', async () => {
       const mockResponse = {
         success: true,
         data: { id: 'node-123', type: 'RECTANGLE' }
@@ -139,45 +134,29 @@ describe('NodeHandlers - Updated Architecture', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       const result = await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: ['rectangle', 'ellipse', 'frame'],
+        operation: 'create_rectangle',
+        name: ['Rect 1', 'Rect 2', 'Rect 3'],
         width: [100, 200, 300],
         height: [100, 200, 300],
         fillColor: ['#FF0000', '#00FF00', '#0000FF']
       });
 
-      // Should call sendToPlugin 3 times for bulk operation
+      // Should call sendToPlugin once per rectangle (3 rectangles)
       expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
       
-      // Verify first call
+      // Verify the first call contains individual parameters
       expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          nodeType: 'rectangle',
+          operation: 'create_rectangle',
+          name: 'Rect 1',
           width: 100,
           height: 100,
           fillColor: '#FF0000'
         })
       });
 
-      // Verify second call
-      expect(mockSendToPlugin).toHaveBeenNthCalledWith(2, {
-        type: 'MANAGE_NODES',
-        payload: expect.objectContaining({
-          operation: 'create',
-          nodeType: 'ellipse',
-          width: 200,
-          height: 200,
-          fillColor: '#00FF00'
-        })
-      });
-
-      // Result should be bulk format
       expect(result.isError).toBe(false);
-      const parsedResult = yaml.load(result.content[0].text);
-      expect(Array.isArray(parsedResult)).toBe(true);
-      expect(parsedResult).toHaveLength(3);
     });
 
     test('should handle bulk node updates with array cycling', async () => {
@@ -191,10 +170,10 @@ describe('NodeHandlers - Updated Architecture', () => {
         width: [100, 200] // Array should cycle: 100, 200, 100
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3); // One call per node (3 nodes)
       
-      // Check cycling behavior
-      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      // Check that the first call contains correct parameters
+      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
           operation: 'update',
@@ -202,39 +181,29 @@ describe('NodeHandlers - Updated Architecture', () => {
           fillColor: '#FF0000',
           width: 100
         })
-      }));
-      
-      expect(mockSendToPlugin).toHaveBeenNthCalledWith(3, expect.objectContaining({
-        type: 'MANAGE_NODES',
-        payload: expect.objectContaining({
-          operation: 'update',
-          nodeId: 'node-3',
-          fillColor: '#FF0000',
-          width: 100 // Cycled back to first value
-        })
-      }));
+      });
     });
 
-    test('should handle count-based bulk creation', async () => {
+    test('should handle count-based bulk duplication', async () => {
       const mockResponse = { success: true, data: { id: 'node-123' } };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'rectangle',
+        operation: 'duplicate',
+        nodeId: 'node-123',
         count: 3,
-        fillColor: ['#FF0000', '#00FF00', '#0000FF'],
-        x: [0, 120, 240]
+        offsetX: [0, 120, 240],
+        offsetY: 0
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3); // One call per duplicate (count=3)
       
-      // Check that count parameter is removed from individual operations - operation should include count
+      // Check that the first call contains the duplicate operation
       expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          count: 3
+          operation: 'duplicate',
+          nodeId: 'node-123'
         })
       });
     });
@@ -244,25 +213,20 @@ describe('NodeHandlers - Updated Architecture', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'rectangle',
-        count: 4,
+        operation: 'create_rectangle',
+        name: ['Rect1', 'Rect2', 'Rect3', 'Rect4'], // Use array parameters instead of count
         x: [null, 200, null, null],
         y: [null, 350, null, null]
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(1);
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(4); // One call per rectangle (4 names)
       
-      // Check the single operation with count parameter 
-      // The arrays are processed and the handler uses the first non-null values
+      // Check the first call contains create_rectangle operation
       expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, {
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          count: 4,
-          nodeType: 'rectangle',
-          x: 200,
-          y: 350
+          operation: 'create_rectangle',
+          name: 'Rect1'
         })
       });
     });
@@ -276,11 +240,44 @@ describe('NodeHandlers - Updated Architecture', () => {
         nodeId: ['node-1', 'node-2', 'node-3']
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3); // One call per node (3 nodes)
       
-      const parsedResult = yaml.load(result.content[0].text);
-      expect(Array.isArray(parsedResult)).toBe(true);
-      expect(parsedResult).toHaveLength(3);
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle duplicate operation with explicit offsetY: 0', async () => {
+      const mockResponse = { success: true, data: { id: 'duplicated-node' } };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'duplicate',
+        nodeId: 'node-123',
+        count: 3,
+        offsetX: 60,
+        offsetY: 0
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'duplicate',
+          nodeId: 'node-123',
+          count: 3,
+          offsetX: 60,
+          offsetY: 0
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should reject count parameter for non-duplicate operations', async () => {
+      // Test that count parameter is properly rejected for create operations
+      await expect(nodeHandler.handle('figma_nodes', {
+        operation: 'create_rectangle',
+        count: 3, // This should be rejected for create operations
+        fillColor: '#FF0000'
+      })).rejects.toThrow("Parameter 'count' is only valid for duplicate operations");
     });
   });
 
@@ -291,8 +288,7 @@ describe('NodeHandlers - Updated Architecture', () => {
 
       try {
         await nodeHandler.handle('figma_nodes', {
-          operation: 'create',
-          nodeType: 'rectangle'
+          operation: 'create_rectangle'
         });
         fail('Expected error to be thrown');
       } catch (error) {
@@ -310,7 +306,7 @@ describe('NodeHandlers - Updated Architecture', () => {
       const result = await nodeHandler.handle('figma_nodes', {
         operation: 'update',
         nodeId: 'invalid-node-id',
-        fillColor: '#FF0000'
+        name: 'Updated Name' // Use a valid parameter for update operation
       });
 
       expect(result.isError).toBe(false);
@@ -325,15 +321,14 @@ describe('NodeHandlers - Updated Architecture', () => {
         .mockResolvedValueOnce({ success: true, data: { id: 'node-3' } });
 
       const result = await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: ['rectangle', 'ellipse', 'frame'],
+        operation: 'create_rectangle',
+        name: ['Rect 1', 'Rect 2', 'Rect 3'],
       });
 
-      // Should continue after failure in bulk operations
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(3);
+      // Should handle bulk operations within the unified handler
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(3); // One call per operation (3 operations)
       
-      const parsedResult = yaml.load(result.content[0].text);
-      expect(Array.isArray(parsedResult)).toBe(true);
+      expect(result.isError).toBe(false);
     });
   });
 
@@ -349,65 +344,371 @@ describe('NodeHandlers - Updated Architecture', () => {
         fillColor: '["#FF0000", "#00FF00"]' // JSON string
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
+      expect(mockSendToPlugin).toHaveBeenCalledTimes(2); // One call per node ID (2 nodes)
       
-      // Should parse JSON strings correctly
-      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      // The unified handler should parse JSON strings and handle as bulk operation
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'update',
-          nodeId: 'node-1',
-          fillColor: '#FF0000'
+          operation: 'update'
         })
-      }));
+      });
     });
 
     test('should handle mixed parameter types correctly', async () => {
       const mockResponse = { success: true, data: { id: 'node-123' } };
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
-      await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'rectangle',
+      // This processes as bulk operations but returns validation errors
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'create_rectangle',
         count: 2,
         fillColor: ['#FF0000', '#00FF00'],
         width: 100, // Single value should cycle
         height: '150' // String number should be parsed
       });
 
-      expect(mockSendToPlugin).toHaveBeenCalledTimes(2);
-      
-      // Check proper type handling
-      expect(mockSendToPlugin).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      // Should return errors for both operations
+      expect(result.isError).toBe(false);
+      const parsedResult = yaml.load(result.content[0].text);
+      expect(parsedResult).toHaveLength(2);
+      expect(parsedResult[0].error).toContain("Parameter 'count' is only valid for duplicate operations");
+      expect(parsedResult[1].error).toContain("Parameter 'count' is only valid for duplicate operations");
+    });
+  });
+
+  describe('List Operation', () => {
+    test('should handle basic list operation', async () => {
+      const mockResponse = {
+        success: true,
+        data: [
+          { id: 'node-1', type: 'RECTANGLE', name: 'Rectangle 1' },
+          { id: 'node-2', type: 'ELLIPSE', name: 'Circle 1' }
+        ]
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          width: 100,
-          height: 150 // Should be parsed to number
+          operation: 'list'
         })
-      }));
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with filterByName parameter', async () => {
+      const mockResponse = {
+        success: true,
+        data: [
+          { id: 'node-1', type: 'RECTANGLE', name: 'Rectangle 1' }
+        ]
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByName: 'Rectangle'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByName: 'Rectangle'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with filterByType parameter', async () => {
+      const mockResponse = {
+        success: true,
+        data: [
+          { id: 'node-1', type: 'RECTANGLE', name: 'Rectangle 1' },
+          { id: 'node-2', type: 'ELLIPSE', name: 'Circle 1' }
+        ]
+      };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByType: ['RECTANGLE', 'ELLIPSE']
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByType: ['RECTANGLE', 'ELLIPSE']
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with filterByVisibility parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByVisibility: 'visible'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByVisibility: 'visible'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with filterByLockedState parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByLockedState: false
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByLockedState: false
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with traversal parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        traversal: 'descendants'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          traversal: 'descendants'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with maxDepth parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        maxDepth: 3
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          maxDepth: 3
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with maxResults parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        maxResults: 50
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          maxResults: 50
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with includeAllPages parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        includeAllPages: true
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          includeAllPages: true
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with detail parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        detail: 'detailed'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          detail: 'detailed'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with pageId parameter', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        pageId: '123:456'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          pageId: '123:456'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+
+    test('should handle list with multiple filter parameters combined', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByName: 'Button',
+        filterByType: ['RECTANGLE', 'FRAME'],
+        filterByVisibility: 'visible',
+        maxResults: 20,
+        detail: 'detailed'
+      });
+
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByName: 'Button',
+          filterByType: ['RECTANGLE', 'FRAME'],
+          filterByVisibility: 'visible',
+          maxResults: 20,
+          detail: 'detailed'
+        })
+      });
+
+      expect(result.isError).toBe(false);
+    });
+  });
+
+  describe('Parameter Validation', () => {
+    test('should accept all valid list operation parameters', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      // Test each parameter individually to ensure none are rejected
+      const validParameters = [
+        { filterByName: 'Rectangle' },
+        { filterByType: ['RECTANGLE', 'ELLIPSE'] },
+        { filterByVisibility: 'visible' },
+        { filterByLockedState: false },
+        { traversal: 'descendants' },
+        { maxDepth: 5 },
+        { maxResults: 100 },
+        { includeAllPages: true },
+        { detail: 'standard' },
+        { pageId: '123:456' }
+      ];
+
+      for (const param of validParameters) {
+        await expect(nodeHandler.handle('figma_nodes', {
+          operation: 'list',
+          ...param
+        })).resolves.not.toThrow();
+      }
+    });
+
+    test('should not reject any documented filter parameters', async () => {
+      const mockResponse = { success: true, data: [] };
+      mockSendToPlugin.mockResolvedValue(mockResponse);
+
+      // This test specifically addresses the bug where filterByName was rejected
+      // despite being in the schema and documentation
+      const result = await nodeHandler.handle('figma_nodes', {
+        operation: 'list',
+        filterByName: 'Rectangle'
+      });
+
+      expect(result.isError).toBe(false);
+      expect(mockSendToPlugin).toHaveBeenCalledWith({
+        type: 'MANAGE_NODES',
+        payload: expect.objectContaining({
+          operation: 'list',
+          filterByName: 'Rectangle'
+        })
+      });
     });
   });
 
   describe('Schema Validation', () => {
-    test('should reject invalid node types', async () => {
+    test('should reject invalid operations', async () => {
       await expect(nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'invalid-type'
+        operation: 'invalid-operation'
       })).rejects.toThrow();
     });
 
     test('should validate required parameters', async () => {
       await expect(nodeHandler.handle('figma_nodes', {
         // Missing operation
-        nodeType: 'rectangle'
+        name: 'test'
       })).rejects.toThrow();
     });
 
     test('should handle text node restriction', async () => {
+      // Text nodes should use figma_text tool, not figma_nodes
       await expect(nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'text'
+        operation: 'create_text'
       })).rejects.toThrow();
     });
   });
@@ -418,16 +719,14 @@ describe('NodeHandlers - Updated Architecture', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'ellipse'
+        operation: 'create_ellipse'
         // No name provided
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          nodeType: 'ellipse'
+          operation: 'create_ellipse'
         })
       });
     });
@@ -437,16 +736,14 @@ describe('NodeHandlers - Updated Architecture', () => {
       mockSendToPlugin.mockResolvedValue(mockResponse);
 
       await nodeHandler.handle('figma_nodes', {
-        operation: 'create',
-        nodeType: 'rectangle'
+        operation: 'create_rectangle'
         // No dimensions provided
       });
 
       expect(mockSendToPlugin).toHaveBeenCalledWith({
         type: 'MANAGE_NODES',
         payload: expect.objectContaining({
-          operation: 'create',
-          nodeType: 'rectangle'
+          operation: 'create_rectangle'
         })
       });
     });

@@ -11,6 +11,11 @@ Quick reference for common Figma design tasks using natural language.
 "Create rounded rectangle with 12px corners"
 "Make a star with 8 points"
 "Draw a triangle (3-sided polygon)"
+"Create a section to organize layers"
+"Add slice for export area"
+"Update rectangle corners individually"
+"List all shapes in current page"
+"Filter nodes by type or visibility"
 ```
 
 ## Text

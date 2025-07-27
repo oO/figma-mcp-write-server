@@ -2,14 +2,19 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { FigmaWebSocketServer } from '../../src/websocket/websocket-server.js';
 import { DEFAULT_WS_CONFIG } from '../../src/types/index.js';
 import WebSocket from 'ws';
-import { debugLog } from '../../src/utils/logger.js';
+import { logger } from '../../src/utils/logger.js';
 
 // Mock the logger to capture calls
 vi.mock('../../src/utils/logger.js', () => ({
-  debugLog: vi.fn()
+  logger: {
+    debug: vi.fn(),
+    log: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn()
+  }
 }));
 
-const mockedDebugLog = vi.mocked(debugLog);
+const mockedLogger = vi.mocked(logger);
 
 describe('WebSocket LOG_MESSAGE Integration', () => {
   let wsServer: FigmaWebSocketServer;

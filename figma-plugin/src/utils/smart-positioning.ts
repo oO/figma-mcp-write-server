@@ -106,6 +106,11 @@ export function checkForOverlaps(
   
   for (const child of parent.children) {
     if ('x' in child && 'y' in child && 'width' in child && 'height' in child) {
+      // Ignore slice nodes for overlap detection - they don't visually interfere with content
+      if (child.type === 'SLICE') {
+        continue;
+      }
+      
       const childBounds = getNodeBounds(child as SceneNode);
       
       if (boundsOverlap(proposedBounds, childBounds, buffer)) {
@@ -141,10 +146,10 @@ export function findMostRecentNode(): SceneNode | null {
     return selection[selection.length - 1];
   }
   
-  // Fallback: get the last child that's a scene node
+  // Fallback: get the last child that's a scene node (ignore slices)
   for (let i = currentPage.children.length - 1; i >= 0; i--) {
     const child = currentPage.children[i];
-    if ('x' in child && 'y' in child) {
+    if ('x' in child && 'y' in child && child.type !== 'SLICE') {
       return child as SceneNode;
     }
   }
@@ -169,10 +174,10 @@ export function findMostRecentNodeInContainer(container: BaseNode & ChildrenMixi
     }
   }
   
-  // Fallback: get the last child in the container that's a scene node
+  // Fallback: get the last child in the container that's a scene node (ignore slices)
   for (let i = container.children.length - 1; i >= 0; i--) {
     const child = container.children[i];
-    if ('x' in child && 'y' in child) {
+    if ('x' in child && 'y' in child && child.type !== 'SLICE') {
       return child as SceneNode;
     }
   }

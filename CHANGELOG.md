@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.35.0] - 2025-07-27
+
+### Added
+- **figma_nodes refactor**: Complete refactor with 19 specialized operations matching fills/strokes pattern
+  - **Basic CRUD**: `get`, `list`, `update`, `delete`, `duplicate` with full bulk support
+  - **Specialized create operations**: `create_rectangle`, `create_ellipse`, `create_frame`, `create_section`, `create_slice`, `create_star`, `create_polygon`
+  - **Specialized update operations**: `update_rectangle`, `update_ellipse`, `update_frame`, `update_section`, `update_slice`, `update_star`, `update_polygon`
+  - **List operation moved from figma_selection**: Advanced filtering with `filterByName`, `filterByType`, `filterByVisibility`, `filterByLockedState`, `traversal`, `maxDepth`, `maxResults`, `includeAllPages`, `detail`, `pageId`
+  - **Type-specific property support**: Rectangle corner radius, frame clipsContent, section devStatus, star/polygon point counts
+  - **Smart positioning**: Automatic placement when x/y not specified to avoid overlaps
+
+### Fixed
+- **Parameter validation**: Fixed filter parameters being stripped for list operations by adding to UnifiedNodeOperationsSchema
+- **Y coordinate drift**: Fixed offsetY: 0 being treated as falsy with nullish coalescing
+- **Count parameter**: Properly restricted to duplicate operations only
+- **Symbol serialization**: Fixed "Cannot unwrap symbol" error in bulk operations
+- **Corner radius handling**: Fixed exceptions when nodes have mixed corner values
+- **Update operations**: Properly implemented type-specific property updates (previously just called generic update)
+- **Missing parameters**: Added blendMode, strokeAlign, fillOpacity, strokeOpacity support
+
+### Changed
+- **figma_selection**: Restored to original state with `get_selection`, `set_selection`, `list_nodes` operations
+- **Test expectations**: Updated bulk operation tests to expect multiple calls instead of single batched call
+- **Parameter debugging**: Added comprehensive checklist documentation for troubleshooting parameter issues
+
 ## [0.34.2] - 2025-07-26
 
 ### Removed
