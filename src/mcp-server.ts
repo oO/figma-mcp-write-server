@@ -3,6 +3,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -12,6 +14,7 @@ import * as yaml from 'js-yaml';
 import { ServerConfig, LegacyServerConfig, DEFAULT_WS_CONFIG, loadConfig } from './types/index.js';
 import { FigmaWebSocketServer } from './websocket/websocket-server.js';
 import { HandlerRegistry } from './handlers/index.js';
+import { ResourceRegistry } from './resources/index.js';
 import { FontService } from './services/font-service.js';
 import { logger } from './utils/logger.js';
 
@@ -25,6 +28,7 @@ export class FigmaMCPServer {
   private server: Server;
   private wsServer: FigmaWebSocketServer;
   private handlerRegistry: HandlerRegistry;
+  private resourceRegistry: ResourceRegistry;
   private config: ServerConfig;
   private fontService: FontService | null = null;
 
@@ -41,6 +45,7 @@ export class FigmaMCPServer {
       {
         capabilities: {
           tools: {},
+          resources: {},
         },
       }
     );
@@ -57,6 +62,11 @@ export class FigmaMCPServer {
       (request: any) => this.wsServer.sendToPlugin(request),
       this.wsServer,
       () => this.fontService // Provide FontService accessor
+    );
+
+    // Initialize resource registry
+    this.resourceRegistry = new ResourceRegistry(
+      (request: any) => this.wsServer.sendToPlugin(request)
     );
 
     // Listen for plugin connection to trigger sync if needed
@@ -78,6 +88,39 @@ export class FigmaMCPServer {
       };
     });
 
+    // List available resources
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return {
+        resources: await this.resourceRegistry.getResources(),
+      };
+    });
+
+    // Handle resource requests
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const { uri } = request.params;
+      
+      logger.log(`📄 MCP resource request: ${uri}`);
+      
+      try {
+        return await this.resourceRegistry.getResourceContent(uri);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.toString() : String(error);
+        
+        return {
+          uri: uri,
+          contents: [
+            {
+              uri: uri,
+              text: JSON.stringify({
+                error: errorMessage,
+                uri: uri,
+                timestamp: new Date().toISOString()
+              }, null, 2)
+            }
+          ]
+        };
+      }
+    });
 
     // Handle tool calls
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {

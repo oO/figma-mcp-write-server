@@ -17,6 +17,18 @@ async def _print_tool_list(tool_map: dict):
         tool_info = tool_map[tool_name]
         print(f"  - {tool_info.name}: {tool_info.description}")
 
+async def _print_resource_list(resource_map: dict):
+    """Prints the list of available resources in a pretty format."""
+    print("\nAvailable resources:")
+    for uri in sorted(resource_map.keys()):
+        resource_info = resource_map[uri]
+        name = getattr(resource_info, 'name', uri)
+        description = getattr(resource_info, 'description', None)
+        if description:
+            print(f"  - {uri}: {name} - {description}")
+        else:
+            print(f"  - {uri}: {name}")
+
 def find_server_pid(command_name: str, script_path: str) -> Optional[int]:
     """Find the PID of our server process."""
     try:
@@ -94,13 +106,30 @@ class MCPClient:
         """Call a tool on the server."""
         return await self.client.call_tool(tool_name, arguments=arguments)
     
+    async def get_resources(self):
+        """Get available resources from the server."""
+        try:
+            resources = await self.client.list_resources()
+            return {resource.uri: resource for resource in resources}
+        except Exception as e:
+            print(f"Warning: Failed to list resources: {e}")
+            return {}
+    
+    async def read_resource(self, uri: str):
+        """Read a specific resource from the server."""
+        return await self.client.read_resource(uri)
+    
     async def run_interactive_session(self):
         """Run an interactive command session."""
         tool_map = await self.get_tools()
+        resource_map = await self.get_resources()
         session = PromptSession()
 
         print("\nReady to receive commands.")
         print("Type 'help' for a list of tools.")
+        if resource_map:
+            print("Type 'list' for a list of resources.")
+            print("Type 'read <resource_uri>' to read a resource.")
         print("Type 'help <tool_name>' for tool usage.")
         print("Type 'tool_name, {arg1: value1, arg2: value2}' to call a tool.")
         print("Type 'exit' to quit.")
@@ -120,6 +149,10 @@ class MCPClient:
                     await _print_tool_list(tool_map)
                     continue
 
+                if line.lower() == 'list':
+                    await _print_resource_list(resource_map)
+                    continue
+
                 if line.lower().startswith('help '):
                     help_tool_name = line.split(' ', 1)[1]
                     if help_tool_name in tool_map:
@@ -130,6 +163,24 @@ class MCPClient:
                         print(yaml.dump(tool_info.inputSchema, indent=2))
                     else:
                         print(f"Tool '{help_tool_name}' not found.")
+                    continue
+
+                if line.lower().startswith('read '):
+                    resource_uri = line.split(' ', 1)[1].strip()
+                    try:
+                        print(f"Reading resource '{resource_uri}'...")
+                        response = await self.read_resource(resource_uri)
+                        print("Resource content:")
+                        if hasattr(response, 'contents') and response.contents:
+                            for content in response.contents:
+                                if hasattr(content, 'text'):
+                                    print(content.text)
+                                else:
+                                    print(content)
+                        else:
+                            print(response)
+                    except Exception as e:
+                        print(f"Error reading resource '{resource_uri}': {e}")
                     continue
 
                 try:
