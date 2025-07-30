@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { handleManageStrokes } from '../../../figma-plugin/src/operations/manage-strokes.js';
+import { MANAGE_STROKES } from '../../../figma-plugin/src/operations/manage-strokes.js';
 
 // Mock Figma API
 const mockFigma = {
@@ -154,7 +154,7 @@ describe('Stroke Gradient Type Change Bug Fix', () => {
       mockFigma.getNodeById.mockReturnValue(node);
 
       // Call update_gradient with gradientType change
-      const result = await handleManageStrokes({
+      const result = await MANAGE_STROKES({
         operation: 'update_gradient',
         nodeId: '4362:68',
         paintIndex: 0,
@@ -178,7 +178,7 @@ describe('Stroke Gradient Type Change Bug Fix', () => {
       mockFigma.getNodeById.mockReturnValue(node);
 
       // Call update_gradient with gradientType change
-      const result = await handleManageStrokes({
+      const result = await MANAGE_STROKES({
         operation: 'update_gradient',
         nodeId: '4362:68',
         paintIndex: 0,
@@ -201,7 +201,7 @@ describe('Stroke Gradient Type Change Bug Fix', () => {
       mockFigma.getNodeById.mockReturnValue(node);
 
       // Call update_gradient with gradientType change
-      const result = await handleManageStrokes({
+      const result = await MANAGE_STROKES({
         operation: 'update_gradient',
         nodeId: '4362:68',
         paintIndex: 0,
@@ -224,7 +224,7 @@ describe('Stroke Gradient Type Change Bug Fix', () => {
       mockFigma.getNodeById.mockReturnValue(node);
 
       // Call update_gradient with gradientType change
-      const result = await handleManageStrokes({
+      const result = await MANAGE_STROKES({
         operation: 'update_gradient',
         nodeId: '4362:68',
         paintIndex: 0,
@@ -247,7 +247,7 @@ describe('Stroke Gradient Type Change Bug Fix', () => {
       mockFigma.getNodeById.mockReturnValue(node);
 
       // Call update_gradient without gradientType change
-      const result = await handleManageStrokes({
+      const result = await MANAGE_STROKES({
         operation: 'update_gradient',
         nodeId: '4362:68',
         paintIndex: 0,

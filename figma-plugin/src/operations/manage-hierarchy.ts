@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById } from '../utils/node-utils.js';
 
 /**
  * Handle MANAGE_HIERARCHY operation

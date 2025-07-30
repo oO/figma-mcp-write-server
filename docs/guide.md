@@ -138,7 +138,7 @@ npm run dev          # Development mode
 
 ### Advanced
 - `figma_boolean_operations` - Union/subtract/intersect
-- `figma_vector_operations` - Paths and outlines
+- `figma_vectors` - Create/edit vectors, convert shapes/text, extract elements
 - `figma_exports` - Export assets
 - `figma_dev_resources` - CSS generation
 - `figma_plugin_status` - Connection status

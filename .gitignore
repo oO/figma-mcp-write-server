@@ -17,6 +17,7 @@ out/
 figma-plugin/ui.html
 figma-plugin/code.js
 figma-plugin/dist/
+figma-plugin/src/generated-operations.ts
 
 # Testing
 coverage/

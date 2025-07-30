@@ -87,7 +87,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       // Wait for message processing
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Test plugin message',
         'message',
         { test: 'data' }
@@ -111,7 +111,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       client.send(JSON.stringify(logMessage));
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Test plugin warning',
         'warning',
         undefined
@@ -135,7 +135,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       client.send(JSON.stringify(logMessage));
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Test plugin error',
         'error',
         { error: 'details' }
@@ -158,7 +158,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       client.send(JSON.stringify(logMessage));
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Test without type',
         'message',
         null
@@ -181,7 +181,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       client.send(JSON.stringify(logMessage));
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         expect.stringMatching(/^🔌 /),
         'message',
         undefined
@@ -231,10 +231,10 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
         await new Promise(resolve => setTimeout(resolve, 50));
       }
       
-      expect(mockedDebugLog).toHaveBeenCalledTimes(4); // 3 test cases + PLUGIN_HELLO
+      expect(mockedLogger.debug).toHaveBeenCalledTimes(4); // 3 test cases + PLUGIN_HELLO
       
       // Check specific calls (skip the first PLUGIN_HELLO related call)
-      const calls = mockedDebugLog.mock.calls.slice(-3);
+      const calls = mockedLogger.debug.mock.calls.slice(-3);
       expect(calls[0]).toEqual(testCases[0].expectedCall);
       expect(calls[1]).toEqual(testCases[1].expectedCall);
       expect(calls[2]).toEqual(testCases[2].expectedCall);
@@ -256,7 +256,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       
       // Should not crash, and should not call debugLog for the malformed message
       // (only the PLUGIN_HELLO should have been logged)
-      expect(mockedDebugLog).toHaveBeenCalledTimes(1);
+      expect(mockedLogger.debug).toHaveBeenCalledTimes(1);
     });
 
     it('should handle invalid JSON gracefully', async () => {
@@ -286,7 +286,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       client.send(JSON.stringify(partialMessage));
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Partial message',
         'message', // Should default to 'message'
         undefined
@@ -318,7 +318,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       await new Promise(resolve => setTimeout(resolve, 100));
       
       // Should still process the message (LOG_MESSAGE doesn't require plugin status)
-      expect(mockedDebugLog).toHaveBeenCalledWith(
+      expect(mockedLogger.debug).toHaveBeenCalledWith(
         '🔌 Unauthorized message',
         'error',
         undefined
@@ -346,7 +346,7 @@ describe('WebSocket LOG_MESSAGE Integration', () => {
       
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      expect(mockedDebugLog).toHaveBeenCalledTimes(4); // 3 messages + 1 PLUGIN_HELLO
+      expect(mockedLogger.debug).toHaveBeenCalledTimes(4); // 3 messages + 1 PLUGIN_HELLO
     });
   });
 });

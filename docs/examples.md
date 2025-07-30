@@ -113,10 +113,13 @@ Quick reference for common Figma design tasks using natural language.
 ## Vector Operations
 
 ```
-"Create path: M 0 0 L 100 0 L 100 100 Z"
-"Outline this text"
-"Outline stroke on shape"
-"Convert to vector network"
+"Create triangle vector with vertices at 0,0 100,0 50,100"
+"Convert this rectangle to editable vector"
+"Outline this text for custom editing"
+"Extract path 2 from complex vector"
+"Explode vector into separate shapes"
+"Flatten these vectors into one"
+"Convert stroke to filled outline"
 ```
 
 ## Export

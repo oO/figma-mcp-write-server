@@ -152,12 +152,12 @@ export function extractCornerRadiusProperties(node: any): Partial<NodeInfo> {
  * Format and safely serialize node response (DRY utility)
  * Combines formatNodeResponse + cleanEmptyPropertiesAsync pattern
  */
-export async function formatNodeResponseAsync(node: SceneNode): Promise<NodeInfo> {
-  const nodeData = formatNodeResponse(node);
+export async function formatNodeResponseAsync(node: SceneNode, message?: string): Promise<NodeInfo> {
+  const nodeData = formatNodeResponse(node, message);
   return await cleanEmptyPropertiesAsync(nodeData) || nodeData;
 }
 
-export function formatNodeResponse(node: SceneNode): NodeInfo {
+export function formatNodeResponse(node: SceneNode, message?: string): NodeInfo {
   const response: NodeInfo = {
     id: node.id,
     name: node.name,
@@ -221,6 +221,11 @@ export function formatNodeResponse(node: SceneNode): NodeInfo {
   if ('paddingRight' in node) response.paddingRight = (node as any).paddingRight;
   if ('paddingBottom' in node) response.paddingBottom = (node as any).paddingBottom;
   if ('paddingLeft' in node) response.paddingLeft = (node as any).paddingLeft;
+  
+  // Add message if provided
+  if (message) {
+    (response as any).message = message;
+  }
   
   return response;
 }

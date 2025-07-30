@@ -1,6 +1,6 @@
 import { OperationResult, TextParams } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById, formatNodeResponse } from '../utils/node-utils.js';
 import { loadFont, getFontFromParams, ensureFontLoaded, loadDefaultFont } from '../utils/font-utils.js';
 import { hexToRgb, createSolidPaint } from '../utils/color-utils.js';
 import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';

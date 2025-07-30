@@ -1,7 +1,7 @@
 import { NodeParams, OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
 import { hexToRgb, createSolidPaint, parseHexColor } from '../utils/color-utils.js';
-import { findNodeById, findNodeInPage, formatNodeResponse, formatNodeResponseAsync, selectAndFocus, moveNodeToPosition, resizeNode, getAllNodes, createNodeData, applyCornerRadius } from '../utils/node-utils.js';
+import { findNodeById, findNodeInPage, formatNodeResponse, formatNodeResponseAsync, moveNodeToPosition, resizeNode, getAllNodes, createNodeData, applyCornerRadius } from '../utils/node-utils.js';
 import { findSmartPosition, checkForOverlaps, createOverlapWarning } from '../utils/smart-positioning.js';
 import { 
   handleBulkError,
@@ -464,7 +464,6 @@ async function duplicateNode(params: any): Promise<OperationResult> {
           duplicates.push(formatNodeResponse(duplicate));
         }
 
-        selectAndFocus(duplicates.map(d => findNodeById(d.id)).filter(Boolean));
         results.push(...duplicates);
       } else {
         const duplicate = node.clone();
@@ -479,7 +478,6 @@ async function duplicateNode(params: any): Promise<OperationResult> {
           node.parent.insertChild(index + 1, duplicate);
         }
 
-        selectAndFocus([duplicate]);
         results.push(formatNodeResponse(duplicate));
       }
     } catch (error) {
@@ -516,8 +514,6 @@ async function createRectangle(params: any): Promise<OperationResult> {
       const positionResult = handleNodePositioning(rect, { x, y }, { width, height }, parentContainer);
       
       await applyCommonNodeProperties(rect, params, i);
-      
-      selectAndFocus([rect]);
       
       const response = formatNodeResponse(rect);
       if (positionResult.warning) response.warning = positionResult.warning;
@@ -556,8 +552,6 @@ async function createEllipse(params: any): Promise<OperationResult> {
       const positionResult = handleNodePositioning(ellipse, { x, y }, { width, height }, parentContainer);
       
       await applyCommonNodeProperties(ellipse, params, i);
-      
-      selectAndFocus([ellipse]);
       
       const response = formatNodeResponse(ellipse);
       if (positionResult.warning) response.warning = positionResult.warning;
@@ -599,8 +593,6 @@ async function createFrame(params: any): Promise<OperationResult> {
       await applyFrameProperties(frame, params, i);
       
       await applyCommonNodeProperties(frame, params, i);
-      
-      selectAndFocus([frame]);
       
       const response = formatNodeResponse(frame);
       if (positionResult.warning) response.warning = positionResult.warning;
@@ -644,8 +636,6 @@ async function createSection(params: any): Promise<OperationResult> {
       
       await applyCommonNodeProperties(section, params, i);
       
-      selectAndFocus([section]);
-      
       const response = formatNodeResponse(section);
       if (positionResult.warning) response.warning = positionResult.warning;
       if (positionResult.positionReason) response.positionReason = positionResult.positionReason;
@@ -683,8 +673,6 @@ async function createSlice(params: any): Promise<OperationResult> {
       const positionResult = handleNodePositioning(slice, { x, y }, { width, height }, parentContainer);
       
       await applyCommonNodeProperties(slice, params, i);
-      
-      selectAndFocus([slice]);
       
       const response = formatNodeResponse(slice);
       if (positionResult.warning) response.warning = positionResult.warning;
@@ -727,8 +715,6 @@ async function createStar(params: any): Promise<OperationResult> {
       
       await applyCommonNodeProperties(star, params, i);
       
-      selectAndFocus([star]);
-      
       const response = formatNodeResponse(star);
       if (positionResult.warning) response.warning = positionResult.warning;
       if (positionResult.positionReason) response.positionReason = positionResult.positionReason;
@@ -769,8 +755,6 @@ async function createPolygon(params: any): Promise<OperationResult> {
       await applyPolygonProperties(polygon, params, i);
       
       await applyCommonNodeProperties(polygon, params, i);
-      
-      selectAndFocus([polygon]);
       
       const response = formatNodeResponse(polygon);
       if (positionResult.warning) response.warning = positionResult.warning;

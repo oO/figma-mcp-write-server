@@ -523,8 +523,6 @@ describe('Figma Fills Integration Tests', () => {
         gradientStartY: 0.3,
         gradientEndX: 0.8,
         gradientEndY: 0.7,
-        gradientWidthX: 0.6,
-        gradientWidthY: 0.1,
         opacity: 0.85,
         blendMode: 'SCREEN'
       });

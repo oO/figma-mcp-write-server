@@ -141,54 +141,6 @@ describe('SelectionHandler', () => {
     });
   });
 
-  describe('list_nodes operation', () => {
-    test('should list nodes with pageId parameter', async () => {
-      const mockResponse = {
-        nodes: [
-          { id: 'node-1', name: 'Rectangle 1', type: 'RECTANGLE' },
-          { id: 'node-2', name: 'Text 1', type: 'TEXT' }
-        ],
-        totalCount: 2,
-        topLevelCount: 2,
-        detail: 'minimal'
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes',
-        pageId: '123:0',
-        filterByType: 'TEXT'
-      });
-
-      expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('totalCount: 2');
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
-        type: 'MANAGE_SELECTION',
-        payload: {
-          operation: 'list_nodes',
-          pageId: '123:0',
-          filterByType: ['TEXT']
-        }
-      });
-    });
-
-    test('should use minimal detail when no filters applied', async () => {
-      const mockResponse = {
-        nodes: [{ id: 'node-1', name: 'Rectangle 1', parentId: 'page-1', type: 'RECTANGLE', visible: true }],
-        totalCount: 1,
-        topLevelCount: 1,
-        detail: 'minimal'
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes'
-      });
-
-      expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('detail: minimal');
-    });
-  });
 
   describe('Error Handling', () => {
     test('should handle plugin connection errors', async () => {
@@ -199,33 +151,6 @@ describe('SelectionHandler', () => {
       })).rejects.toThrow('Plugin not connected');
     });
 
-    test('should handle page not found errors', async () => {
-      mockSendToPlugin.mockRejectedValue(new Error('Page not found: 999:0. Available pages: Page 1 (123:0), Page 2 (456:0)'));
-
-      await expect(selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes',
-        pageId: '999:0'
-      })).rejects.toThrow('Page not found: 999:0');
-    });
-
-    test('should handle node not found errors', async () => {
-      mockSendToPlugin.mockRejectedValue(new Error('Node not found in page "Page 1" (123:0): invalid-id'));
-
-      await expect(selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes',
-        pageId: '123:0',
-        nodeId: 'invalid-id'
-      })).rejects.toThrow('Node not found in page');
-    });
-
-    test('should handle global node not found errors', async () => {
-      mockSendToPlugin.mockRejectedValue(new Error('Node not found: invalid-id'));
-
-      await expect(selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes',
-        nodeId: 'invalid-id'
-      })).rejects.toThrow('Node not found: invalid-id');
-    });
 
     test('should handle unknown tool names', async () => {
       await expect(selectionHandler.handle('unknown_tool', {}))
@@ -233,55 +158,6 @@ describe('SelectionHandler', () => {
     });
   });
 
-  describe('PageId Parameter Validation', () => {
-    test('should accept valid pageId parameter', async () => {
-      const mockResponse = {
-        nodes: [],
-        totalCount: 0,
-        topLevelCount: 0,
-        detail: 'minimal'
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes',
-        pageId: '123:0'
-      });
-
-      expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('totalCount: 0');
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
-        type: 'MANAGE_SELECTION',
-        payload: {
-          operation: 'list_nodes',
-          pageId: '123:0'
-        }
-      });
-    });
-
-    test('should work without pageId (uses current page)', async () => {
-      const mockResponse = {
-        nodes: [{ id: 'node-1', name: 'Test', parentId: 'current-page', type: 'RECTANGLE', visible: true }],
-        totalCount: 1,
-        topLevelCount: 1,
-        detail: 'minimal'
-      };
-      mockSendToPlugin.mockResolvedValue(mockResponse);
-
-      const result = await selectionHandler.handle('figma_selection', {
-        operation: 'list_nodes'
-      });
-
-      expect(result.isError).toBe(false);
-      expect(result.content[0].text).toContain('totalCount: 1');
-      expect(mockSendToPlugin).toHaveBeenCalledWith({
-        type: 'MANAGE_SELECTION',
-        payload: {
-          operation: 'list_nodes'
-        }
-      });
-    });
-  });
 
   describe('Response Format', () => {
     test('should return YAML formatted response', async () => {

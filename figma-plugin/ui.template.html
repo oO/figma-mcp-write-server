@@ -344,7 +344,7 @@
                         updateConnectionStatus(true, "Connected to localhost:{{PORT}}");
                         connectionAttempts = 0;
                         clearReconnectTimer();
-                        ws.send(JSON.stringify({ type: "PLUGIN_HELLO" }));
+                        ws.send(JSON.stringify({ type: "PLUGIN_HELLO", version: "{{VERSION}}" }));
                         
                         // Notify main thread of connection status
                         parent.postMessage({

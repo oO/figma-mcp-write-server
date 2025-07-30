@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { handleManageFills } from '../../../figma-plugin/src/operations/manage-fills.js';
+import { MANAGE_FILLS } from '../../../figma-plugin/src/operations/manage-fills.js';
 
 // Mock Figma API
 const mockFigma = {
@@ -141,7 +141,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint(), createGradientPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node',
         fillIndex: 0
@@ -157,7 +157,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node',
         fillIndex: 5
@@ -167,7 +167,7 @@ describe('ManageFillsOperation', () => {
     it('should throw error for node not found', async () => {
       mockFigma.getNodeById.mockReturnValue(null);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'get',
         nodeId: 'nonexistent',
         fillIndex: 0
@@ -178,7 +178,7 @@ describe('ManageFillsOperation', () => {
       const node = { id: 'test-node', fills: 'mixed' as any, type: 'RECTANGLE' };
       mockFigma.getNodeById.mockReturnValue(node);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node',
         fillIndex: 0
@@ -192,7 +192,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode(fills);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node'
       });
@@ -207,7 +207,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode(fills);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node',
         filterType: 'SOLID'
@@ -225,7 +225,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(node1)
         .mockReturnValueOnce(node2);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: ['node1', 'node2']
       });
@@ -242,7 +242,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(node1)
         .mockReturnValueOnce(null); // Node not found
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: ['node1', 'nonexistent'],
       });
@@ -259,7 +259,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_solid',
         nodeId: 'test-node',
         color: '#FF0000',
@@ -276,7 +276,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createGradientPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_solid',
         nodeId: 'test-node',
         color: '#00FF00',
@@ -295,7 +295,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(node1)
         .mockReturnValueOnce(node2);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_solid',
         nodeId: ['node1', 'node2'],
         color: '#0000FF'
@@ -312,7 +312,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_gradient',
         nodeId: 'test-node',
         gradientType: 'GRADIENT_LINEAR',
@@ -329,7 +329,7 @@ describe('ManageFillsOperation', () => {
     });
 
     it('should throw error for mismatched stop arrays', async () => {
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'add_gradient',
         nodeId: 'test-node',
         gradientType: 'GRADIENT_LINEAR',
@@ -344,7 +344,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_image',
         nodeId: 'test-node',
         imageUrl: 'https://example.com/image.jpg',
@@ -361,7 +361,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_image',
         nodeId: 'test-node',
         imageHash: 'existing-hash-789'
@@ -375,7 +375,7 @@ describe('ManageFillsOperation', () => {
       const mockRect = { id: 'new-rect', resize: vi.fn(), x: 0, y: 0 };
       mockFigma.createRectangle.mockReturnValue(mockRect);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_image',
         imageUrl: 'https://example.com/image.jpg',
         x: 100,
@@ -391,7 +391,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'add_image',
         nodeId: 'test-node',
         imageHash: 'test-hash',
@@ -404,7 +404,7 @@ describe('ManageFillsOperation', () => {
     });
 
     it('should throw error for missing image source', async () => {
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'add_image',
         nodeId: 'test-node'
         // No imageUrl, imagePath, or imageHash
@@ -417,7 +417,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'update',
         nodeId: 'test-node',
         fillIndex: 0,
@@ -434,7 +434,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'update',
         nodeId: 'test-node',
         fillIndex: 0,
@@ -448,7 +448,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createImagePaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'update',
         nodeId: 'test-node',
         fillIndex: 0,
@@ -465,7 +465,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint(), createGradientPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'delete',
         nodeId: 'test-node',
         fillIndex: 0
@@ -483,7 +483,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(node1)
         .mockReturnValueOnce(node2);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'delete',
         nodeId: ['node1', 'node2'],
         fillIndex: 0
@@ -500,7 +500,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint(), createGradientPaint(), createImagePaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'reorder',
         nodeId: 'test-node',
         fillIndex: 2,
@@ -517,7 +517,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'reorder',
         nodeId: 'test-node',
         fillIndex: 0,
@@ -531,7 +531,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint(), createGradientPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'clear',
         nodeId: 'test-node'
       });
@@ -549,7 +549,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(node1)
         .mockReturnValueOnce(node2);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'clear',
         nodeId: ['node1', 'node2']
       });
@@ -570,7 +570,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(sourceNode)
         .mockReturnValueOnce(targetNode);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'copy',
         fromNodeId: 'source',
         toNodeId: 'target'
@@ -591,7 +591,7 @@ describe('ManageFillsOperation', () => {
         .mockReturnValueOnce(target1)
         .mockReturnValueOnce(target2);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'copy',
         fromNodeId: 'source',
         toNodeId: ['target1', 'target2']
@@ -606,7 +606,7 @@ describe('ManageFillsOperation', () => {
       const sourceNode = { id: 'source', fills: 'mixed' as any, type: 'RECTANGLE' };
       mockFigma.getNodeById.mockReturnValue(sourceNode);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'copy',
         fromNodeId: 'source',
         toNodeId: 'target'
@@ -616,14 +616,14 @@ describe('ManageFillsOperation', () => {
 
   describe('Error handling', () => {
     it('should throw error for unknown operation', async () => {
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'invalid_operation',
         nodeId: 'test-node'
       })).rejects.toThrow('Unknown fill operation: invalid_operation');
     });
 
     it('should validate required parameters', async () => {
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'get'
         // Missing id and fillIndex
       })).rejects.toThrow('Missing required parameter');
@@ -633,7 +633,7 @@ describe('ManageFillsOperation', () => {
       const node = { id: 'text-node', type: 'TEXT' }; // No fills property
       mockFigma.getNodeById.mockReturnValue(node);
 
-      await expect(handleManageFills({
+      await expect(MANAGE_FILLS({
         operation: 'get',
         nodeId: 'text-node',
         fillIndex: 0
@@ -646,7 +646,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node'
       });
@@ -661,7 +661,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode(largeFillsArray);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'get',
         nodeId: 'test-node'
       });
@@ -674,7 +674,7 @@ describe('ManageFillsOperation', () => {
       const node = createMockNode([createSolidPaint()]);
       mockFigma.getNodeById.mockReturnValue(node);
 
-      const result = await handleManageFills({
+      const result = await MANAGE_FILLS({
         operation: 'delete',
         nodeId: 'test-node',
         fillIndex: 0

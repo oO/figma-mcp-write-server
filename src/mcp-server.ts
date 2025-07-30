@@ -126,6 +126,7 @@ export class FigmaMCPServer {
     await this.initializeFontDatabase();
     
     logger.log('🚀 MCP server started, waiting for plugin connection...', {
+      version: VERSION,
       pid: process.pid,
       parentPid: process.ppid
     });
@@ -157,12 +158,12 @@ export class FigmaMCPServer {
   }
 
   private async onPluginConnected(): Promise<void> {
-    logger.log('🔌 Plugin connection event received, checking font database sync...');
+    logger.log('🔤 Checking font database status...');
     if (this.fontService) {
       // Check if sync is needed now that plugin is connected
       await this.fontService.checkAndSyncIfNeeded();
     } else {
-      logger.warn('FontService not available, skipping sync');
+      logger.log('🔤 Font Service not available');
     }
   }
 

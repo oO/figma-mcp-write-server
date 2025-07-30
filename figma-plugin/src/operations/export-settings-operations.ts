@@ -52,8 +52,8 @@ function handleGetSetting(params: any): OperationResult {
   
   if (exportIndex !== undefined) {
     // Get specific setting by index
-    if (exportIndex < 0 || exportIndex >= node.exportSettings.length) {
-      throw new Error(`Export setting index ${exportIndex} out of range. Node has ${node.exportSettings.length} export settings.`);
+    if (exportIndex < 0 || exportIndex >= target.exportSettings.length) {
+      throw new Error(`Export setting index ${exportIndex} out of range. Node has ${target.exportSettings.length} export settings.`);
     }
     
     return {

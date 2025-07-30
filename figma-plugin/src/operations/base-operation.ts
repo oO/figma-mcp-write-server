@@ -1,5 +1,3 @@
-import { OperationResult } from '../types.js';
-
 /**
  * Base utilities for all operations
  */

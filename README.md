@@ -28,7 +28,7 @@ Rather than a thin wrapper around the Figma API, tools are organized for intuiti
 - **Core Design:** `figma_nodes`, `figma_text`, `figma_fills`, `figma_strokes`, `figma_effects`
 - **Layout & Positioning:** `figma_auto_layout`, `figma_constraints`, `figma_alignment`, `figma_hierarchy`
 - **Design System:** `figma_styles`, `figma_components`, `figma_instances`, `figma_variables`, `figma_fonts`
-- **Advanced Operations:** `figma_boolean_operations`, `figma_vector_operations`
+- **Advanced Operations:** `figma_boolean_operations`, `figma_vectors`
 - **Developer Tools:** `figma_dev_resources`, `figma_annotations`, `figma_measurements`, `figma_exports`
 - **System:** `figma_plugin_status`, `figma_pages`, `figma_selection`
 
@@ -117,9 +117,10 @@ Open Claude Desktop and use any of the 24 available tools to design programmatic
 - "Build icon libraries with consistent stroke-to-fill conversion"
 
 ### Vector Operations
-- "Create custom icons with SVG paths and flatten complex shapes"
-- "Convert stroke outlines to filled paths for better scaling"
-- "Extract vector paths from existing shapes for modification"
+- "Create and edit vector shapes with vertices, paths, and bezier curves"
+- "Convert shapes, strokes, and text to editable vector paths"
+- "Extract or explode vector elements into separate shapes"
+- "Flatten multiple vectors into single optimized paths"
 
 ### Developer Handoff
 - "Add annotations and measurements, generate CSS for developers"
@@ -141,7 +142,7 @@ Open Claude Desktop and use any of the 24 available tools to design programmatic
 ## 📚 Documentation
 
 - **[Complete Guide](docs/guide.md)** - Setup, tools, examples, and development
-- **[Examples](docs/examples.md)** - Quick command reference
+- **[Examples](docs/examples.md)** - Common design tasks with natural language
 - **[Configuration](docs/configuration.md)** - Advanced server settings
 - **[Development](docs/development.md)** - Technical reference for contributors
 - **[Changelog](CHANGELOG.md)** - Version history and updates

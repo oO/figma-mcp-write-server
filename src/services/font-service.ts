@@ -272,6 +272,8 @@ export class FontService {
         logger.log('🔤 Font database requires sync, updating...');
         await this.syncService.syncFonts();
         logger.log('🔤 Font database sync completed');
+      } else {
+        logger.log('🔤 Font database up-to-date');
       }
     } catch (error) {
       logger.error('🔤 Font database sync failed:', error);

@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById, formatNodeResponse } from '../utils/node-utils.js';
 
 /**
  * Handle MANAGE_COMPONENTS operation

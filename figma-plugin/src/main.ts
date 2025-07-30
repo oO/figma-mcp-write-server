@@ -22,8 +22,6 @@ class FigmaPlugin {
 
   private initializePlugin(): void {
     try {
-      // logger.debug('Initializing plugin with auto-discovery router...');
-      
       // Initialize the operation router (now synchronous)
       operationRouter.initialize();
       

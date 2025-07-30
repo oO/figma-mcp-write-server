@@ -141,7 +141,3 @@ class PluginLogger {
 // Export singleton logger instance
 export const logger = new PluginLogger();
 
-// Export legacy function for backward compatibility
-export function pluginLog(message: string, type: LogType = 'message', data?: any) {
-  logger.log(message, type, data);
-}

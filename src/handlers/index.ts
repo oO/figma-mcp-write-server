@@ -93,7 +93,7 @@ export class HandlerRegistry {
       () => import('./styles-handler.js').then(m => ({ class: m.StyleHandler, name: 'StyleHandler' })),
       () => import('./texts-handler.js').then(m => ({ class: m.TextHandler, name: 'TextHandler' })),
       () => import('./variables-handler.js').then(m => ({ class: m.VariablesHandler, name: 'VariablesHandler' })),
-      () => import('./vector-handler.js').then(m => ({ class: m.VectorOperationsHandler, name: 'VectorOperationsHandler' }))
+      () => import('./vectors-handler.js').then(m => ({ class: m.VectorsHandler, name: 'VectorsHandler' }))
     ];
 
     return handlerImports;

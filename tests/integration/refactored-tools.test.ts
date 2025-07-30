@@ -62,7 +62,7 @@ describe('Refactored Tools Integration', () => {
         'figma_constraints',
         'figma_fills', // Fill operations 
         'figma_boolean_operations',
-        'figma_vector_operations',
+        'figma_vectors',
         'figma_dev_resources',
         'figma_measurements'
       ];
@@ -89,7 +89,7 @@ describe('Refactored Tools Integration', () => {
   //        'figma_selection', 'figma_fonts', 'figma_text', 'figma_components',
   //        'figma_instances', 'figma_auto_layout', 'figma_hierarchy', 'figma_pages',
   //        'figma_variables', 'figma_alignment', 'figma_annotations', 'figma_constraints',
-  //        'figma_fills', 'figma_boolean_operations', 'figma_vector_operations', 
+  //        'figma_fills', 'figma_boolean_operations', 'figma_vectors', 
   //        'figma_dev_resources', 'figma_measurements'].includes(tool.name)
   //     );
 
@@ -150,7 +150,7 @@ describe('Refactored Tools Integration', () => {
         { tool: 'figma_constraints', args: { operation: 'get', nodeId: '1:2' } },
         { tool: 'figma_fills', args: { operation: 'get', nodeId: '1:2' } },
         { tool: 'figma_boolean_operations', args: { operation: 'union', subjectNodeIds: ['1:2'], clipNodeId: '1:3' } },
-        { tool: 'figma_vector_operations', args: { operation: 'get_vector_data', nodeId: '1:2' } },
+        { tool: 'figma_vectors', args: { operation: 'get_svg', nodeId: '1:2' } },
         { tool: 'figma_dev_resources', args: { operation: 'get_css', nodeId: '1:2' } },
         { tool: 'figma_measurements', args: { operation: 'get', nodeId: '1:2' } }
       ];

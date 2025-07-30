@@ -1,6 +1,6 @@
 
 import { AlignmentParams, OperationResult, NodeBounds, AlignmentResult } from '../types.js';
-import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById } from '../utils/node-utils.js';
 import { BaseOperation } from './base-operation.js';
 
 // Top-level operation handler
@@ -29,9 +29,6 @@ export async function MANAGE_ALIGNMENT(payload: AlignmentParams): Promise<Operat
         node.y = result.newPosition.y;
       }
     }
-
-    // Select the aligned nodes in the Figma UI
-    selectAndFocus(nodes);
 
     return {
       operation: 'manage_alignment',

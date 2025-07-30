@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.36.0] - 2025-07-30
+
+### Added
+- **figma_vectors tool**: Complete vector creation and manipulation system with sparse format
+- **Font database integration**: Comprehensive testing and optimization with 6 operations
+- **Enhanced logging**: Server and plugin version tracking, improved font database status messages
+
+### Fixed
+- **Vector operations**: Resolved rgbToHex import error in get_line operation
+- **Code quality**: Removed debug statements, unused imports, and dead code
+  
+### Changed
+- **Test coverage**: Comprehensive test suite cleanup and vector format coverage
+- **Logging system**: Consistent emoji usage and resolution messages for font database operations
+
 ## [0.35.0] - 2025-07-27
 
 ### Added
@@ -331,7 +346,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Solution**: Added complete implementations for all missing component operations
   - **Operations Added**: `update` (modify name/description), `delete` (remove component), `remove_variant` (remove variant properties)
   - **Impact**: All documented component operations now work as expected
-- **CRITICAL: Vector Operations API Fixes**: Fixed incorrect Figma API usage in `figma_vector_operations` tool
+- **CRITICAL: Vector Operations API Fixes**: Fixed incorrect Figma API usage in `figma_vectors` tool
   - **Root Cause**: Wrong API signatures for `flatten` and `outlineStroke` methods causing "cannot read property 'id' of null" errors
   - **Research**: Validated against official Figma Plugin API documentation at https://www.figma.com/plugin-docs/
   - **API Corrections**: `figma.flatten(nodes, parent)` and `node.outlineStroke()` (not figma global methods)

@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById } from '../utils/node-utils.js';
 import { unwrapArrayParam } from '../utils/parameter-utils.js';
 
 export async function MANAGE_CONSTRAINTS(params: any): Promise<OperationResult> {
@@ -59,7 +59,6 @@ async function setConstraints(node: SceneNode, params: any): Promise<any> {
   }
   
   (node as any).constraints = constraints;
-  selectAndFocus([node]);
   
   return {
     operation: 'set',
@@ -102,8 +101,6 @@ async function resetConstraints(node: SceneNode): Promise<any> {
     horizontal: 'MIN',
     vertical: 'MIN'
   };
-  
-  selectAndFocus([node]);
   
   return {
     operation: 'reset',

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { handleManageVariables } from '../../../figma-plugin/src/operations/manage-variables.js';
+import { MANAGE_VARIABLES } from '../../../figma-plugin/src/operations/manage-variables.js';
 
 // Mock BaseOperation
 vi.mock('../../../figma-plugin/src/operations/base-operation.js', async () => {
@@ -42,7 +42,7 @@ const mockFigma = {
 // @ts-ignore
 global.figma = mockFigma;
 
-describe('handleManageVariables', () => {
+describe('MANAGE_VARIABLES', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -58,7 +58,7 @@ describe('handleManageVariables', () => {
         variableType: 'COLOR'
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(BaseOperation.validateParams).toHaveBeenCalledWith(params, ['operation']);
     });
@@ -73,7 +73,7 @@ describe('handleManageVariables', () => {
         variableType: 'COLOR'
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(BaseOperation.validateStringParam).toHaveBeenCalledWith(
         'create',
@@ -88,7 +88,7 @@ describe('handleManageVariables', () => {
         throw new Error('Invalid operation: invalid');
       });
       
-      await expect(handleManageVariables({ operation: 'invalid' })).rejects.toThrow('Invalid operation: invalid');
+      await expect(MANAGE_VARIABLES({ operation: 'invalid' })).rejects.toThrow('Invalid operation: invalid');
     });
   });
 
@@ -127,7 +127,7 @@ describe('handleManageVariables', () => {
         variableType: 'COLOR'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableCollectionByIdAsync).toHaveBeenCalledWith('VariableCollectionId:collection123');
       expect(mockFigma.variables.createVariable).toHaveBeenCalledWith('Test Variable', expect.any(Object), 'COLOR');
@@ -144,7 +144,7 @@ describe('handleManageVariables', () => {
         variableType: 'COLOR'
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableCollectionByIdAsync).toHaveBeenCalledWith('VariableCollectionId:collection123');
     });
@@ -175,7 +175,7 @@ describe('handleManageVariables', () => {
         hiddenFromPublishing: true
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockVariable.description).toBe('Test description');
       expect(mockVariable.scopes).toEqual(['FILL_COLOR']);
@@ -209,7 +209,7 @@ describe('handleManageVariables', () => {
         }
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockVariable.setValueForMode).toHaveBeenCalledWith('mode1', { r: 1, g: 0, b: 0 });
       expect(mockVariable.setValueForMode).toHaveBeenCalledWith('mode2', { r: 0, g: 1, b: 0 });
@@ -241,7 +241,7 @@ describe('handleManageVariables', () => {
         }
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockVariable.setValueForMode).toHaveBeenCalledWith('mode1', { r: 1, g: 0, b: 0 });
       expect(mockVariable.setValueForMode).toHaveBeenCalledWith('mode2', { r: 1, g: 0, b: 1 });
@@ -257,7 +257,7 @@ describe('handleManageVariables', () => {
         variableType: 'COLOR'
       };
       
-      await expect(handleManageVariables(params)).rejects.toThrow('Variable collection not found');
+      await expect(MANAGE_VARIABLES(params)).rejects.toThrow('Variable collection not found');
     });
   });
 
@@ -286,7 +286,7 @@ describe('handleManageVariables', () => {
         description: 'Updated description'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableByIdAsync).toHaveBeenCalledWith('VariableID:var123');
       expect(result.name).toBe('Updated Variable');
@@ -300,7 +300,7 @@ describe('handleManageVariables', () => {
         variableName: 'Updated Variable'
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableByIdAsync).toHaveBeenCalledWith('VariableID:var123');
     });
@@ -313,7 +313,7 @@ describe('handleManageVariables', () => {
         variableId: 'var123'
       };
       
-      await expect(handleManageVariables(params)).rejects.toThrow('Variable not found');
+      await expect(MANAGE_VARIABLES(params)).rejects.toThrow('Variable not found');
     });
   });
 
@@ -332,7 +332,7 @@ describe('handleManageVariables', () => {
         variableId: 'var123'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableByIdAsync).toHaveBeenCalledWith('VariableID:var123');
       expect(mockVariable.remove).toHaveBeenCalled();
@@ -375,7 +375,7 @@ describe('handleManageVariables', () => {
         variableId: 'var123'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(result.id).toBe('var123');
       expect(result.name).toBe('Test Variable');
@@ -422,7 +422,7 @@ describe('handleManageVariables', () => {
         collectionId: 'collection123'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(result.collectionId).toBe('collection123');
       expect(result.collectionName).toBe('Test Collection');
@@ -461,7 +461,7 @@ describe('handleManageVariables', () => {
         property: 'width'
       };
       
-      const result = await handleManageVariables(params);
+      const result = await MANAGE_VARIABLES(params);
       
       expect(mockFigma.variables.getVariableByIdAsync).toHaveBeenCalledWith('VariableID:var123');
       expect(findNodeById).toHaveBeenCalledWith('node123');
@@ -503,7 +503,7 @@ describe('handleManageVariables', () => {
         modeValues: { light: '#FF0000' }
       };
       
-      await handleManageVariables(params);
+      await MANAGE_VARIABLES(params);
       
       expect(mockVariable.setValueForMode).toHaveBeenCalledWith('mode1', { r: 1, g: 0, b: 0 });
     });

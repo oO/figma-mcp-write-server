@@ -191,7 +191,9 @@ export class FigmaWebSocketServer extends EventEmitter {
 
   private handleMessage(ws: WebSocket, message: any): void {
     if (message.type === 'PLUGIN_HELLO') {
-      logger.log('🔌 Plugin connected via WebSocket');
+      logger.log('🔌 Plugin connected via WebSocket', {
+        pluginVersion: message.version || 'unknown'
+      });
       this.pluginConnection = ws;
       this.connectionStatus.pluginConnected = true;
       this.connectionStatus.connectionHealth = 'healthy';

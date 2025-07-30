@@ -97,8 +97,8 @@ export class UnifiedHandler {
     const validatedArgs = this.validateArgs(singleArgs, config);
     
 
-    // Generate parameter warnings (non-blocking)
-    const warnings = this.generateParameterWarnings(validatedArgs, config);
+    // Generate parameter warnings (non-blocking) - use raw args before any processing
+    const warnings = this.generateParameterWarnings(args, config);
 
     // Use custom handler if provided
     if (config.customHandler) {
@@ -251,7 +251,9 @@ export class UnifiedHandler {
         text: yaml.dump(responseData, { 
           indent: 2, 
           quotingType: '"',
-          forceQuotes: false
+          forceQuotes: false,
+          condenseFlow: true,
+          noRefs: true
         })
       }],
       isError: false
@@ -269,7 +271,9 @@ export class UnifiedHandler {
         text: yaml.dump(bulkResult, { 
           indent: 2, 
           quotingType: '"',
-          forceQuotes: false
+          forceQuotes: false,
+          condenseFlow: true,
+          noRefs: true
         })
       }],
       isError: false

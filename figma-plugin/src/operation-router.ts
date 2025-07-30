@@ -18,14 +18,11 @@ class OperationRouter {
    * Initialize the router by discovering all operations
    */
   initialize(): void {
-    // logger.debug('🔍 Auto-discovering operations...');
     
     try {
       this.operations = this.importOperations();
       const operationCount = Object.keys(this.operations).length;
       
-      // logger.debug(`✅ Auto-discovered ${operationCount} operations:`, 
-      //          Object.keys(this.operations).sort());
     } catch (error) {
       logger.error('❌ Failed to initialize operation router:', error);
       throw error;
@@ -45,7 +42,6 @@ class OperationRouter {
       fileName !== 'base-operation'
     );
 
-    // logger.debug(`📁 Loading ${operationFiles.length} operation files from ${OPERATION_FILES.length} total files`);
 
     // Import each operation module synchronously
     for (const fileName of operationFiles) {
@@ -56,7 +52,6 @@ class OperationRouter {
         for (const [exportName, exportValue] of Object.entries(module)) {
           if (typeof exportValue === 'function' && this.isValidOperationName(exportName)) {
             operations[exportName] = exportValue as OperationHandler;
-            // logger.debug(`📝 Registered operation: ${exportName} (from ${fileName})`);
           }
         }
         

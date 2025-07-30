@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, selectAndFocus, validateNodeType } from '../utils/node-utils.js';
+import { findNodeById, validateNodeType } from '../utils/node-utils.js';
 
 /**
  * Handle MANAGE_AUTO_LAYOUT operation with 7 operations: get, set_horizontal, set_vertical, set_grid, set_freeform, set_child, reorder_children

@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, formatNodeResponse, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById, formatNodeResponse } from '../utils/node-utils.js';
 
 /**
  * Handle BOOLEAN_OPERATION - perform boolean operations on vector nodes
@@ -63,9 +63,6 @@ export async function BOOLEAN_OPERATION(params: any): Promise<OperationResult> {
     
     // Set name
     booleanNode.name = params.name || `Boolean ${operation}`;
-    
-    // Select and focus the result
-    selectAndFocus(booleanNode);
     
     return formatNodeResponse(booleanNode, `Boolean ${operation} operation completed successfully`);
   });

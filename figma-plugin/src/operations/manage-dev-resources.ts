@@ -1,6 +1,6 @@
 import { OperationResult } from '../types.js';
 import { BaseOperation } from './base-operation.js';
-import { findNodeById, selectAndFocus } from '../utils/node-utils.js';
+import { findNodeById } from '../utils/node-utils.js';
 
 /**
  * Handle DEV_RESOURCE_OPERATION - manage dev mode resources and CSS generation
@@ -46,8 +46,6 @@ async function generateCss(params: any): Promise<any> {
   if (!node) {
     throw new Error(`Node ${params.nodeId} not found`);
   }
-  
-  selectAndFocus([node]);
   
   // Basic CSS generation - this is a simplified implementation
   // In a full implementation, this would generate actual CSS based on node properties
@@ -129,8 +127,6 @@ async function setDevStatus(params: any): Promise<any> {
     throw new Error(`Invalid status: ${params.status}. Valid statuses: ${validStatuses.join(', ')}`);
   }
   
-  selectAndFocus([node]);
-  
   // Note: In a full implementation, this would set actual dev status in Figma
   // For now, we return a response indicating the operation was processed
   
@@ -157,8 +153,6 @@ async function addDevLink(params: any): Promise<any> {
   if (!node) {
     throw new Error(`Node ${params.nodeId} not found`);
   }
-  
-  selectAndFocus([node]);
   
   // Note: In a full implementation, this would add actual dev links in Figma
   // For now, we return a response indicating the operation was processed
@@ -202,8 +196,6 @@ async function getDevResources(params: any): Promise<any> {
   if (!node) {
     throw new Error(`Node ${params.nodeId} not found`);
   }
-  
-  selectAndFocus([node]);
   
   // Note: In a full implementation, this would retrieve actual dev resources from Figma
   // For now, we return a response with available basic information

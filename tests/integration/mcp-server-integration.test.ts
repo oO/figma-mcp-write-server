@@ -71,7 +71,7 @@ describe("MCP Server Integration", () => {
       expect(toolNames).toContain("figma_variables");
       expect(toolNames).toContain("figma_components");
       expect(toolNames).toContain("figma_boolean_operations");
-      expect(toolNames).toContain("figma_vector_operations");
+      expect(toolNames).toContain("figma_vectors");
       expect(toolNames).toContain("figma_annotations");
       expect(toolNames).toContain("figma_measurements");
       expect(toolNames).toContain("figma_dev_resources");
@@ -232,7 +232,7 @@ describe("MCP Server Integration", () => {
     //   mockSendToPlugin.mockResolvedValue(mockResponse);
 
     //   const result = await handlerRegistry.handleToolCall(
-    //     "figma_vector_operations",
+    //     "figma_vectors",
     //     {
     //       operation: "create_vector",
     //       name: "Custom Vector",
@@ -683,7 +683,7 @@ describe("MCP Server Integration", () => {
       });
 
       const createResult = await handlerRegistry.handleToolCall(
-        "figma_vector_operations",
+        "figma_vectors",
         {
           operation: "create_vector",
           name: "Custom Path",
@@ -708,7 +708,7 @@ describe("MCP Server Integration", () => {
       });
 
       const pathsResult = await handlerRegistry.handleToolCall(
-        "figma_vector_operations",
+        "figma_vectors",
         {
           operation: "get_vector_paths",
           nodeId: "vector-1",
@@ -725,7 +725,7 @@ describe("MCP Server Integration", () => {
       });
 
       const flattenResult = await handlerRegistry.handleToolCall(
-        "figma_vector_operations",
+        "figma_vectors",
         {
           operation: "flatten",
           nodeId: "vector-1",
