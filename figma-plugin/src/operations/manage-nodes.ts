@@ -10,6 +10,7 @@ import {
 } from '../utils/bulk-operations.js';
 import { createPageNodesResponse } from '../utils/response-utils.js';
 import { normalizeToArray } from '../utils/paint-properties.js';
+import { removeSymbols } from '../utils/vector-sparse-format.js';
 
 /**
  * Add a node to the specified parent container or page
@@ -123,12 +124,7 @@ async function getNode(params: any): Promise<OperationResult> {
         const nodeData = formatNodeResponse(node);
         
         // Apply Symbol cleanup before adding to results
-        const cleanData = JSON.parse(JSON.stringify(nodeData, (key, value) => {
-          if (typeof value === 'symbol') {
-            return undefined;
-          }
-          return value;
-        }));
+        const cleanData = removeSymbols(nodeData);
         
         results.push(cleanData);
         
@@ -323,8 +319,11 @@ async function listNodes(params: any = {}): Promise<OperationResult> {
     // Get nodes using shared traversal/filtering logic
     const allNodes = await getNodesFromParams(params, detail);
     
+    // Apply Symbol cleanup to all nodes before creating response
+    const cleanNodes = allNodes.map(node => removeSymbols(node));
+    
     // Create response with proper detail level
-    const pageData = createPageNodesResponse(allNodes, detail);
+    const pageData = createPageNodesResponse(cleanNodes, detail);
     
     return pageData;
   });
