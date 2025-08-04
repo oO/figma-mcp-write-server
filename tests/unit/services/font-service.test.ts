@@ -155,7 +155,8 @@ describe('FontService', () => {
         type: 'MANAGE_FONTS',
         payload: {
           operation: 'check_availability',
-          fontNames
+          fontFamily: ['Inter', 'Arial'],
+          fontStyle: ['Regular', 'Bold']
         }
       });
       expect(result).toEqual(mockResponse);
