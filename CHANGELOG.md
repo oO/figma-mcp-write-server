@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.38.0] - 2025-08-04
+
+### Added
+- **figma_images tool**: Image management with four operations
+  - **list**: List image hashes in pages with filtering and metadata options
+  - **get**: Get detailed information about specific images including usage and dimensions  
+  - **export**: Export image data as MCP image content or save as PNG files
+  - **create**: Create image nodes from URLs, file paths, or existing hashes with auto-detection and bulk support
+
+### Fixed
+- **Node operations**: Resolve Symbol serialization error when listing nodes with detailed properties
+
+### Changed
+- **Test coverage**: Add 41 comprehensive unit tests for image management functionality
+- **Image operations**: Refactored create operation to support both single and bulk workflows
+
 ## [0.37.1] - 2025-07-30
 
 ### Fixed

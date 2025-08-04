@@ -121,6 +121,7 @@ npm run dev          # Development mode
 - `figma_fills` - Colors, gradients, images
 - `figma_strokes` - Border styling
 - `figma_effects` - Shadows, blurs
+- `figma_images` - List image hashes, get detailed info, export image data, create image nodes from URLs or files
 
 ### Layout
 - `figma_auto_layout` - Auto layout properties
@@ -141,6 +142,9 @@ npm run dev          # Development mode
 - `figma_vectors` - Create/edit vectors, convert shapes/text, extract elements
 - `figma_exports` - Export assets
 - `figma_dev_resources` - CSS generation
+
+### System
+- `figma_pages` - Page management and navigation
 - `figma_plugin_status` - Connection status
 
 ## Configuration

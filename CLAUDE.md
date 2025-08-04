@@ -133,7 +133,7 @@ target.effects[0] = newEffect;      // Will not work properly
 
 ## Project Architecture
 
-Figma MCP Write Server with 24 MCP tools, handler-based architecture, WebSocket communication, and YAML responses.
+Figma MCP Write Server with 25 MCP tools, handler-based architecture, WebSocket communication, and YAML responses.
 
 ## Figma Plugin Development Critical Knowledge
 

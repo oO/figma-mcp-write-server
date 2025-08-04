@@ -84,6 +84,7 @@ export class HandlerRegistry {
       () => import('./strokes-handler.js').then(m => ({ class: m.StrokesHandler, name: 'StrokesHandler' })),
       () => import('./fonts-handler.js').then(m => ({ class: m.FontsHandler, name: 'FontsHandler' })),
       () => import('./hierarchy-handler.js').then(m => ({ class: m.HierarchyHandler, name: 'HierarchyHandler' })),
+      () => import('./images-handler.js').then(m => ({ class: m.ImagesHandler, name: 'ImagesHandler' })),
       () => import('./instances-handler.js').then(m => ({ class: m.InstancesHandler, name: 'InstancesHandler' })),
       () => import('./measurements-handler.js').then(m => ({ class: m.MeasurementsHandler, name: 'MeasurementsHandler' })),
       () => import('./nodes-handler.js').then(m => ({ class: m.NodeHandler, name: 'NodeHandler' })),

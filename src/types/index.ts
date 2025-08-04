@@ -48,6 +48,9 @@ export * from './fill-operations.js';
 // Stroke management operations (Paint objects for strokes)
 export * from './stroke-operations.js';
 
+// Image management operations
+export * from './image-operations.js';
+
 // Font management operations
 export * from './font-operations.js';
 

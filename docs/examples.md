@@ -131,6 +131,19 @@ Quick reference for common Figma design tasks using natural language.
 "Export PDF of current page"
 ```
 
+## Images
+
+```
+"List all images used in this page"
+"Show detailed info for image hash abc123"
+"Find which nodes use this specific image"
+"Export image data in PNG format to Downloads folder"
+"Create new image node from https://example.com/photo.jpg"
+"Add image from local file ~/Desktop/logo.png"
+"Create image node from existing hash abc123 at position 150,200"
+"Get color type and file size of images"
+```
+
 ## Complex Examples
 
 ### Design System Setup

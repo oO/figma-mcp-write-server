@@ -105,7 +105,7 @@ Port Management:
   - Provides clear error messages for port conflicts
 
 Available MCP Tools:
-  24 comprehensive tools for Figma automation including:
+  25 comprehensive tools for Figma automation including:
   - Node management (create, update, delete, duplicate)
   - Style operations (fills, strokes, effects, text styles)
   - Layout and positioning (alignments, transforms)

@@ -30,7 +30,7 @@ Rather than a thin wrapper around the Figma API, tools are organized for intuiti
 - **Design System:** `figma_styles`, `figma_components`, `figma_instances`, `figma_variables`, `figma_fonts`
 - **Advanced Operations:** `figma_boolean_operations`, `figma_vectors`
 - **Developer Tools:** `figma_dev_resources`, `figma_annotations`, `figma_measurements`, `figma_exports`
-- **System:** `figma_plugin_status`, `figma_pages`, `figma_selection`
+- **System:** `figma_plugin_status`, `figma_pages`, `figma_selection`, `figma_images`
 
 These 24 tools provide complete access to Figma's capabilities - from creating basic shapes and text to building complex design systems with components and variables. Advanced features include boolean operations for combining shapes, vector manipulation for custom paths, and comprehensive export options for developer handoff.
 
@@ -126,6 +126,13 @@ Open Claude Desktop and use any of the 24 available tools to design programmatic
 - "Add annotations and measurements, generate CSS for developers"
 - "Export selected components as PNG files"
 - "Create design specifications with spacing measurements"
+
+### Images
+- "List all images used in this page with usage information"
+- "Create image node from https://example.com/photo.jpg"
+- "Add image from local file ~/Desktop/logo.png at position 100,50"
+- "Create image node from existing hash abc123 at position 150,200"
+- "Export image data to Downloads folder in PNG format"
 
 
 

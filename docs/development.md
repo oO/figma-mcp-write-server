@@ -107,6 +107,51 @@ try {
 }
 ```
 
+### Compound Operations
+```typescript
+// Pattern: Single MCP tool, multiple internal operations
+case 'create': {
+  // Step 1: Delegate to existing operation
+  const { MANAGE_NODES } = await import('../generated-operations.js');
+  const nodeResult = await MANAGE_NODES({
+    operation: 'create_rectangle',
+    width: 10, height: 10, x, y
+  });
+  
+  // Step 2: Delegate to another operation  
+  const { MANAGE_FILLS } = await import('../generated-operations.js');
+  const fillResult = await MANAGE_FILLS({
+    operation: 'add_image',
+    nodeId: nodeResult.nodeId,
+    imageUrl: url
+  });
+  
+  // Step 3: Update with final result
+  await MANAGE_NODES({
+    operation: 'update',
+    nodeId: nodeResult.nodeId,
+    width: fillResult.dimensions.width,
+    height: fillResult.dimensions.height
+  });
+  
+  // Return combined result
+  return {
+    success: true,
+    nodeId: nodeResult.nodeId,
+    imageHash: fillResult.imageHash,
+    // ... combined metadata
+  };
+}
+```
+
+Benefits:
+- **Agent Simplicity**: Single tool call instead of orchestrating multiple operations
+- **Code Reuse**: Leverages existing operation logic (DRY principle)  
+- **Atomic Behavior**: Either complete success or rollback
+- **Performance**: Single WebSocket roundtrip instead of multiple
+
+Example tools: `figma_images` (create operation)
+
 ## Testing
 
 ### Unit Tests
