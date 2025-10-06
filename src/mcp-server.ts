@@ -5,6 +5,7 @@ import {
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
@@ -46,6 +47,7 @@ export class FigmaMCPServer {
         capabilities: {
           tools: {},
           resources: {},
+          prompts: {},
         },
       }
     );
@@ -74,10 +76,7 @@ export class FigmaMCPServer {
       this.onPluginConnected();
     });
 
-    // Wait for handler registration before setting up request handlers
-    this.handlerRegistry.waitForHandlerRegistration().then(() => {
-      this.setupHandlers();
-    });
+    // Note: setupHandlers will be called after handler registration in start()
   }
 
   private setupHandlers() {
@@ -92,6 +91,13 @@ export class FigmaMCPServer {
     this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
       return {
         resources: await this.resourceRegistry.getResources(),
+      };
+    });
+
+    // List available prompts (empty for now)
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      return {
+        prompts: [],
       };
     });
 
@@ -160,6 +166,10 @@ export class FigmaMCPServer {
   async start(): Promise<void> {
     // Start WebSocket server
     await this.wsServer.start();
+    
+    // Wait for handler registration then setup handlers
+    await this.handlerRegistry.waitForHandlerRegistration();
+    this.setupHandlers();
     
     // Start MCP server
     const transport = new StdioServerTransport();

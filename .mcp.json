@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "figma-mcp-write-server": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/Users/olivier/Projects/figma-mcp-write-server/dist/index.js"],
+      "env": {}
+    }
+  }
+}
