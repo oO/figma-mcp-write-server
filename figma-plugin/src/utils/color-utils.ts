@@ -674,35 +674,36 @@ export function imageMatrixToFlattened(matrix: Transform): {
   //        tx,ty = translation components
   const [[m11, m12, tx], [m21, m22, ty]] = matrix;
   
-  // Extract translation components (straightforward)
+  // Extract translation components
+  // Transform uses normalized 0-1 coordinate system relative to node bounds
   const imageTranslateX = tx;
   const imageTranslateY = ty;
-  
+
   // Extract scale values using the magnitude of each axis vector
   // Preserve sign to handle flips correctly
   const scaleX = Math.sqrt(m11 * m11 + m12 * m12) * Math.sign(m11 || 1);
   const scaleY = Math.sqrt(m21 * m21 + m22 * m22) * Math.sign(m22 || 1);
   const averageScale = (Math.abs(scaleX) + Math.abs(scaleY)) / 2;
-  
+
   // Extract rotation angle from the first column vector (X-axis)
   const rotationRadians = Math.atan2(m12, m11);
   const rotationDegrees = rotationRadians * (180 / Math.PI);
-  
+
   // Extract skew by removing rotation from the Y-axis vector
   const cosRotation = Math.cos(-rotationRadians);
   const sinRotation = Math.sin(-rotationRadians);
-  
+
   // Rotate the Y-axis vector back to isolate skew
   const derotatedYx = m21 * cosRotation - m22 * sinRotation;
   const derotatedYy = m21 * sinRotation + m22 * cosRotation;
-  
+
   // Calculate skew angle from the derotated Y vector
   const skewRadians = Math.abs(scaleX) > 0 ? Math.atan2(derotatedYx, Math.abs(scaleX)) : 0;
   const skewDegrees = skewRadians * (180 / Math.PI);
-  
-  // Calculate relative offset (-1 to 1 range, normalized to 200px reference)
-  const offsetX = Math.max(-1, Math.min(1, imageTranslateX / 200));
-  const offsetY = Math.max(-1, Math.min(1, imageTranslateY / 200));
+
+  // Use normalized coordinates directly (no conversion needed)
+  const offsetX = tx;
+  const offsetY = ty;
   
   return {
     transformOffsetX: Number(offsetX.toFixed(3)),
@@ -756,20 +757,22 @@ export function flattenedToImageMatrix(params: {
   if (params.imageFlipVertical) scaleY *= -1;
   
   // Handle translation (offset vs translate parameters)
+  // Transform uses normalized 0-1 coordinate system relative to node bounds
+  // (0,0) = top-left corner, (1,1) = bottom-right corner
   let translateX = 0;
   let translateY = 0;
-  
+
   // Use either translate or offset parameters, with translate taking precedence
   if (params.imageTranslateX !== undefined) {
     translateX = params.imageTranslateX;
   } else if (params.transformOffsetX !== undefined) {
-    translateX = params.transformOffsetX * 200; // Convert offset to pixels
+    translateX = params.transformOffsetX; // Use normalized coordinates directly
   }
-  
+
   if (params.imageTranslateY !== undefined) {
     translateY = params.imageTranslateY;
   } else if (params.transformOffsetY !== undefined) {
-    translateY = params.transformOffsetY * 200; // Convert offset to pixels
+    translateY = params.transformOffsetY; // Use normalized coordinates directly
   }
   
   // Build transformation matrix step by step
