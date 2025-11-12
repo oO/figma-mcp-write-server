@@ -256,28 +256,32 @@ export function createPatternPaint(
  * Create an ImagePaint object with scale mode-aware transform handling
  */
 export function createImagePaint(
-  imageHash: string, 
-  scaleMode: string = 'FILL', 
-  transformParams?: any, 
-  filters?: any
+  imageHash: string,
+  scaleMode: string = 'FILL',
+  transformParams?: any,
+  filters?: any,
+  context?: {
+    frameDimensions?: { width: number; height: number };
+    imageDimensions?: { width: number; height: number };
+  }
 ): { paint: ImagePaint; warnings: string[] } {
   const paint: any = {
     type: 'IMAGE',
     imageHash,
     scaleMode: scaleMode.toUpperCase()
   };
-  
+
   let warnings: string[] = [];
-  
+
   if (transformParams) {
     const strategy = getTransformStrategy(scaleMode);
     const validation = validateTransformParams(scaleMode, transformParams);
     warnings = validation.warnings;
-    
+
     switch (strategy) {
       case 'MATRIX_TRANSFORM':
-        // CROP mode: Use full matrix transform
-        paint.imageTransform = flattenedToImageMatrix(transformParams);
+        // CROP mode: Use full matrix transform with optional intuitive API support
+        paint.imageTransform = flattenedToImageMatrix(transformParams, context);
         break;
         
       case 'INDIVIDUAL_PROPERTIES':
@@ -310,23 +314,45 @@ export function createImagePaint(
 /**
  * Extract mode-specific transform parameters from ImagePaint
  * Only returns parameters that are actually effective for the given scale mode
+ * Returns intuitive API values (pixels, natural scale) when context is provided
  */
-export function extractFlattenedImageParams(paint: ImagePaint): Record<string, number> {
+export function extractFlattenedImageParams(
+  paint: ImagePaint,
+  context?: {
+    frameDimensions?: { width: number; height: number };
+    imageDimensions?: { width: number; height: number };
+  }
+): Record<string, number> {
   const scaleMode = paint.scaleMode || 'FILL';
   const result: Record<string, number> = {};
-  
+
   switch (scaleMode.toUpperCase()) {
     case 'CROP':
       // CROP mode: Extract full transform parameters from matrix
       if (paint.imageTransform) {
-        const flattened = imageMatrixToFlattened(paint.imageTransform);
-        result.transformOffsetX = flattened.transformOffsetX;
-        result.transformOffsetY = flattened.transformOffsetY;
-        result.transformScaleX = flattened.transformScaleX;
-        result.transformScaleY = flattened.transformScaleY;
-        result.transformRotation = flattened.transformRotation;
-        result.transformSkewX = flattened.transformSkewX;
-        result.transformSkewY = flattened.transformSkewY;
+        const flattened = imageMatrixToFlattened(paint.imageTransform, context);
+
+        // Return intuitive values if available, otherwise UV values
+        if (flattened.imagePositionX !== undefined) {
+          result.imagePositionX = flattened.imagePositionX;
+          result.imagePositionY = flattened.imagePositionY!;
+          result.imageScaleX = flattened.imageScaleX!;
+          result.imageScaleY = flattened.imageScaleY!;
+          result.imageWidth = flattened.imageWidth!;
+          result.imageHeight = flattened.imageHeight!;
+          if (flattened.imageRotation !== undefined) {
+            result.imageRotation = flattened.imageRotation;
+          }
+        } else {
+          // Fallback to UV values
+          result.transformOffsetX = flattened.transformOffsetX;
+          result.transformOffsetY = flattened.transformOffsetY;
+          result.transformScaleX = flattened.transformScaleX;
+          result.transformScaleY = flattened.transformScaleY;
+          result.transformRotation = flattened.transformRotation;
+          result.transformSkewX = flattened.transformSkewX;
+          result.transformSkewY = flattened.transformSkewY;
+        }
       }
       break;
       
@@ -657,7 +683,11 @@ export function matrixToFlattened(matrix: Transform): {
  * 
  * Internal representation: [[a, c, e], [b, d, f]] = [[scaleX, skewX, translateX], [skewY, scaleY, translateY]]
  */
-export function imageMatrixToFlattened(matrix: Transform): {
+export function imageMatrixToFlattened(matrix: Transform, context?: {
+  frameDimensions?: { width: number; height: number };
+  imageDimensions?: { width: number; height: number };
+}): {
+  // Legacy UV values
   transformOffsetX: number;
   transformOffsetY: number;
   transformScale: number;
@@ -668,6 +698,14 @@ export function imageMatrixToFlattened(matrix: Transform): {
   transformSkewY: number;
   imageTranslateX: number;
   imageTranslateY: number;
+  // Intuitive values (if dimensions provided)
+  imagePositionX?: number;
+  imagePositionY?: number;
+  imageScaleX?: number;
+  imageScaleY?: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageRotation?: number;
 } {
   // 2D transformation matrix format: [[m11, m12, tx], [m21, m22, ty]]
   // Where: m11,m12 = first row (X-axis transform), m21,m22 = second row (Y-axis transform)
@@ -704,8 +742,9 @@ export function imageMatrixToFlattened(matrix: Transform): {
   // Use normalized coordinates directly (no conversion needed)
   const offsetX = tx;
   const offsetY = ty;
-  
-  return {
+
+  // Build base result with UV values
+  const result: any = {
     transformOffsetX: Number(offsetX.toFixed(3)),
     transformOffsetY: Number(offsetY.toFixed(3)),
     transformScale: Number(averageScale.toFixed(3)),
@@ -717,6 +756,27 @@ export function imageMatrixToFlattened(matrix: Transform): {
     imageTranslateX: Number(imageTranslateX.toFixed(1)),
     imageTranslateY: Number(imageTranslateY.toFixed(1))
   };
+
+  // Add intuitive values if dimensions are provided
+  if (context?.frameDimensions && context?.imageDimensions) {
+    const { cropTransformToIntuitive } = require('./image-transform-utils.js');
+    const intuitive = cropTransformToIntuitive(
+      {
+        transformOffsetX: offsetX,
+        transformOffsetY: offsetY,
+        transformScaleX: scaleX,
+        transformScaleY: scaleY,
+        transformRotation: rotationDegrees
+      },
+      context.frameDimensions,
+      context.imageDimensions
+    );
+
+    // Add intuitive values to result
+    Object.assign(result, intuitive);
+  }
+
+  return result;
 }
 
 /**
@@ -730,6 +790,7 @@ export function imageMatrixToFlattened(matrix: Transform): {
  * Internal representation: [[a, c, e], [b, d, f]] = [[scaleX, skewX, translateX], [skewY, scaleY, translateY]]
  */
 export function flattenedToImageMatrix(params: {
+  // Legacy UV API (normalized 0-1 coordinates)
   transformOffsetX?: number;
   transformOffsetY?: number;
   transformScale?: number;
@@ -742,20 +803,52 @@ export function flattenedToImageMatrix(params: {
   imageTranslateY?: number;
   imageFlipHorizontal?: boolean;
   imageFlipVertical?: boolean;
+
+  // Intuitive designer API (pixels, natural scale)
+  imagePositionX?: number;
+  imagePositionY?: number;
+  imageWidth?: number;
+  imageHeight?: number;
+  imageScaleX?: number;
+  imageScaleY?: number;
+  imageRotation?: number;
+}, context?: {
+  frameDimensions?: { width: number; height: number };
+  imageDimensions?: { width: number; height: number };
 }): Transform {
+  // Import conversion functions for intuitive API
+  const { hasIntuitiveParams, intuitiveToCropTransform } = require('./image-transform-utils.js');
+
+  // Check if user is using intuitive API
+  const useIntuitiveAPI = hasIntuitiveParams(params);
+
+  // Convert intuitive params to UV if needed
+  let uvParams = params;
+  if (useIntuitiveAPI && context?.frameDimensions && context?.imageDimensions) {
+    const converted = intuitiveToCropTransform(params, context.frameDimensions, context.imageDimensions);
+    uvParams = {
+      ...params,
+      transformOffsetX: converted.transformOffsetX,
+      transformOffsetY: converted.transformOffsetY,
+      transformScaleX: converted.transformScaleX,
+      transformScaleY: converted.transformScaleY,
+      transformRotation: converted.transformRotation
+    };
+  }
+
   // Extract parameters with defaults
-  const rotation = (params.transformRotation ?? 0) * Math.PI / 180; // Convert to radians
-  const skewX = (params.transformSkewX ?? 0) * Math.PI / 180; // Convert to radians
-  const skewY = (params.transformSkewY ?? 0) * Math.PI / 180; // Convert to radians
-  
+  const rotation = (uvParams.transformRotation ?? params.imageRotation ?? 0) * Math.PI / 180; // Convert to radians
+  const skewX = (uvParams.transformSkewX ?? 0) * Math.PI / 180; // Convert to radians
+  const skewY = (uvParams.transformSkewY ?? 0) * Math.PI / 180; // Convert to radians
+
   // Handle scale parameters (scaleX/Y override uniform scale)
-  let scaleX = params.transformScaleX ?? params.transformScale ?? 1;
-  let scaleY = params.transformScaleY ?? params.transformScale ?? 1;
-  
+  let scaleX = uvParams.transformScaleX ?? uvParams.transformScale ?? 1;
+  let scaleY = uvParams.transformScaleY ?? uvParams.transformScale ?? 1;
+
   // Apply flips as negative scale
-  if (params.imageFlipHorizontal) scaleX *= -1;
-  if (params.imageFlipVertical) scaleY *= -1;
-  
+  if (uvParams.imageFlipHorizontal) scaleX *= -1;
+  if (uvParams.imageFlipVertical) scaleY *= -1;
+
   // Handle translation (offset vs translate parameters)
   // Transform uses normalized 0-1 coordinate system relative to node bounds
   // (0,0) = top-left corner, (1,1) = bottom-right corner
@@ -763,16 +856,16 @@ export function flattenedToImageMatrix(params: {
   let translateY = 0;
 
   // Use either translate or offset parameters, with translate taking precedence
-  if (params.imageTranslateX !== undefined) {
-    translateX = params.imageTranslateX;
-  } else if (params.transformOffsetX !== undefined) {
-    translateX = params.transformOffsetX; // Use normalized coordinates directly
+  if (uvParams.imageTranslateX !== undefined) {
+    translateX = uvParams.imageTranslateX;
+  } else if (uvParams.transformOffsetX !== undefined) {
+    translateX = uvParams.transformOffsetX; // Use normalized coordinates directly
   }
 
-  if (params.imageTranslateY !== undefined) {
-    translateY = params.imageTranslateY;
-  } else if (params.transformOffsetY !== undefined) {
-    translateY = params.transformOffsetY; // Use normalized coordinates directly
+  if (uvParams.imageTranslateY !== undefined) {
+    translateY = uvParams.imageTranslateY;
+  } else if (uvParams.transformOffsetY !== undefined) {
+    translateY = uvParams.transformOffsetY; // Use normalized coordinates directly
   }
   
   // Build transformation matrix step by step

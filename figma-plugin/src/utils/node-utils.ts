@@ -154,7 +154,11 @@ export function extractCornerRadiusProperties(node: any): Partial<NodeInfo> {
  */
 export async function formatNodeResponseAsync(node: SceneNode, message?: string): Promise<NodeInfo> {
   const nodeData = formatNodeResponse(node, message);
-  return await cleanEmptyPropertiesAsync(nodeData) || nodeData;
+  // Pass frame dimensions for intuitive image transform API
+  const context = ('width' in node && 'height' in node)
+    ? { frameDimensions: { width: node.width, height: node.height } }
+    : undefined;
+  return await cleanEmptyPropertiesAsync(nodeData, context) || nodeData;
 }
 
 export function formatNodeResponse(node: SceneNode, message?: string): NodeInfo {
@@ -654,7 +658,13 @@ function isColorStopArray(obj: any): obj is ColorStop[] {
 /**
  * Async version of cleanEmptyProperties that can enhance image fills with metadata
  */
-export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
+export async function cleanEmptyPropertiesAsync(
+  obj: any,
+  context?: {
+    frameDimensions?: { width: number; height: number };
+    imageDimensions?: { width: number; height: number };
+  }
+): Promise<any> {
   try {
     if (obj === null || typeof obj !== 'object') {
       return obj;
@@ -673,7 +683,7 @@ export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
       
       const cleaned = [];
       for (const item of obj) {
-        const cleanedItem = await cleanEmptyPropertiesAsync(item);
+        const cleanedItem = await cleanEmptyPropertiesAsync(item, context);
         if (cleanedItem !== undefined) {
           cleaned.push(cleanedItem);
       }
@@ -701,7 +711,7 @@ export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
   // Special handling for IMAGE fills - extract unified flat parameters
   if (enhancedObj.type === 'IMAGE') {
     try {
-      const flatParams = extractFlattenedImageParams(enhancedObj as ImagePaint);
+      const flatParams = extractFlattenedImageParams(enhancedObj as ImagePaint, context);
       Object.assign(cleaned, flatParams);
       hasProperties = true;
     } catch (error) {
@@ -792,7 +802,7 @@ export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
     
     if (Array.isArray(value)) {
       if (value.length > 0) {
-        const cleanedArray = await cleanEmptyPropertiesAsync(value);
+        const cleanedArray = await cleanEmptyPropertiesAsync(value, context);
         if (cleanedArray !== undefined) {
           cleaned[key] = cleanedArray;
           hasProperties = true;
@@ -801,7 +811,7 @@ export async function cleanEmptyPropertiesAsync(obj: any): Promise<any> {
     } else if (typeof value === 'object') {
       // Check if object is empty
       if (Object.keys(value).length > 0) {
-        const cleanedObj = await cleanEmptyPropertiesAsync(value);
+        const cleanedObj = await cleanEmptyPropertiesAsync(value, context);
         if (cleanedObj !== undefined && Object.keys(cleanedObj).length > 0) {
           cleaned[key] = cleanedObj;
           hasProperties = true;

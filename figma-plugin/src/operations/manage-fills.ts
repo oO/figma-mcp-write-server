@@ -46,20 +46,35 @@ import {
 /**
  * Clean and format fill response data with compact YAML formatting
  */
-async function formatFillResponse(responseData: any): Promise<any> {
-  return await cleanEmptyPropertiesAsync(responseData) || responseData;
+async function formatFillResponse(responseData: any, node?: SceneNode): Promise<any> {
+  // Extract frame dimensions if node provided
+  const context = node && 'width' in node && 'height' in node
+    ? { frameDimensions: { width: node.width, height: node.height } }
+    : undefined;
+
+  return await cleanEmptyPropertiesAsync(responseData, context) || responseData;
 }
 
 /**
  * Apply scale mode-aware transform processing to an image paint
  * Handles both new image creation and existing image updates
  */
-function applyScaleModeAwareTransforms(
+async function applyScaleModeAwareTransforms(
   imageHash: string,
   scaleMode: string,
   params: any,
+  node: SceneNode,
   existingPaint?: ImagePaint
-): { paint: ImagePaint; warnings: string[] } {
+): Promise<{ paint: ImagePaint; warnings: string[] }> {
+  // Extract frame dimensions from node
+  const frameDimensions = ('width' in node && 'height' in node)
+    ? { width: node.width, height: node.height }
+    : undefined;
+
+  // Get image dimensions from hash
+  const { getImageDimensions } = require('../utils/color-utils.js');
+  const imageDimensions = await getImageDimensions(imageHash);
+
   // Collect transform parameters for scale mode-aware processing
   const transformParams = {
     transformOffsetX: params.transformOffsetX,
@@ -70,14 +85,29 @@ function applyScaleModeAwareTransforms(
     transformRotation: params.transformRotation,
     transformSkewX: params.transformSkewX,
     transformSkewY: params.transformSkewY,
-    imageTransform: params.imageTransform // Allow explicit matrix override
+    imageTransform: params.imageTransform, // Allow explicit matrix override
+    // Intuitive API parameters
+    imagePositionX: params.imagePositionX,
+    imagePositionY: params.imagePositionY,
+    imageWidth: params.imageWidth,
+    imageHeight: params.imageHeight,
+    imageScaleX: params.imageScaleX,
+    imageScaleY: params.imageScaleY,
+    imageRotation: params.imageRotation
   };
-  
+
+  // Create context for intuitive API support
+  const context = (frameDimensions && imageDimensions)
+    ? { frameDimensions, imageDimensions }
+    : undefined;
+
   // Create image paint with scale mode-aware transform handling
   const { paint: transformedPaint, warnings } = createImagePaint(
     imageHash,
     scaleMode,
-    transformParams
+    transformParams,
+    undefined, // filters
+    context
   );
   
   // If updating existing paint, preserve non-transform properties
@@ -549,12 +579,13 @@ async function addImageFill(params: any): Promise<OperationResult> {
         if (!('fills' in node)) {
           throw new Error(`Node ${nodeId} does not support fills`);
         }
-        
+
         // Apply scale mode-aware transform processing
-        const { paint: basePaint, warnings } = applyScaleModeAwareTransforms(
+        const { paint: basePaint, warnings } = await applyScaleModeAwareTransforms(
           imageHash,
           params.imageScaleMode ?? 'FILL',
-          params
+          params,
+          node
         );
         
         // Log any transform warnings for debugging
@@ -801,57 +832,63 @@ async function updateImageFill(params: any): Promise<OperationResult> {
       throw new Error(`Fill at index ${fillIndex} is not an image fill (type: ${currentFill.type}). Use update_solid or update_gradient for other fill types.`);
     }
     
+    // Update outside of modifyFills for async operations
+    const updatedFill = clone(currentFill) as ImagePaint;
+
+    // Update image-specific properties
+    if (params.imageScaleMode) {
+      updatedFill.scaleMode = params.imageScaleMode.toUpperCase();
+    }
+
+    // Handle transformation and scale mode updates using scale mode-aware processing
+    if (params.imageScaleMode || params.imageTransform ||
+        params.transformOffsetX !== undefined || params.transformOffsetY !== undefined ||
+        params.transformScale !== undefined || params.transformScaleX !== undefined || params.transformScaleY !== undefined ||
+        params.transformRotation !== undefined || params.transformSkewX !== undefined || params.transformSkewY !== undefined ||
+        params.imageTranslateX !== undefined || params.imageTranslateY !== undefined ||
+        params.imageFlipHorizontal !== undefined || params.imageFlipVertical !== undefined ||
+        params.imagePositionX !== undefined || params.imagePositionY !== undefined ||
+        params.imageWidth !== undefined || params.imageHeight !== undefined ||
+        params.imageScaleX !== undefined || params.imageScaleY !== undefined ||
+        params.imageRotation !== undefined) {
+
+      // Determine the target scale mode (new mode takes precedence over current mode)
+      const targetScaleMode = params.imageScaleMode?.toUpperCase() || updatedFill.scaleMode || 'FILL';
+
+      // Apply scale mode-aware transform processing
+      const { paint: transformedPaint, warnings } = await applyScaleModeAwareTransforms(
+        updatedFill.imageHash,
+        targetScaleMode,
+        params,
+        node, // Pass node for dimensions
+        updatedFill // Pass existing paint for property preservation
+      );
+
+      // Replace the updatedFill with the transformed paint
+      Object.assign(updatedFill, transformedPaint);
+
+      // Log warnings if any
+      if (warnings.length > 0) {
+        logger.warn('Transform warnings:', warnings.join(', '));
+      }
+    }
+
+    // Apply filter updates
+    if (params.filterExposure !== undefined || params.filterContrast !== undefined ||
+        params.filterSaturation !== undefined || params.filterTemperature !== undefined ||
+        params.filterTint !== undefined || params.filterHighlights !== undefined ||
+        params.filterShadows !== undefined) {
+      const filteredPaint = applyImageFilters(updatedFill, params);
+      Object.assign(updatedFill, filteredPaint);
+    }
+
+    // Update common properties
+    if (params.opacity !== undefined) updatedFill.opacity = params.opacity;
+    if (params.visible !== undefined) updatedFill.visible = params.visible;
+    if (params.blendMode) updatedFill.blendMode = params.blendMode;
+
     // Use FigmaPropertyManager for proper array handling
     modifyFills(node, (manager) => {
-      const updatedFill = clone(currentFill) as ImagePaint;
-      
-      // Update image-specific properties
-      if (params.imageScaleMode) {
-        updatedFill.scaleMode = params.imageScaleMode.toUpperCase();
-      }
-      
-      // Handle transformation and scale mode updates using scale mode-aware processing
-      if (params.imageScaleMode || params.imageTransform || 
-          params.transformOffsetX !== undefined || params.transformOffsetY !== undefined ||
-          params.transformScale !== undefined || params.transformScaleX !== undefined || params.transformScaleY !== undefined ||
-          params.transformRotation !== undefined || params.transformSkewX !== undefined || params.transformSkewY !== undefined ||
-          params.imageTranslateX !== undefined || params.imageTranslateY !== undefined ||
-          params.imageFlipHorizontal !== undefined || params.imageFlipVertical !== undefined) {
-        
-        // Determine the target scale mode (new mode takes precedence over current mode)
-        const targetScaleMode = params.imageScaleMode?.toUpperCase() || updatedFill.scaleMode || 'FILL';
-        
-        // Apply scale mode-aware transform processing
-        const { paint: transformedPaint, warnings } = applyScaleModeAwareTransforms(
-          updatedFill.imageHash,
-          targetScaleMode,
-          params,
-          updatedFill // Pass existing paint for property preservation
-        );
-        
-        // Replace the updatedFill with the transformed paint
-        Object.assign(updatedFill, transformedPaint);
-        
-        // Log warnings if any
-        if (warnings.length > 0) {
-          logger.warn('Transform warnings:', warnings.join(', '));
-        }
-      }
-      
-      // Apply filter updates
-      if (params.filterExposure !== undefined || params.filterContrast !== undefined ||
-          params.filterSaturation !== undefined || params.filterTemperature !== undefined ||
-          params.filterTint !== undefined || params.filterHighlights !== undefined ||
-          params.filterShadows !== undefined) {
-        const filteredPaint = applyImageFilters(updatedFill, params);
-        Object.assign(updatedFill, filteredPaint);
-      }
-      
-      // Update common properties
-      if (params.opacity !== undefined) updatedFill.opacity = params.opacity;
-      if (params.visible !== undefined) updatedFill.visible = params.visible;
-      if (params.blendMode) updatedFill.blendMode = params.blendMode;
-      
       manager.update(fillIndex, updatedFill);
     });
     
@@ -861,8 +898,8 @@ async function updateImageFill(params: any): Promise<OperationResult> {
       updatedFill: (node as any).fills[fillIndex],
       totalFills: (node as any).fills.length
     };
-    
-    return await formatFillResponse(responseData);
+
+    return await formatFillResponse(responseData, node);
   }
 
 async function updatePatternFill(params: any): Promise<OperationResult> {

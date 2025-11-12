@@ -186,12 +186,61 @@ export class FillsHandler implements ToolHandler {
               ],
               description: 'Transform horizontal skew angle(s) in degrees - used in CROP mode only - single number or array for bulk operations'
             },
-            transformSkewY: { 
+            transformSkewY: {
               oneOf: [
                 { type: 'number' },
                 { type: 'array', items: { type: 'number' } }
               ],
               description: 'Transform vertical skew angle(s) in degrees - used in CROP mode only - single number or array for bulk operations'
+            },
+            imagePositionX: {
+              oneOf: [
+                { type: 'number' },
+                { type: 'array', items: { type: 'number' } }
+              ],
+              description: 'Image X position in pixels from frame top-left (intuitive API for CROP mode) - single number or array for bulk operations'
+            },
+            imagePositionY: {
+              oneOf: [
+                { type: 'number' },
+                { type: 'array', items: { type: 'number' } }
+              ],
+              description: 'Image Y position in pixels from frame top-left (intuitive API for CROP mode) - single number or array for bulk operations'
+            },
+            imageWidth: {
+              oneOf: [
+                { type: 'number', minimum: 0 },
+                { type: 'array', items: { type: 'number', minimum: 0 } }
+              ],
+              description: 'Image width in pixels (intuitive API for CROP mode, alternative to imageScaleX) - single number or array for bulk operations'
+            },
+            imageHeight: {
+              oneOf: [
+                { type: 'number', minimum: 0 },
+                { type: 'array', items: { type: 'number', minimum: 0 } }
+              ],
+              description: 'Image height in pixels (intuitive API for CROP mode, alternative to imageScaleY) - single number or array for bulk operations'
+            },
+            imageScaleX: {
+              oneOf: [
+                { type: 'number', minimum: 0 },
+                { type: 'array', items: { type: 'number', minimum: 0 } }
+              ],
+              description: 'Horizontal image scale (intuitive API for CROP mode: 1.0=natural width, 2.0=2x wider) - single number or array for bulk operations'
+            },
+            imageScaleY: {
+              oneOf: [
+                { type: 'number', minimum: 0 },
+                { type: 'array', items: { type: 'number', minimum: 0 } }
+              ],
+              description: 'Vertical image scale (intuitive API for CROP mode: 1.0=natural height, 2.0=2x taller) - single number or array for bulk operations'
+            },
+            imageRotation: {
+              oneOf: [
+                { type: 'number' },
+                { type: 'array', items: { type: 'number' } }
+              ],
+              description: 'Image rotation in degrees (intuitive API for CROP mode) - single number or array for bulk operations'
             },
             filterExposure: { 
               oneOf: [
@@ -397,7 +446,7 @@ export class FillsHandler implements ToolHandler {
     const config: UnifiedHandlerConfig = {
       toolName: 'figma_fills',
       operation: 'fills',
-      bulkParams: ['nodeId', 'fillIndex', 'filterType', 'color', 'gradientType', 'gradientStartX', 'gradientStartY', 'gradientEndX', 'gradientEndY', 'gradientScale', 'imageUrl', 'imagePath', 'imageBytes', 'imageHash', 'imageScaleMode', 'imageTransform', 'transformOffsetX', 'transformOffsetY', 'transformScale', 'transformScaleX', 'transformScaleY', 'transformRotation', 'transformSkewX', 'transformSkewY', 'filterExposure', 'filterContrast', 'filterSaturation', 'filterTemperature', 'filterTint', 'filterHighlights', 'filterShadows', 'sourceNodeId', 'patternTileType', 'patternScalingFactor', 'patternSpacingX', 'patternSpacingY', 'patternHorizontalAlignment', 'opacity', 'visible', 'blendMode', 'newIndex', 'fromNodeId', 'toNodeId', 'overwrite', 'x', 'y'],
+      bulkParams: ['nodeId', 'fillIndex', 'filterType', 'color', 'gradientType', 'gradientStartX', 'gradientStartY', 'gradientEndX', 'gradientEndY', 'gradientScale', 'imageUrl', 'imagePath', 'imageBytes', 'imageHash', 'imageScaleMode', 'imageTransform', 'transformOffsetX', 'transformOffsetY', 'transformScale', 'transformScaleX', 'transformScaleY', 'transformRotation', 'transformSkewX', 'transformSkewY', 'imagePositionX', 'imagePositionY', 'imageWidth', 'imageHeight', 'imageScaleX', 'imageScaleY', 'imageRotation', 'filterExposure', 'filterContrast', 'filterSaturation', 'filterTemperature', 'filterTint', 'filterHighlights', 'filterShadows', 'sourceNodeId', 'patternTileType', 'patternScalingFactor', 'patternSpacingX', 'patternSpacingY', 'patternHorizontalAlignment', 'opacity', 'visible', 'blendMode', 'newIndex', 'fromNodeId', 'toNodeId', 'overwrite', 'x', 'y'],
       paramConfigs: {
         // Core parameters
         operation: { expectedType: 'string' as const, required: true },
@@ -433,6 +482,16 @@ export class FillsHandler implements ToolHandler {
         transformRotation: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         transformSkewX: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         transformSkewY: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+
+        // Intuitive image transform parameters
+        imagePositionX: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imagePositionY: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imageWidth: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imageHeight: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imageScaleX: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imageScaleY: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+        imageRotation: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
+
         filterExposure: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         filterContrast: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
         filterSaturation: { expectedType: 'array' as const, arrayItemType: 'number' as const, allowSingle: true },
