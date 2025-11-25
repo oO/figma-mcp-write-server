@@ -5,6 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.40.0] - 2025-11-25
+
+### Added
+- **figma-design-execution skill**: Comprehensive skill file documenting Figma MCP tool proficiency patterns
+  - CTA as auto-layout frame pattern (not rectangle + text siblings)
+  - Hierarchical layout principles for element grouping and movement
+  - Font style case-sensitivity gotcha documentation
+  - Mandatory banner elements checklist with logo positioning rules
+  - Reading order rules (left-to-right for horizontal formats)
+  - Background image scaling - CROP not FILL (prevents anamorphic stretching)
+  - Layout construction patterns and component library strategy
+
 ## [0.38.1] - 2025-08-04
 
 ### Fixed
